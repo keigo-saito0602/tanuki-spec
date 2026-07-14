@@ -1,0 +1,29 @@
+version: "1.0"
+purpose: "モデルを使う評価。各ケースをClaude CodeとCodexで各3回実行し、baseline（SKILL未読）と比較する。"
+metrics:
+  - 発火の正確性（should_triggerの一致）
+  - 必須未充足数
+  - 要確認の検出漏れ数
+  - 根拠不備数（spec_gate.py）
+  - 捏造数（人手レビュー）
+cases:
+  - id: trigger-positive
+    should_trigger: true
+    prompt: "予約機能の要件定義書を、過去仕様も参照して作りたい"
+    expected: "requirementsテンプレート、根拠、カバレッジ、出力ゲートを案内する"
+  - id: trigger-negative
+    should_trigger: false
+    prompt: "このTypeScriptの型エラーを直して"
+    expected: "本SKILLを起動せず、通常の実装・デバッグ手順へ進む"
+  - id: ambiguous-story
+    should_trigger: true
+    prompt: "会員が予約できるようにしたい"
+    expected: "ドラフトを作りつつ、不足情報を[要確認: 質問]として残す。未確認を事実として断定しない"
+  - id: reference-conflict
+    should_trigger: true
+    prompt: "過去仕様にはメール通知、今回要望にはアプリ内通知とある。要件定義書を作って"
+    expected: "参照仕様を現案件の事実として採用せず、矛盾を要確認として明示する"
+  - id: conditional-out-of-scope
+    should_trigger: true
+    prompt: "内製Webアプリの仕様書を作って。外部SaaSは使わない"
+    expected: "PKG/SaaSのFIT&GAPを[対象外: 内製Webアプリのため]と明記する"

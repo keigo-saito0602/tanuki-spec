@@ -1,0 +1,27 @@
+# AI品質評価 記録（evaluation/ai-quality-rubric.md §4 の形式）
+# 旧形式のレビュー例。現行の validate_review.py の入力形式ではない。
+# requirements-filled.md は非機能明細・根拠不足のため、出力ゲート不通過。
+ai_quality_review:
+  date: 2026-07-14
+  target: requirements
+  # ①入力ゲート（user-story.md で判定済み）
+  input_gate_invest: {I: yes, N: yes, V: yes, E: yes, S: yes, T: yes}
+  # ③カバレッジ評価（coverage.py の実測値）
+  coverage:
+    required_coverage: 47.8    # 必須22/46（非機能明細を個別評価）
+    overall_coverage: 41.0     # 全体25/61
+    todo_flags: 0              # [要確認] 残ゼロ
+  # ④6軸ルーブリック（PASS / 要改善 / 判断不可）
+  rubric:
+    完全性: 要改善             # 必須の非機能明細が未記入
+    曖昧性の排除: PASS         # 一文一意、曖昧語なし
+    整合性: PASS               # 二重予約禁止が受入基準・非機能・業務系非機能で一貫
+    トレーサビリティ: PASS     # 各機能要件が受入基準へ辿れる
+    実装可能性: PASS           # 受入基準がテスト可能（例:同時最終1枠の競合）
+    根拠_非ハルシネーション: 要改善  # 多くの項目に根拠がない
+  # ⑤人手サンプリング
+  human_sampling: {reviewed: false, note: 次回月次でKEIGOが1件確認予定}
+  # 出力ゲート（DoD）
+  dod_passed: false           # 非機能明細の欠落と根拠不足があるため
+  dod_note: 現行テンプレートで非機能明細と項目ごとの根拠を補完してから再レビューする
+  diff_from_prev: 初回のため差分なし

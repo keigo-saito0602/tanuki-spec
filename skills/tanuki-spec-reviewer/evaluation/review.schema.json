@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "tanuki-spec-reviewer AI quality review",
+  "type": "object",
+  "required": ["ai_quality_review"],
+  "properties": {
+    "ai_quality_review": {
+      "type": "object",
+      "required": ["date", "target", "reviewer", "generated_spec_sha256", "coverage", "rubric", "dod_passed"],
+      "properties": {
+        "target": {"enum": ["requirements", "basic_design", "detailed_design"]},
+        "generated_spec_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "dod_passed": {"type": "boolean"}
+      }
+    }
+  }
+}

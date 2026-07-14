@@ -1,0 +1,1 @@
+../../tanuki-spec-all/evaluation/generate_templates.py

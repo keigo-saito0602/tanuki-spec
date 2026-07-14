@@ -1,0 +1,39 @@
+version: "1.0"
+updated: "2026-07-14"
+sources:
+  - id: requirements-pptx
+    title: CA5210_業務システム要件定義_講師用v5.23.pptx
+    kind: pptx
+    vault_path: /Users/saitoukeigo/Documents/ObsidianStorage/CA5210_業務システム要件定義_講師用v5.23.pptx
+    sha256: c7bcc9cf2d00ee8d0cd2605a820fe98f20f7d10b59a9de3ccfec17378f42d549
+    locator_format: "S<スライド番号>"
+  - id: design-pptx
+    title: CA5010_業務システム設計の要点v5.22.pptx
+    kind: pptx
+    vault_path: /Users/saitoukeigo/Documents/ObsidianStorage/CA5010_業務システム設計の要点v5.22.pptx
+    sha256: a581218febdc7de9e1a394919bc03badad03e394edd340fcbb3eb232465d19dd
+    locator_format: "S<スライド番号>"
+  - id: requirements-quality-xlsx
+    title: OPEN_品質項目（要件定義）v1.21.xlsx
+    kind: xlsx
+    vault_path: /Users/saitoukeigo/Documents/ObsidianStorage/OPEN_品質項目（要件定義）v1.21.xlsx
+    sha256: dae768e19aff0274d2eb7bfbbd27cd75b31bdcb6f8b21087a95c0b8639a7ead3
+    locator_format: "シート名"
+  - id: design-quality-xlsx
+    title: OPEN_品質項目（設計：外部仕様）v1.21.xlsx
+    kind: xlsx
+    vault_path: /Users/saitoukeigo/Documents/ObsidianStorage/OPEN_品質項目（設計：外部仕様）v1.21.xlsx
+    sha256: 0e5ca6ec0ef95776be0caeac680a9e2b8292da14a6a9517c8ef49685abda200f
+    locator_format: "シート名"
+  - id: nfr-xlsx
+    title: 非機能要件・対応方針一覧_.xlsx
+    kind: xlsx
+    vault_path: /Users/saitoukeigo/Documents/ObsidianStorage/非機能要件・対応方針一覧_.xlsx
+    sha256: a4f08421087d257d8b75c08427217593db73277194afb42e6aff526a722ec13e
+    locator_format: "シート名"
+  - id: ai-quality-pdf
+    title: 生成AI活用開発における品質管理ガイドライン_v1.2.pdf
+    kind: pdf
+    vault_path: /Users/saitoukeigo/Documents/ObsidianStorage/生成AI活用開発における品質管理ガイドライン_v1.2.pdf
+    sha256: 66181fa95ea8855605fa7e979c090e8dfc420fae0ed9d18ed8aca9d3dbe90d34
+    locator_format: "章節番号"
