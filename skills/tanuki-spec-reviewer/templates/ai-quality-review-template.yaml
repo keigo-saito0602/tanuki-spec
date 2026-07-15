@@ -1,0 +1,28 @@
+# <...> を実測値へ置き換えてから validate_review.py で検証する。
+ai_quality_review:
+  date: "<YYYY-MM-DD>"
+  target: requirements # requirements / basic_design / detailed_design
+  reviewer:
+    role: reviewer
+    model: "<レビューに使ったモデルまたは担当者>"
+    independent: true
+  generated_spec_sha256: "<対象仕様書のSHA-256>"
+  traceability_sha256: "<traceability.yamlのSHA-256>"
+  traceability_gate_passed: true
+  coverage:
+    required_coverage: <必須充足率>
+    overall_coverage: <全体充足率>
+    todo_flags: <要確認件数>
+  rubric:
+    完全性: PASS # PASS / 要改善 / 判断不可
+    曖昧性の排除: PASS
+    整合性: PASS
+    トレーサビリティ: PASS
+    実装可能性: PASS
+    根拠_非ハルシネーション: PASS
+  human_sampling:
+    reviewed: false
+    note: "<人手確認の結果または予定>"
+  dod_passed: false
+  dod_note: "<DoD判定の理由>"
+  diff_from_prev: "<前回との差分。初回は初回と記載>"

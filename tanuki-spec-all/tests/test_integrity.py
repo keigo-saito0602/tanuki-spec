@@ -38,3 +38,7 @@ class IntegrityTest(unittest.TestCase):
         template = yaml.safe_load((ROOT / "templates" / "traceability-template.yaml").read_text(encoding="utf-8"))
         failures = traceability_gate.validate(template)
         self.assertTrue(any("statement が必要です" in failure for failure in failures))
+
+    def test_template_catalog_contains_backlog_and_traceability_sources(self):
+        for filename in ("README.md", "product-backlog-template.md", "traceability-template.yaml"):
+            self.assertTrue((ROOT / "templates" / filename).is_file())

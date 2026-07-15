@@ -51,6 +51,7 @@ INVESTの6軸（Independent/Negotiable/Valuable/Estimable/Small/Testable）をYE
 NOの軸は質問リストにして仕様書へ残す。ドラフト生成は止めないが、根拠がない項目を埋めてはいけない。
 
 ユーザーの要望が一文にまとまっている場合は、利用者・したいこと・得たい価値・通常/例外時の流れを質問し、独立した `US-xxx` へ分割してから②へ進む。
+開発初期は、`templates/product-backlog-template.md` を使ってUS・優先度・リリース単位を整理してから開始する。
 
 ### ②穴埋め生成
 1. `spec-items.yaml` の対象工程の項目と、`templates/<工程>-template.md` を読む。

@@ -11,3 +11,5 @@ python3 -m venv .venv
 ```
 
 `spec-items.yaml`が品質項目の唯一の正本です。テンプレートは手編集せず、`evaluation/generate_templates.py`で再生成します。
+
+利用する書類と作成順は、[templates/README.md](./templates/README.md)を参照してください。開発初期のプロダクトバックログとトレーサビリティ正本はコピーして記入し、要件定義書・設計書・試験項目書は正本から生成・検証します。
