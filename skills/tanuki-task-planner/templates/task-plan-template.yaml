@@ -1,0 +1,14 @@
+version: "1.0"
+release: "<MVPまたは対象リリース>"
+
+tasks:
+  - id: TASK-001
+    status: in_scope # in_scope / deferred / out_of_scope。後者2つはreason必須
+    title: "<作成または変更する成果物>"
+    type: backend # design / data / backend / frontend / integration / test / verification / documentation
+    requirement_ids: [FR-001]
+    acceptance_test_ids: [AC-001]
+    system_test_ids: [ST-001]
+    depends_on: []
+    definition_of_done: ["<完了と判断できる成果物の状態>"]
+    verification: ["<実行するテストまたは確認手順>"]
