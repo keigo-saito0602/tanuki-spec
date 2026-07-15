@@ -36,3 +36,8 @@ class SpecGateTest(unittest.TestCase):
         document = self.complete_requirements_document(with_evidence=False)
         results = coverage.evaluate(document, self.data, "requirements")
         self.assertGreater(len(spec_gate.evidence_failures(document, results)), 0)
+
+    def test_marker_missing_is_not_reported_twice(self):
+        results = coverage.evaluate("", self.data, "requirements")
+        failures = spec_gate.actionable_gate_failures(results)
+        self.assertFalse(any(failure.startswith("必須未充足:") for failure in failures))

@@ -1,11 +1,11 @@
 # AI品質評価 記録（evaluation/ai-quality-rubric.md §4 の形式）
-# 旧形式のレビュー例。現行の validate_review.py の入力形式ではない。
+# 非通過の仕様書に対する、現行スキーマ準拠のレビュー記録例。
 # requirements-filled.md は非機能明細・根拠不足のため、出力ゲート不通過。
 ai_quality_review:
   date: 2026-07-14
   target: requirements
-  # ①入力ゲート（user-story.md で判定済み）
-  input_gate_invest: {I: yes, N: yes, V: yes, E: yes, S: yes, T: yes}
+  reviewer: {role: reviewer, model: "sample-reviewer", independent: true}
+  generated_spec_sha256: "77492e6e2400b9fa1644df72d9f373c3a760d67030bce2ea7fb126edf5882b1c"
   # ③カバレッジ評価（coverage.py の実測値）
   coverage:
     required_coverage: 47.8    # 必須22/46（非機能明細を個別評価）

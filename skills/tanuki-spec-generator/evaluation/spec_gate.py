@@ -24,6 +24,17 @@ def evidence_failures(document: str, results: list[dict]) -> list[str]:
     return failures
 
 
+def actionable_gate_failures(results: list[dict]) -> list[str]:
+    """構造エラーとして報告済みのマーカー欠落を重複表示しない。"""
+    marker_missing_ids = {result["id"] for result in results if result["status"] == "欠落"}
+    failures = []
+    for failure in coverage.gate_failures(results):
+        if any(failure.startswith(f"必須未充足: {item_id} ") for item_id in marker_missing_ids):
+            continue
+        failures.append(failure)
+    return failures
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="仕様書の出力ゲート検証")
     parser.add_argument("spec", help="記入済み仕様書(.md)のパス")
@@ -38,7 +49,7 @@ def main() -> None:
     summary = coverage.summarize(results)
     failures = (
         coverage.structural_failures(document, data, phase)
-        + coverage.gate_failures(results)
+        + actionable_gate_failures(results)
         + evidence_failures(document, results)
     )
     if data["meta"].get("approval_status") != "approved":

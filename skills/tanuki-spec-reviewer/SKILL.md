@@ -17,7 +17,7 @@ reviewer:        # 例: codex / claude-new-session。生成担当と別である
 
 1. 対象仕様書を独立した目で読み、生成側の意図・根拠欄を鵜呑みにせず検証する。
 2. `evaluation/ai-quality-rubric.md §2④`の6軸を`PASS`、`要改善`、`判断不可`で判定する。
-3. `python3 evaluation/coverage.py <対象仕様書> --json`を実行し、`required_coverage`、`coverage`、`confirmation_needed`を控える。
+3. `python3 evaluation/coverage.py <対象仕様書> --json`を実行し、`required_coverage`、`overall_coverage`、`todo_flags`を控える。値は出力JSONの`required_coverage`、`coverage`、`confirmation_needed`からそれぞれ転記する。
 4. `review.schema.json`に沿って、`date`、`target`、`reviewer`、`generated_spec_sha256`、`coverage`、`rubric`、`dod_passed`を持つYAMLを作る。SHA-256は`shasum -a 256 <対象仕様書>`で算出する。
 5. `python3 evaluation/validate_review.py <review.yaml> --spec <対象仕様書>`を実行し、記録の整合性を確認する。
 6. DoD判定と、要改善・判断不可が残った軸をKEIGOに報告する。
