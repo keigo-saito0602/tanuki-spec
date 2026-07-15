@@ -9,6 +9,9 @@ ai_quality_review:
   generated_spec_sha256: "<対象仕様書のSHA-256>"
   traceability_sha256: "<traceability.yamlのSHA-256>"
   traceability_gate_passed: true
+  # basic_design / detailed_design のときだけ必須。requirements では削除してよい。
+  design_traceability_sha256: "<design-traceability.yamlのSHA-256>"
+  design_traceability_gate_passed: true
   coverage:
     required_coverage: <必須充足率>
     overall_coverage: <全体充足率>

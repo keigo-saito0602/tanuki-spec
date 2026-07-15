@@ -10,6 +10,8 @@ Codex（および任意のAIエージェント）は `SKILL.md` の手順に従�
 4. `python3 evaluation/coverage.py <記入済み.md> --strict`、`python3 evaluation/traceability_gate.py <traceability.yaml>`、`python3 evaluation/spec_gate.py <記入済み.md> --traceability <traceability.yaml>` で評価。
 5. 出力ゲート通過後は、`tanuki-spec-reviewer`へ独立レビューを引き継ぐ。
 
+要件定義書起点の設計生成・設計トレーサビリティ・要件変更の追従更新は、`tanuki-spec-design`を使う。本SKILLの既存設計工程は変更しない。
+
 ## 依存
 - Python 3.9+ / `pyyaml`（`pip install pyyaml`）
 

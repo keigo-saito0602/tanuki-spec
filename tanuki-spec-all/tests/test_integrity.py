@@ -9,6 +9,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "evaluation"))
 import generate_templates
+import design_traceability_gate
 import traceability_gate
 
 
@@ -39,6 +40,12 @@ class IntegrityTest(unittest.TestCase):
         failures = traceability_gate.validate(template)
         self.assertTrue(any("statement が必要です" in failure for failure in failures))
 
+    def test_design_traceability_template_requires_real_content(self):
+        template = yaml.safe_load((ROOT / "templates" / "design-traceability-template.yaml").read_text(encoding="utf-8"))
+        requirements = {"BR-001": {"id": "BR-001", "status": "in_scope"}, "FR-001": {"id": "FR-001", "status": "in_scope"}}
+        failures = design_traceability_gate.validate(template, requirements)
+        self.assertTrue(any("name が必要です" in failure for failure in failures))
+
     def test_template_catalog_contains_backlog_and_traceability_sources(self):
-        for filename in ("README.md", "product-backlog-template.md", "traceability-template.yaml"):
+        for filename in ("README.md", "product-backlog-template.md", "traceability-template.yaml", "design-traceability-template.yaml"):
             self.assertTrue((ROOT / "templates" / filename).is_file())

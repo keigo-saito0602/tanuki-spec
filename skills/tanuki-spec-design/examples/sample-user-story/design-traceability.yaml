@@ -1,0 +1,11 @@
+version: "1.0"
+requirements_traceability: "../../../tanuki-spec-generator/examples/sample-user-story/traceability.yaml"
+design_elements:
+  - id: BD-001
+    type: basic_design
+    name: "レッスン予約画面・予約APIの外部仕様"
+    requirement_ids: [BR-001, FR-001, FR-002]
+  - id: DD-001
+    type: detailed_design
+    name: "予約確定の排他制御と通知処理"
+    requirement_ids: [FR-003, NFR-001]

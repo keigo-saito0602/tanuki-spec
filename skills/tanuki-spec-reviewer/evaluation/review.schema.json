@@ -12,6 +12,8 @@
         "generated_spec_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "traceability_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "traceability_gate_passed": {"type": "boolean"},
+        "design_traceability_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "design_traceability_gate_passed": {"type": "boolean"},
         "dod_passed": {"type": "boolean"}
       }
     }

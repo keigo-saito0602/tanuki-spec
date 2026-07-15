@@ -384,6 +384,27 @@ phases:
             required: true
             source: 設計観点 S79
             aspects: [reliability]
+          - id: bd-alternatives
+            name: 代替案・採否理由・設計リスク
+            purpose: 実現案の比較、採用理由、未解決リスクを記録し、後続の判断を再現可能にする
+            required: true
+            source: "設計品質観点(Google: alternatives/risk)"
+            aspects: [maintainability, reliability, documentation]
+            new: true
+          - id: bd-cross-cutting
+            name: 横断的関心事（セキュリティ・プライバシー・可観測性）
+            purpose: 機能ごとに見落としやすい横断要件を設計方針として明示する
+            required: true
+            source: "設計品質観点(Google: cross-cutting concerns)"
+            aspects: [security, operability, reliability]
+            new: true
+          - id: bd-waf
+            name: 非機能設計の5観点（信頼性・セキュリティ・コスト・運用・性能）
+            purpose: 非機能方針をトレードオフを含めて具体化し、運用後の品質劣化を防ぐ
+            required: true
+            source: "設計品質観点(Microsoft: Well-Architected)"
+            aspects: [reliability, security, operability, performance]
+            new: true
           - id: bd-axis
             name: 設計展開の軸・観点の設定
             purpose: 詳細設計への展開軸を仮検討し手戻りを防ぐ
@@ -508,6 +529,20 @@ phases:
             required: false
             source: 設計観点 S89
             aspects: [maintainability]
+          - id: dd-spec-quality
+            name: 機能仕様の完全性・明確性・実装可能性確認
+            purpose: 前後機能との整合、解釈の一意性、実装と見積りに十分な具体性を確認する
+            required: true
+            source: "設計品質観点(NTTデータ: 機能仕様チェック)"
+            aspects: [functional, maintainability, documentation]
+            new: true
+          - id: dd-observability
+            name: 監視・診断・インシデント対応の詳細設計
+            purpose: 障害の検知、原因特定、復旧判断に必要なログ・メトリクス・手順を実装可能にする
+            required: true
+            source: "設計品質観点(Microsoft: Operational Excellence)"
+            aspects: [operability, reliability, security]
+            new: true
 
 # =============================================================================
 # 非機能要件 明細（IPA非機能要求グレード）

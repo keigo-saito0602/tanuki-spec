@@ -16,6 +16,15 @@ sources:
   - id: design-quality
     scope: 設計の品質特性別チェック観点
     locator_format: "観点区分"
+  - id: design-quality-google
+    scope: 設計の代替案・横断的関心事・リスクを確認する観点
+    locator_format: "観点区分"
+  - id: design-quality-microsoft
+    scope: 信頼性・セキュリティ・コスト・運用・性能の設計品質観点
+    locator_format: "観点区分"
+  - id: design-quality-nttdata
+    scope: 機能仕様の完全性・網羅性・整合性・明確性・実装可能性の観点
+    locator_format: "観点区分"
   - id: non-functional-quality
     scope: 性能・可用性・セキュリティ等の非機能観点
     locator_format: "観点区分"

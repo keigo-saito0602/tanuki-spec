@@ -158,3 +158,7 @@ ai_quality_review:
   dod_passed: false      # 整合性が要改善のため未通過
   diff_from_prev: 初回のため無し
 ```
+## 設計工程のDoD追加
+
+- `basic_design`／`detailed_design`では、`design_traceability_gate.py`が通過し、レビュー記録に正しい`design_traceability_sha256`と`design_traceability_gate_passed: true`を記録する。
+- `validate_review.py`は設計工程で`--design-traceability`を指定して実行する。要件定義レビューには適用しない。

@@ -1,0 +1,14 @@
+version: "1.0"
+requirements_traceability: traceability.yaml
+
+# 要件定義書の BR/FR/NFR と設計要素の対応を管理する正本。
+# status: in_scope の要件は、少なくとも1つの設計要素で被覆する。
+design_elements:
+  - id: BD-001
+    type: basic_design # basic_design / detailed_design
+    name: "<基本設計要素名>"
+    requirement_ids: [BR-001]
+  - id: DD-001
+    type: detailed_design # basic_design / detailed_design
+    name: "<詳細設計要素名>"
+    requirement_ids: [FR-001]

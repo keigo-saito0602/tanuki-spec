@@ -1,0 +1,1 @@
+../tanuki-spec-all/requirements.txt

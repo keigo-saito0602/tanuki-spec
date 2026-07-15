@@ -10,6 +10,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 TRACEABILITY = ROOT.parent / "tanuki-spec-generator" / "examples" / "sample-user-story" / "traceability.yaml"
+DESIGN_TRACEABILITY = ROOT.parent / "tanuki-spec-design" / "examples" / "sample-user-story" / "design-traceability.yaml"
 sys.path.insert(0, str(ROOT / "evaluation"))
 import coverage
 import validate_review
@@ -80,3 +81,23 @@ class ValidateReviewTest(unittest.TestCase):
         review["ai_quality_review"]["traceability_sha256"] = "0" * 64
         errors = validate_review.validate(review, spec, TRACEABILITY)
         self.assertTrue(any("traceability_sha256" in error for error in errors))
+
+    def test_design_review_requires_design_traceability(self):
+        spec = self.make_spec()
+        self.addCleanup(spec.unlink)
+        review = self.make_review(spec)
+        review["ai_quality_review"]["target"] = "basic_design"
+        errors = validate_review.validate(review, spec, TRACEABILITY)
+        self.assertTrue(any("設計工程の必須項目不足" in error for error in errors))
+        self.assertTrue(any("--design-traceability" in error for error in errors))
+
+    def test_design_traceability_sha256_mismatch_is_rejected(self):
+        spec = self.make_spec()
+        self.addCleanup(spec.unlink)
+        review = self.make_review(spec)
+        entry = review["ai_quality_review"]
+        entry["target"] = "basic_design"
+        entry["design_traceability_sha256"] = "0" * 64
+        entry["design_traceability_gate_passed"] = True
+        errors = validate_review.validate(review, spec, TRACEABILITY, DESIGN_TRACEABILITY)
+        self.assertTrue(any("design_traceability_sha256" in error for error in errors))
