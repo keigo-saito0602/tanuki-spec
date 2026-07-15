@@ -5,20 +5,20 @@
 # テンプレート生成・カバレッジ評価・AI品質評価はすべてこのファイルを参照する。
 # 資料改訂で項目が増減した場合、このファイルだけを直せば全機能が追随する。
 #
-# 出典6資料（Phase 0で抽出）:
-#   - 要件定義pptx   = CA5210_業務システム要件定義_講師用v5.23.pptx
-#   - 設計pptx       = CA5010_業務システム設計の要点v5.22.pptx
-#   - 品質項目要件定義 = OPEN_品質項目（要件定義）v1.21.xlsx
-#   - 品質項目設計   = OPEN_品質項目（設計：外部仕様）v1.21.xlsx
-#   - 非機能一覧     = 非機能要件・対応方針一覧_.xlsx（IPA非機能要求グレード）
-#   - AI品質GL       = 生成AI活用開発における品質管理ガイドライン_v1.2.pdf
+# 根拠6分類（内容を抽出・一般化して利用）:
+#   - 要件定義観点   = 要件定義における業務・機能・非機能・移行・文書化の観点
+#   - 設計観点       = 基本/詳細設計における構成・データ・連携・運用の観点
+#   - 要件品質観点   = 要件定義の品質特性別チェック観点
+#   - 設計品質観点   = 設計の品質特性別チェック観点
+#   - 非機能観点     = 性能・可用性・セキュリティ等の非機能観点
+#   - AI品質観点     = 生成AI活用時の品質管理・検証・改善の観点
 #
 # フィールド定義:
 #   id        … 安定した一意キー（テンプレ/評価の突き合わせ用。変更しない）
 #   name      … 項目名（見出しになる）
 #   purpose   … なぜ必要か（1文）
 #   required  … true=必須 / false=任意 / conditional=条件付き必須（conditionに条件）
-#   source    … 出典（資料名＋シート/スライド）
+#   source    … 根拠分類＋資料内の位置（原本のパス・ファイル名は記載しない）
 #   aspects   … 関連するISO25010系品質特性（カバレッジの観点タグ）
 #   new       … true=ユーザの叩き台に無かった新規項目
 # =============================================================================
@@ -63,28 +63,28 @@ phases:
             name: システム化の目的・背景（経営戦略との紐づけ）
             purpose: 「真の目的」を明確化し、以後の要件取捨選択・優先順位判断の拠り所にする
             required: true
-            source: 要件定義pptx S21/S107
+            source: 要件定義観点 S21/S107
             aspects: [functional]
             new: true
           - id: req-scope
             name: システム化対象業務・スコープ定義（対象/対象外/範囲）
             purpose: システム化範囲を確定し対象漏れ・認識齟齬を防ぐ
             required: true
-            source: 品質項目要件定義(機能性)／要件定義pptx S21
+            source: 要件品質観点(機能性)／要件定義観点 S21
             aspects: [functional]
             new: true
           - id: req-stakeholder
             name: ステークホルダー・関係者体制（役割・権限・組織）
             purpose: 所掌の違いによる要求スコープ・実現レベルの食い違いを防ぐ
             required: true
-            source: 要件定義pptx S22/S56/S107
+            source: 要件定義観点 S22/S56/S107
             aspects: [functional]
             new: true
           - id: req-bizflow
             name: 業務フロー（As-Is／To-Be、インパクト分析）
             purpose: 現状と新業務の変化・影響を可視化し見直し漏れを防ぐ
             required: true
-            source: 要件定義pptx S23-25
+            source: 要件定義観点 S23-25
             aspects: [functional]
             new: false
           - id: req-userstory
@@ -102,14 +102,14 @@ phases:
             name: 機能要件一覧・詳細（P5W2Hで整理）
             purpose: Priority/Who/When&条件/What&量/Where/Why/How/HowMuchの見落としを防ぐ
             required: true
-            source: 要件定義pptx S111
+            source: 要件定義観点 S111
             aspects: [functional]
             new: false
           - id: req-priority
             name: 要件の優先順位方針（分類・優先度基準）
             purpose: 要件をグループ化し優先度判断をぶれさせない
             required: true
-            source: 要件定義pptx S112
+            source: 要件定義観点 S112
             aspects: [functional]
             new: true
 
@@ -120,28 +120,28 @@ phases:
             name: データ要件・データモデル（ERD/DFD、CRUD分析）
             purpose: データ構造・流れを独立の柱で整理しDB設計との手戻りを防ぐ
             required: true
-            source: 品質項目要件定義(機能性)／要件定義pptx S24/S36
+            source: 要件品質観点(機能性)／要件定義観点 S24/S36
             aspects: [functional]
             new: true
           - id: req-code
             name: コード設計・コード体系
             purpose: JIS/業界標準・既存コード表との整合を事前確認する
             required: false
-            source: 品質項目要件定義(機能性)
+            source: 要件品質観点(機能性)
             aspects: [functional]
             new: true
           - id: req-io
             name: 入出力（画面・帳票）要件・UI標準
             purpose: 入出力様式・操作方法を統一し操作ミスを抑制する
             required: true
-            source: 品質項目要件定義(操作性)
+            source: 要件品質観点(操作性)
             aspects: [usability]
             new: false
           - id: req-interface
             name: 他システム連携・外部インターフェース要件
             purpose: 授受方式・タイミング・形式を明確化し結合試験の手戻りを防ぐ
             required: true
-            source: 品質項目要件定義(機能性)／要件定義pptx S51
+            source: 要件品質観点(機能性)／要件定義観点 S51
             aspects: [functional]
             new: false
 
@@ -152,7 +152,7 @@ phases:
             name: 処理方式・システム構成要件（オンライン/バッチ等の選定）
             purpose: 機能要件と方式を整合させ開発規模・予算の見誤りを防ぐ
             required: true
-            source: 要件定義pptx S26-27/S33
+            source: 要件定義観点 S26-27/S33
             aspects: [performance, scalability]
             new: true
           - id: req-pkg-fitgap
@@ -160,7 +160,7 @@ phases:
             purpose: 過度なカスタマイズによる保守困難化・サポート切れを回避する
             required: conditional
             condition: 業務パッケージ/SaaSを採用する場合
-            source: 要件定義pptx S28-30
+            source: 要件定義観点 S28-30
             aspects: [functional, maintainability]
             new: true
 
@@ -171,7 +171,7 @@ phases:
             name: 非機能要件の観点別ブレークダウン
             purpose: 一括りの「非機能要件」での抜け漏れを防ぐ（詳細は non_functional を展開）
             required: true
-            source: 品質項目要件定義(各シート)／要件定義pptx S73-83／非機能一覧
+            source: 要件品質観点(各シート)／要件定義観点 S73-83／非機能観点
             aspects: [reliability, performance, scalability, operability, maintainability, portability, security, environment]
             expands: non_functional
             new: false
@@ -179,7 +179,7 @@ phases:
             name: 業務系非機能要件（業務運用視点の可用性・保守性・移行性等）
             purpose: 基盤系だけでなく業務運用側の非機能も明文化する
             required: true
-            source: 要件定義pptx S81-83
+            source: 要件定義観点 S81-83
             aspects: [operability, reliability, portability]
             new: true
 
@@ -197,14 +197,14 @@ phases:
             name: カットオーバークライテリア（サービス開始判定基準）
             purpose: 本番移行可否を業務・システム・試験網羅性・品質・体制から段階判定する
             required: true
-            source: 要件定義pptx S109-110
+            source: 要件定義観点 S109-110
             aspects: [portability, reliability]
             new: true
           - id: req-test-support
             name: 試験支援要件（試験環境・データ・シナリオ抽出可能性）
             purpose: 要件からテスト項目が導出できることを事前確認しV字の試験漏れを防ぐ
             required: true
-            source: 品質項目要件定義(移行性)／要件定義pptx S116
+            source: 要件品質観点(移行性)／要件定義観点 S116
             aspects: [reliability]
             new: true
 
@@ -215,21 +215,21 @@ phases:
             name: 移行要件・移行計画（方式・切り戻し・リハーサル・PoNR）
             purpose: 移行方式と失敗時の切り戻し手順を事前定義しトラブルを防ぐ
             required: true
-            source: 品質項目要件定義(移行性)／要件定義pptx S51
+            source: 要件品質観点(移行性)／要件定義観点 S51
             aspects: [portability]
             new: true
           - id: req-operation
             name: 運用要件（通常/障害時/保守運用の作業分担）
             purpose: 平常時・故障時・保全時の運用分担を明確化する
             required: true
-            source: 品質項目要件定義(運用性/保守性)
+            source: 要件品質観点(運用性/保守性)
             aspects: [operability, maintainability]
             new: true
           - id: req-kpi
             name: 業務改善効果・KPI測定項目
             purpose: システム化効果を定量評価できる指標を要件段階で定義する
             required: false
-            source: 品質項目要件定義(機能性/環境)／要件定義pptx S102
+            source: 要件品質観点(機能性/環境)／要件定義観点 S102
             aspects: [environment, functional]
             new: true
 
@@ -247,28 +247,28 @@ phases:
             name: 課題管理・検討経緯記録（不採用案・廃案理由を含む）
             purpose: 論点の蒸し返し時に判断根拠を遡れるようにし手戻りを防ぐ
             required: true
-            source: 要件定義pptx S5/S111
+            source: 要件定義観点 S5/S111
             aspects: [documentation]
             new: true
           - id: req-team
             name: 開発体制・スキル要件（要員計画）
             purpose: 必要な業務知識・技術知識を持つ人材確保を確認する
             required: true
-            source: 要件定義pptx S22/S108
+            source: 要件定義観点 S22/S108
             aspects: [functional]
             new: true
           - id: req-compliance
             name: 法規制・コンプライアンス対応要件
             purpose: 個人情報保護法・PCIDSS等への対応可否を要件段階で確認する
             required: true
-            source: 品質項目要件定義(セキュリティ)
+            source: 要件品質観点(セキュリティ)
             aspects: [security]
             new: true
           - id: req-doc-system
             name: ドキュメント体系・成果物一覧・用語統一
             purpose: 粒度・用語を統一し後工程・保守での解釈齟齬を防ぐ
             required: false
-            source: 品質項目要件定義(ドキュメンテーション)／要件定義pptx S113-115
+            source: 要件品質観点(ドキュメンテーション)／要件定義観点 S113-115
             aspects: [documentation]
             new: true
 
@@ -284,55 +284,55 @@ phases:
             name: 業務体系・業務処理概要
             purpose: 仕様変更に強い業務分割・処理形態を明確化する
             required: true
-            source: 品質項目設計(機能性)
+            source: 設計品質観点(機能性)
             aspects: [functional]
           - id: bd-trigger
             name: 処理起動条件一覧
             purpose: バッチ/オンライン/センタカットの起動条件を運用設計・試験の基礎にする
             required: true
-            source: 品質項目設計(機能性)
+            source: 設計品質観点(機能性)
             aspects: [functional, operability]
           - id: bd-biz-rule
             name: 業務規制条件・処理内容の明確化
             purpose: 規制すべきエラー種別・更新編集方法を明確化し詳細設計の土台にする
             required: true
-            source: 品質項目設計(機能性)
+            source: 設計品質観点(機能性)
             aspects: [functional]
           - id: bd-screen
             name: 画面一覧・画面遷移設計
             purpose: 触れる画面と遷移を確定し漏れ・重複のないUI仕様にする
             required: true
-            source: 品質項目設計(機能性)
+            source: 設計品質観点(機能性)
             aspects: [usability, functional]
           - id: bd-report
             name: 帳票一覧・帳票仕様
             purpose: 出力帳票の種類・様式・条件を明確化する
             required: true
-            source: 品質項目設計(機能性)
+            source: 設計品質観点(機能性)
             aspects: [functional]
           - id: bd-io-item
             name: 入出力項目定義（データ項目・CRUD整理）
             purpose: 桁数・精度・編集書式を統一し漏れ・重複を防ぐ
             required: true
-            source: 品質項目設計(機能性)
+            source: 設計品質観点(機能性)
             aspects: [functional]
           - id: bd-message
             name: メッセージ一覧・エラーメッセージ仕様
             purpose: 通知・警告・エラーの内容と形式を統一する
             required: true
-            source: 品質項目設計(機能性)
+            source: 設計品質観点(機能性)
             aspects: [usability, functional]
           - id: bd-menu
             name: コマンド・メニュー体系設計
             purpose: 名称体系・操作方法を統一し操作ミスを防止する
             required: false
-            source: 品質項目設計(機能性)
+            source: 設計品質観点(機能性)
             aspects: [usability]
           - id: bd-ext-if
             name: 外部インターフェース仕様（他システム連携）
             purpose: 電文構造・送受手順を明確化し連携整合性を保証する
             required: true
-            source: 品質項目設計(機能性)
+            source: 設計品質観点(機能性)
             aspects: [functional]
           - id: bd-api
             name: API仕様（エンドポイント/リクエスト・レスポンス/認証/エラー）
@@ -345,74 +345,74 @@ phases:
             name: ER図・DB論理設計
             purpose: テーブル間リレーションとデータ構造を明確化する
             required: true
-            source: 品質項目設計(機能性)
+            source: 設計品質観点(機能性)
             aspects: [functional]
           - id: bd-datafile
             name: データファイル仕様・DB拡張計画
             purpose: 拡張性・容量見積りを明確化し将来の業務拡大に備える
             required: true
-            source: 品質項目設計(拡張性)
+            source: 設計品質観点(拡張性)
             aspects: [scalability]
           - id: bd-code
             name: コード設計（コード体系）
             purpose: コード体系化・標準採用・外部接続先との整合を取る
             required: true
-            source: 品質項目設計(機能性)
+            source: 設計品質観点(機能性)
             aspects: [functional]
           - id: bd-func-spec
             name: 機能一覧・機能仕様（入力/処理/出力定義）
             purpose: INPUT/PROCESS/OUTPUT単位で外部仕様を確定する
             required: true
-            source: 設計pptx S16
+            source: 設計観点 S16
             aspects: [functional]
           - id: bd-processing
             name: 処理方式の選定・確認
             purpose: 処理方式を選定し非機能要件と整合させる
             required: true
-            source: 設計pptx S13
+            source: 設計観点 S13
             aspects: [performance]
           - id: bd-nfr-policy
             name: 非機能要件方針（可用性/性能拡張性/保守性/業務運用性/移行性/セキュリティ/環境）
             purpose: 横断で揃える非機能レベルを基本設計段階で方針化する
             required: true
-            source: 設計pptx S50／非機能一覧
+            source: 設計観点 S50／非機能観点
             aspects: [reliability, performance, scalability, operability, maintainability, portability, security, environment]
             expands: non_functional
           - id: bd-critical
             name: 重点整理事項の識別
             purpose: クリティカルな処理を洗い出し優先して方針を固める
             required: true
-            source: 設計pptx S79
+            source: 設計観点 S79
             aspects: [reliability]
           - id: bd-axis
             name: 設計展開の軸・観点の設定
             purpose: 詳細設計への展開軸を仮検討し手戻りを防ぐ
             required: false
-            source: 設計pptx S25
+            source: 設計観点 S25
             aspects: [maintainability]
           - id: bd-security
             name: セキュリティ方針（認証・アクセス制御の外部仕様）
             purpose: 認証方式・権限レベルを外部仕様として定義する
             required: true
-            source: 品質項目設計(セキュリティ)
+            source: 設計品質観点(セキュリティ)
             aspects: [security]
           - id: bd-migration
             name: 移行方式・移行対象概要
             purpose: 一括/段階移行の方式・対象範囲を明確化する
             required: false
-            source: 品質項目設計(移行性)
+            source: 設計品質観点(移行性)
             aspects: [portability]
           - id: bd-quality-select
             name: 品質項目一覧の選択・設計方針への反映
             purpose: ISO25010系の観点を選択しプロジェクト特性に応じた設計方針として明文化する
             required: true
-            source: 設計pptx S102
+            source: 設計観点 S102
             aspects: [documentation]
           - id: bd-doc-rule
             name: ドキュメント体系・命名規則の規定
             purpose: 管理番号体系・構成・改訂履歴ルールを定める
             required: false
-            source: 品質項目設計(ドキュメンテーション)
+            source: 設計品質観点(ドキュメンテーション)
             aspects: [documentation]
 
   # ---------------------------------------------------------------------------
@@ -427,86 +427,86 @@ phases:
             name: 状態遷移図・状態遷移マトリクス
             purpose: 状態×イベントを総当たりで整理し網羅的内部仕様と試験項目を導出する
             required: true
-            source: 設計pptx S26
+            source: 設計観点 S26
             aspects: [functional, reliability]
           - id: dd-decision-table
             name: デシジョンテーブル・真理値表
             purpose: 処理条件の全組合せを漏れなく列挙し正当性・保守性を担保する
             required: true
-            source: 設計pptx S43
+            source: 設計観点 S43
             aspects: [functional, maintainability]
           - id: dd-crud
             name: CRUD分析（詳細設計版）
             purpose: 重要データへのC/U/Dを整理し内部データ管理の網羅性を確認する
             required: true
-            source: 設計pptx S29
+            source: 設計観点 S29
             aspects: [functional]
           - id: dd-flow
             name: 処理フロー・構造化チャート設計
             purpose: 順次・分岐・反復の3構造で記述しスパゲッティ化を防ぐ
             required: true
-            source: 設計pptx S84
+            source: 設計観点 S84
             aspects: [maintainability]
           - id: dd-module
             name: モジュール化・階層化設計（APの階層構造）
             purpose: 処理を階層化し分担開発・試験効率・再利用性を高める
             required: true
-            source: 設計pptx S86
+            source: 設計観点 S86
             aspects: [maintainability, scalability]
           - id: dd-input-check
             name: 入力データチェック仕様
             purpose: チェック順序・内容・規定外/省略時対処を詳細化し不正データ混入を防ぐ
             required: true
-            source: 品質項目設計(機能性)
+            source: 設計品質観点(機能性)
             aspects: [functional, security]
           - id: dd-exception
             name: 例外処理・準正常系設計
             purpose: 業務例外（在庫切れ等）を正常系に組み込んで設計し想定外障害を防ぐ
             required: true
-            source: 設計pptx S71
+            source: 設計観点 S71
             aspects: [reliability]
           - id: dd-transaction
             name: 排他制御・トランザクション設計（悲観/楽観ロック）
             purpose: ロック方式を明示選択しデッドロック回避・区間最小化を設計に落とす
             required: true
-            source: 設計pptx S64
+            source: 設計観点 S64
             aspects: [reliability, performance]
           - id: dd-db-physical
             name: DB物理設計（物理構造・インデックス・パーティション）
             purpose: アクセスパターン・性能要件から物理構造を決定し性能と拡張性を両立する
             required: true
-            source: 品質項目設計(機能性:RDB)
+            source: 設計品質観点(機能性:RDB)
             aspects: [performance, scalability]
           - id: dd-batch
             name: バッチ処理詳細設計（リラン/リスタート、ジョブスケジュール）
             purpose: 起動サイクル・処理時間・リラン救済単位を詳細化し運用トラブルに備える
             required: conditional
             condition: バッチ処理を持つ場合
-            source: 品質項目設計(運用性)
+            source: 設計品質観点(運用性)
             aspects: [operability, reliability]
           - id: dd-recovery
             name: リカバリ・障害時処理詳細設計
             purpose: ダウン後の再開・ファイルリカバリ手順を設計し復旧を保証する
             required: true
-            source: 品質項目設計(信頼性)
+            source: 設計品質観点(信頼性)
             aspects: [reliability]
           - id: dd-performance
             name: 性能詳細設計（スループット/TAT見積り、リソース負荷算定）
             purpose: ピーク負荷を定量算定し性能目標の達成可能性を検証する
             required: true
-            source: 品質項目設計(性能)
+            source: 設計品質観点(性能)
             aspects: [performance]
           - id: dd-errorcode
             name: エラーコード・メッセージ詳細仕様
             purpose: エラー条件ごとに一意なID/メッセージを割当て原因調査性を高める
             required: true
-            source: 設計pptx S45
+            source: 設計観点 S45
             aspects: [maintainability, usability]
           - id: dd-sequence
             name: 内部処理シーケンス設計（階層別シーケンス図）
             purpose: 階層別に処理シーケンスを詳細化し区間・共通処理の実装方針を明確化する
             required: false
-            source: 設計pptx S89
+            source: 設計観点 S89
             aspects: [maintainability]
 
 # =============================================================================
@@ -515,7 +515,7 @@ phases:
 # =============================================================================
 non_functional:
   label: 非機能要件（IPA非機能要求グレード）
-  source: 非機能一覧
+  source: 非機能観点
   major_items:
     - id: nf-availability
       label: 可用性
@@ -584,25 +584,25 @@ non_functional:
 # =============================================================================
 ai_quality_perspectives:
   label: 生成AI活用開発の品質管理観点
-  source: AI品質GL
+  source: AI品質観点
   items:
-    - {id: aiq-risk-typing,   name: 生成AI特有リスクの類型化,   purpose: ハルシネーション/ブラックボックス性/評価困難性/著作権等を事前把握, source: "GL 2.1"}
-    - {id: aiq-human-review,  name: 成果物の人間レビュー原則,   purpose: AI生成物は必ず人が最終確認し逸脱を修正, source: "GL 2.3-1"}
-    - {id: aiq-poc,           name: PoCによる品質影響の事前検証, purpose: 導入前にPoCで品質影響と品質水準の妥当性を検証, source: "GL 2.3-2"}
-    - {id: aiq-input-quality, name: インプット品質の確保,       purpose: 各フェーズで入力情報の質を高め後続への悪影響を最小化, source: "GL 2.3-3"}
-    - {id: aiq-prompt-mgmt,   name: プロンプトの管理・改善,     purpose: テンプレを構成管理し評価を通じ継続改善, source: "GL 2.3-4"}
-    - {id: aiq-knowledge,     name: ナレッジの蓄積と横展開,     purpose: 良否事例をテンプレ/チェックリスト化し他PJへ展開, source: "GL 2.3-5"}
-    - {id: aiq-plan-extra,    name: 追加作業を見込んだ計画,     purpose: 要求欠損/実装漏れ/AI障害等の追加作業を計画に反映, source: "GL 2.3-6"}
-    - {id: aiq-qa-story,      name: 品質保証ストーリーへの反映, purpose: PJ特性からAIリスクを洗い出し各フェーズの確認方法を明文化, source: "GL 3.2"}
-    - {id: aiq-qc-plan,       name: 品質管理計画への考慮点追加, purpose: レビュー計画/問題記述にAI起因問題の検出観点を組込む, source: "GL 3.3"}
-    - {id: aiq-design-test-view, name: 設計観点・テスト観点の追加, purpose: 既存観点で検出できないエラーがないか確認し観点を追加, source: "GL 3.4"}
-    - {id: aiq-quant-qual,    name: 定量・定性の両面評価,       purpose: エラー摘出密度等の定量＋再現性を踏まえた定性評価, source: "GL 3.5"}
-    - {id: aiq-hallucination, name: ハルシネーション・整合性確認, purpose: インプットが解釈誤り・抜け漏れなく反映され他成果物と整合するか, source: "GL 4.2"}
-    - {id: aiq-cross-review,  name: 生成AIレビューの見落とし対策, purpose: 別AIのクロスレビューや人手切替の基準を設ける, source: "GL 4.4/4.6"}
-    - {id: aiq-coding-cover,  name: コーディング規約・条件網羅性, purpose: 例外/エラー処理の条件網羅を確認, source: "GL 4.5"}
-    - {id: aiq-test-cover,    name: テスト資材の網羅性・妥当性,  purpose: 境界値/異常系/条件分岐の網羅と非実在前提の排除を確認, source: "GL 4.7"}
-    - {id: aiq-prompt-fact,   name: プロンプトのレビュー観点,   purpose: 「わからない」明言/推測明示/根拠出典明記でハルシ抑制, source: "GL 5.1"}
-    - {id: aiq-quality-level, name: 品質水準の設定方法,         purpose: 過去データ/PoC結果/削減割合を根拠に評価基準を設定, source: "GL 5.2"}
-    - {id: aiq-poc-metrics,   name: PoCの定量・定性評価項目,    purpose: 網羅率/適用率/安定性(再実行のばらつき)で検証, source: "GL 5.3"}
-    - {id: aiq-case-feedback, name: プロジェクト事例の反映,     purpose: レビューのボトルネック化/出力ばらつき等を踏まえ継続改善, source: "GL 6.2"}
-    - {id: aiq-role-split,    name: 生成AI活用の作業配分見直し, purpose: AIが生成/判定・人が補完/最終判定と役割分担し責任所在を保つ, source: "GL 6.2-5"}
+    - {id: aiq-risk-typing,   name: 生成AI特有リスクの類型化,   purpose: ハルシネーション/ブラックボックス性/評価困難性/著作権等を事前把握, source: "AI品質観点 2.1"}
+    - {id: aiq-human-review,  name: 成果物の人間レビュー原則,   purpose: AI生成物は必ず人が最終確認し逸脱を修正, source: "AI品質観点 2.3-1"}
+    - {id: aiq-poc,           name: PoCによる品質影響の事前検証, purpose: 導入前にPoCで品質影響と品質水準の妥当性を検証, source: "AI品質観点 2.3-2"}
+    - {id: aiq-input-quality, name: インプット品質の確保,       purpose: 各フェーズで入力情報の質を高め後続への悪影響を最小化, source: "AI品質観点 2.3-3"}
+    - {id: aiq-prompt-mgmt,   name: プロンプトの管理・改善,     purpose: テンプレを構成管理し評価を通じ継続改善, source: "AI品質観点 2.3-4"}
+    - {id: aiq-knowledge,     name: ナレッジの蓄積と横展開,     purpose: 良否事例をテンプレ/チェックリスト化し他PJへ展開, source: "AI品質観点 2.3-5"}
+    - {id: aiq-plan-extra,    name: 追加作業を見込んだ計画,     purpose: 要求欠損/実装漏れ/AI障害等の追加作業を計画に反映, source: "AI品質観点 2.3-6"}
+    - {id: aiq-qa-story,      name: 品質保証ストーリーへの反映, purpose: PJ特性からAIリスクを洗い出し各フェーズの確認方法を明文化, source: "AI品質観点 3.2"}
+    - {id: aiq-qc-plan,       name: 品質管理計画への考慮点追加, purpose: レビュー計画/問題記述にAI起因問題の検出観点を組込む, source: "AI品質観点 3.3"}
+    - {id: aiq-design-test-view, name: 設計観点・テスト観点の追加, purpose: 既存観点で検出できないエラーがないか確認し観点を追加, source: "AI品質観点 3.4"}
+    - {id: aiq-quant-qual,    name: 定量・定性の両面評価,       purpose: エラー摘出密度等の定量＋再現性を踏まえた定性評価, source: "AI品質観点 3.5"}
+    - {id: aiq-hallucination, name: ハルシネーション・整合性確認, purpose: インプットが解釈誤り・抜け漏れなく反映され他成果物と整合するか, source: "AI品質観点 4.2"}
+    - {id: aiq-cross-review,  name: 生成AIレビューの見落とし対策, purpose: 別AIのクロスレビューや人手切替の基準を設ける, source: "AI品質観点 4.4/4.6"}
+    - {id: aiq-coding-cover,  name: コーディング規約・条件網羅性, purpose: 例外/エラー処理の条件網羅を確認, source: "AI品質観点 4.5"}
+    - {id: aiq-test-cover,    name: テスト資材の網羅性・妥当性,  purpose: 境界値/異常系/条件分岐の網羅と非実在前提の排除を確認, source: "AI品質観点 4.7"}
+    - {id: aiq-prompt-fact,   name: プロンプトのレビュー観点,   purpose: 「わからない」明言/推測明示/根拠出典明記でハルシ抑制, source: "AI品質観点 5.1"}
+    - {id: aiq-quality-level, name: 品質水準の設定方法,         purpose: 過去データ/PoC結果/削減割合を根拠に評価基準を設定, source: "AI品質観点 5.2"}
+    - {id: aiq-poc-metrics,   name: PoCの定量・定性評価項目,    purpose: 網羅率/適用率/安定性(再実行のばらつき)で検証, source: "AI品質観点 5.3"}
+    - {id: aiq-case-feedback, name: プロジェクト事例の反映,     purpose: レビューのボトルネック化/出力ばらつき等を踏まえ継続改善, source: "AI品質観点 6.2"}
+    - {id: aiq-role-split,    name: 生成AI活用の作業配分見直し, purpose: AIが生成/判定・人が補完/最終判定と役割分担し責任所在を保つ, source: "AI品質観点 6.2-5"}
