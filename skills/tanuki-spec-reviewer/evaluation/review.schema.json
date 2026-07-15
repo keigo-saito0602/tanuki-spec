@@ -6,10 +6,12 @@
   "properties": {
     "ai_quality_review": {
       "type": "object",
-      "required": ["date", "target", "reviewer", "generated_spec_sha256", "coverage", "rubric", "dod_passed"],
+      "required": ["date", "target", "reviewer", "generated_spec_sha256", "traceability_sha256", "traceability_gate_passed", "coverage", "rubric", "dod_passed"],
       "properties": {
         "target": {"enum": ["requirements", "basic_design", "detailed_design"]},
         "generated_spec_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "traceability_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "traceability_gate_passed": {"type": "boolean"},
         "dod_passed": {"type": "boolean"}
       }
     }

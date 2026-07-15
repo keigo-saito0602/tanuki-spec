@@ -6,6 +6,8 @@ ai_quality_review:
   target: requirements
   reviewer: {role: reviewer, model: "sample-reviewer", independent: true}
   generated_spec_sha256: "1d5fbcb755f9055dabec295045b936c0a453ad30de06a32b0e101175392b250c"
+  traceability_sha256: "ef77c6686cbb556f72934e4974298da6e7505e8a44d71ddf1d672c7645cb84f8"
+  traceability_gate_passed: true
   # ③カバレッジ評価（coverage.py の実測値）
   coverage:
     required_coverage: 47.8    # 必須22/46（非機能明細を個別評価）

@@ -9,6 +9,7 @@ import re
 from pathlib import Path
 
 import coverage
+import traceability_gate
 
 EVIDENCE_RE = re.compile(r"(?m)^[-*]\s*\*\*根拠\*\*:\s*(?:\[入力\]|\[参照\]).+\S")
 
@@ -35,9 +36,18 @@ def actionable_gate_failures(results: list[dict]) -> list[str]:
     return failures
 
 
+def traceability_failures(path: Path) -> list[str]:
+    """要件定義書と同時に、要件から試験までの対応漏れを検証する。"""
+    try:
+        return traceability_gate.validate(traceability_gate.load(path))
+    except (OSError, ValueError, traceability_gate.yaml.YAMLError) as error:
+        return [f"トレーサビリティ正本を読み込めません: {error}"]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="仕様書の出力ゲート検証")
     parser.add_argument("spec", help="記入済み仕様書(.md)のパス")
+    parser.add_argument("--traceability", type=Path, required=True, help="要件から試験までを管理する traceability.yaml のパス")
     parser.add_argument("--phase", choices=["requirements", "basic_design", "detailed_design"])
     parser.add_argument("--json", action="store_true", help="JSONで出力")
     args = parser.parse_args()
@@ -51,6 +61,7 @@ def main() -> None:
         coverage.structural_failures(document, data, phase)
         + actionable_gate_failures(results)
         + evidence_failures(document, results)
+        + traceability_failures(args.traceability)
     )
     if data["meta"].get("approval_status") != "approved":
         failures.insert(0, "品質項目マスターはユーザの承認待ちです。承認前の仕様書は実装へ引き渡せません")

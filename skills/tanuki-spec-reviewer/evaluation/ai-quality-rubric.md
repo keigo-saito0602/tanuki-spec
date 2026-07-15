@@ -61,9 +61,9 @@ Web調査の結論として、個人開発規模では大企業QMS（IEEE/DO-178
 
 ### ②穴埋め生成 — ハルシネーション対策ルール（必須）
 
-- 各FILLブロックに`**根拠**: [入力] ...`または`**根拠**: [参照] <path>#<heading>`を記録する。内部の思考過程は出力しない。
+- 各FILLブロックに`**根拠**: [入力] ...`または`**根拠**: [参照] 提供内容「<見出しまたは要点>`を記録する。内部の思考過程は出力しない。
 - 参照元に根拠が無い項目は**勝手に埋めない**。空欄のまま `[要確認: 根拠なし]` フラグを残す。
-- 参照仕様（過去案件）を使う場合、その**出典（リポジトリ/ファイル）を項目脚注に明記**する。
+- 参照仕様（過去案件）を使う場合、その**提供内容の要点**を項目脚注に明記する。原本のパス・ファイル名は記載しない。
 - 断定できないものは「（推定）」と明示する。
 
 ### ③カバレッジ評価 — 決定論チェック（`coverage.py`）
@@ -81,8 +81,8 @@ Web調査の結論として、個人開発規模では大企業QMS（IEEE/DO-178
 | 完全性 | 必須項目がすべて実質記入され、`[要確認]`が残っていないか | aiq-hallucination, aiq-coding-cover |
 | 曖昧性の排除 | 一文一意か／「適切に」「等」等の曖昧語や未解決TBDが無いか | aiq-input-quality, aiq-prompt-fact |
 | 整合性 | 項目間・他成果物（要件↔設計↔受入基準）で矛盾が無いか | aiq-design-test-view, aiq-cross-review |
-| トレーサビリティ | 各要件が設計セクション/受入基準へ1方向リンクで辿れるか | aiq-qa-story |
-| 実装可能性 | 受入基準がテスト可能で、制約・非機能と衝突しないか | aiq-test-cover |
+| トレーサビリティ | `traceability_gate.py`が通過し、US→業務フロー手順→BR/FR/NFR→AC→STを辿れるか | aiq-qa-story |
+| 実装可能性 | 受入基準・システムテストがテスト可能で、制約・非機能と衝突しないか | aiq-test-cover |
 | 根拠・非ハルシネーション | 各項目に根拠/出典/前提が示され、捏造が無いか | aiq-human-review, aiq-prompt-mgmt |
 
 - **順序バイアス対策**: 項目数が多い工程は、採点時に項目の並びをシャッフルして2回判定し、食い違う項目だけ人手確認。
@@ -100,6 +100,7 @@ Web調査の結論として、個人開発規模では大企業QMS（IEEE/DO-178
 - [ ] `[要確認]`フラグが残っていない（または残件がユーザ確認済み）
 - [ ] ④6軸に「要改善」が残っていない
 - [ ] 受入基準がテスト可能な形で書かれている
+- [ ] `traceability_gate.py` が通過し、US・業務フロー手順・要件・受入試験・システムテストに孤立がない
 
 ---
 
@@ -134,7 +135,7 @@ Web調査の結論として、個人開発規模では大企業QMS（IEEE/DO-178
 
 ## 4. 評価結果の記録フォーマット（`examples/` に実サンプルあり）
 
-1回の生成ごとに、次のブロックをサイドカーファイルに残す。`generated_spec_sha256`は対象MarkdownのSHA-256、`reviewer.independent`は生成担当と別セッション/別担当であることを示す。保存後に`validate_review.py`で検証する。
+1回の生成ごとに、次のブロックをサイドカーファイルに残す。`generated_spec_sha256`は対象Markdown、`traceability_sha256`は対応するトレーサビリティ正本のSHA-256である。`reviewer.independent`は生成担当と別セッション/別担当であることを示す。保存後に`validate_review.py --traceability`で検証する。
 
 ```yaml
 ai_quality_review:
@@ -142,6 +143,8 @@ ai_quality_review:
   target: requirements   # 工程
   reviewer: {role: reviewer, model: "モデル名", independent: true}
   generated_spec_sha256: "対象MarkdownのSHA-256"
+  traceability_sha256: "traceability.yamlのSHA-256"
+  traceability_gate_passed: true
   input_gate_invest: {I: yes, N: yes, V: yes, E: yes, S: yes, T: yes}
   coverage: {required_coverage: 100.0, overall_coverage: 88.0, todo_flags: 0}
   rubric:                # PASS / 要改善 / 判断不可

@@ -20,7 +20,9 @@ Claude Codeではスキルの配置先からこのディレクトリを読み込
 
 ```bash
 .venv/bin/python evaluation/coverage.py path/to/spec.md --strict
-.venv/bin/python evaluation/spec_gate.py path/to/spec.md
+.venv/bin/python evaluation/traceability_gate.py path/to/traceability.yaml
+.venv/bin/python evaluation/render_traceability_docs.py path/to/traceability.yaml --output-dir path/to/output
+.venv/bin/python evaluation/spec_gate.py path/to/spec.md --traceability path/to/traceability.yaml
 ```
 
 `spec-items.yaml`の`approval_status`が`pending_owner_approval`の間は、作成物をドラフトとして扱い、実装へ渡す前にユーザの承認を得ます。

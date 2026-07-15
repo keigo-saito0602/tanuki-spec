@@ -9,6 +9,7 @@ import unittest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+TRACEABILITY = ROOT.parent / "tanuki-spec-generator" / "examples" / "sample-user-story" / "traceability.yaml"
 sys.path.insert(0, str(ROOT / "evaluation"))
 import coverage
 import validate_review
@@ -47,6 +48,8 @@ class ValidateReviewTest(unittest.TestCase):
                 "target": "requirements",
                 "reviewer": {"role": "reviewer", "model": "test-model", "independent": True},
                 "generated_spec_sha256": hashlib.sha256(spec.read_bytes()).hexdigest(),
+                "traceability_sha256": hashlib.sha256(TRACEABILITY.read_bytes()).hexdigest(),
+                "traceability_gate_passed": True,
                 "coverage": {
                     "required_coverage": summary["required_coverage"],
                     "overall_coverage": summary["coverage"],
@@ -60,12 +63,20 @@ class ValidateReviewTest(unittest.TestCase):
     def test_current_review_format_is_valid_when_master_is_pending(self):
         spec = self.make_spec()
         self.addCleanup(spec.unlink)
-        self.assertEqual(validate_review.validate(self.make_review(spec), spec), [])
+        self.assertEqual(validate_review.validate(self.make_review(spec), spec, TRACEABILITY), [])
 
     def test_sha256_mismatch_is_rejected(self):
         spec = self.make_spec()
         self.addCleanup(spec.unlink)
         review = self.make_review(spec)
         review["ai_quality_review"]["generated_spec_sha256"] = "0" * 64
-        errors = validate_review.validate(review, spec)
+        errors = validate_review.validate(review, spec, TRACEABILITY)
         self.assertTrue(any("generated_spec_sha256" in error for error in errors))
+
+    def test_traceability_sha256_mismatch_is_rejected(self):
+        spec = self.make_spec()
+        self.addCleanup(spec.unlink)
+        review = self.make_review(spec)
+        review["ai_quality_review"]["traceability_sha256"] = "0" * 64
+        errors = validate_review.validate(review, spec, TRACEABILITY)
+        self.assertTrue(any("traceability_sha256" in error for error in errors))

@@ -41,3 +41,7 @@ class SpecGateTest(unittest.TestCase):
         results = coverage.evaluate("", self.data, "requirements")
         failures = spec_gate.actionable_gate_failures(results)
         self.assertFalse(any(failure.startswith("必須未充足:") for failure in failures))
+
+    def test_complete_traceability_sample_passes(self):
+        path = ROOT / "examples" / "sample-user-story" / "traceability.yaml"
+        self.assertEqual(spec_gate.traceability_failures(path), [])

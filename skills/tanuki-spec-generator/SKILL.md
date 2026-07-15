@@ -22,8 +22,8 @@ description: 案件着手時に、ユーザーストーリーから要件定義�
 ```
 tanuki-spec-generator
 工程:            # requirements（要件定義）/ basic_design（基本設計）/ detailed_design（詳細設計）
-ストーリー:      # 誰が/何を/なぜ、のざっくりでOK
-参照仕様:        # 参照したい過去仕様のパス（例: /Programming/soil-groove）。無ければ空欄
+ストーリー:      # 誰が/何を/なぜ、のユーザーストーリー群
+参照仕様:        # 過去仕様から今回使う内容の抜粋。無ければ空欄
 モード:          # full（既定・全項目＋評価）/ quick（必須のみ＋簡易）。空欄ならfull
 ```
 
@@ -35,12 +35,12 @@ tanuki-spec-generator
 
 | パラメータ | 必須 | 説明 |
 | --- | --- | --- |
-| ユーザーストーリー | ○ | 「誰が/何を/なぜ」レベルのざっくりした要望でよい |
+| ユーザーストーリー | ○ | 「誰が/何を/なぜ」レベルの要望。複数ある場合は分けて列挙する |
 | 対象工程 | ○ | `requirements`（要件定義）/ `basic_design`（基本設計）/ `detailed_design`（詳細設計） |
-| 参照仕様（過去案件） | 任意 | **都度指定**。参照したい過去の仕様書リポジトリ/ファイルのパスを渡す（例: soil-groove の `codex-task-*`）。無指定なら参照なしで生成 |
+| 参照仕様（過去案件） | 任意 | **都度指定**。今回採用したい仕様本文・画面説明・制約・判断理由の抜粋を渡す。原本のパス・ファイル名は渡さない |
 | モード | 任意 | `full`（全項目・カバレッジ＋AI品質評価）/ `quick`（必須項目のみ・簡易チェック）。既定 `full` |
 
-> 参照仕様は固定しない設計。案件ごとに参照元を指定して使う。
+> 参照仕様は固定しない設計。案件ごとに必要な内容だけを指定して使う。
 
 ---
 
@@ -50,26 +50,37 @@ tanuki-spec-generator
 INVESTの6軸（Independent/Negotiable/Valuable/Estimable/Small/Testable）をYES/NOで確認。
 NOの軸は質問リストにして仕様書へ残す。ドラフト生成は止めないが、根拠がない項目を埋めてはいけない。
 
+ユーザーの要望が一文にまとまっている場合は、利用者・したいこと・得たい価値・通常/例外時の流れを質問し、独立した `US-xxx` へ分割してから②へ進む。
+
 ### ②穴埋め生成
 1. `spec-items.yaml` の対象工程の項目と、`templates/<工程>-template.md` を読む。
    - テンプレは `python3 evaluation/generate_templates.py` でSSOTから再生成できる（手で編集せずSSOTを直す）。
-2. 各項目の `<!-- FILL:START id -->` … `END` の間を、ユーザーストーリー（＋参照仕様）から記入する。
-3. **根拠・不確実性ルール（必須）**:
-   - 実際に記入した各FILLブロックの先頭に、`- **根拠**: [入力] ユーザーストーリー「<該当箇所>」` または `- **根拠**: [参照] <相対パス>#<見出し>` を書く。
+2. `templates/traceability-template.yaml` をコピーして `traceability.yaml` を作る。ユーザーストーリーと業務フロー手順に `US-xxx` / `BF-xxx-Sxx` を付け、次をすべて洗い出す。
+   - 業務要件・機能要件・非機能要件は `BR-xxx` / `FR-xxx` / `NFR-xxx` とし、各要件に `user_story_ids` と `flow_step_ids` を必ず指定する。
+   - 受入試験は `AC-xxx` とし、対象US・要件・業務フロー手順・前提条件・操作・期待結果を指定する。
+   - システムテストは `ST-xxx` とし、対象要件・受入試験・テスト種別・前提条件・操作・期待結果を指定する。
+3. 各項目の `<!-- FILL:START id -->` … `END` の間を、ユーザーストーリー（＋参照仕様）から記入する。対応する `US-xxx` / `BR-xxx` 等を本文にも記載する。
+4. **根拠・不確実性ルール（必須）**:
+   - 実際に記入した各FILLブロックの先頭に、`- **根拠**: [入力] ユーザーストーリー US-xxx「<該当箇所>」` または `- **根拠**: [参照] 提供内容「<見出しまたは要点>」` を書く。
    - 根拠が無い項目は勝手に埋めず、`[要確認: <確認したい質問>]` を残す。これは充足ではない。
    - 過去仕様は現案件の事実ではないため、採用する場合はユーザの承認を得る。
-4. `required: conditional` の項目は、該当しない場合のみ `[対象外: <適用しない理由>]` と記入する。理由なしの対象外は許可しない。
+5. `required: conditional` の項目は、該当しない場合のみ `[対象外: <適用しない理由>]` と記入する。理由なしの対象外は許可しない。
 
 ### ③カバレッジ評価（決定論・自動）
 ```bash
 python3 evaluation/coverage.py <記入済み仕様書.md> --strict
 ```
 → 必須充足率・全体充足率・欠落項目・`[要確認]`が出る。`--json` で機械可読サマリ。
-続けて根拠まで含む出力ゲートを実行する。
+続けてトレーサビリティを検証し、受入試験項目書・システムテスト項目書を生成する。
 ```bash
-python3 evaluation/spec_gate.py <記入済み仕様書.md>
+python3 evaluation/traceability_gate.py <traceability.yaml>
+python3 evaluation/render_traceability_docs.py <traceability.yaml> --output-dir <成果物ディレクトリ>
 ```
-必須の欠落または要確認があれば②へ戻る。絶対%は合否にせず「必須欠落ゼロ」と前回差分を見る。
+最後に根拠とトレーサビリティを含む出力ゲートを実行する。
+```bash
+python3 evaluation/spec_gate.py <記入済み仕様書.md> --traceability <traceability.yaml>
+```
+必須の欠落、要確認、または孤立したUS・業務フロー手順・要件・試験項目があれば②へ戻る。絶対%は合否にせず「必須欠落ゼロ」と前回差分を見る。
 
 ③で出力ゲートを通過したら、レビューは別SKILL [`tanuki-spec-reviewer`](../tanuki-spec-reviewer/SKILL.md) に引き継ぐ。このSKILL自身では④⑤を実施しない。
 
@@ -81,6 +92,8 @@ python3 evaluation/spec_gate.py <記入済み仕様書.md>
 
 - 記入済みの `<工程>` 仕様書（Markdown）
 - カバレッジ評価レポート（必須充足率／欠落リスト）
+- `traceability.yaml`（US → BR/FR/NFR → AC → ST の正本）
+- `requirements-traceability.md`、`acceptance-test-cases.md`、`system-test-cases.md`
 
 実例は `examples/sample-user-story/` を参照（サンプルストーリー1件のE2E成果物）。
 
@@ -96,6 +109,8 @@ tanuki-spec-generator/
 ├── evaluation/
 │   ├── generate_templates.py      ← 共有コアへのsymlink
 │   ├── coverage.py                ← 共有コアへのsymlink
+│   ├── traceability_gate.py        ← US〜試験の孤立・リンク切れ検査
+│   ├── render_traceability_docs.py ← 要件対応表・試験項目書の生成
 │   ├── spec_gate.py               ← 根拠・未確定事項を含む出力ゲート
 │   └── run_harness.py             ← 共有コア＋生成側の回帰テスト
 ├── evals/cases.yaml               ← モデルを使う評価シナリオ

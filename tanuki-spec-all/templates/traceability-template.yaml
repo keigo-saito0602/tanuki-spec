@@ -1,0 +1,44 @@
+version: "1.0"
+
+# status は全行に必須。deferred/out_of_scope は reason を必須とし、出力ゲート対象外にする。
+user_stories:
+  - id: US-001
+    status: in_scope
+    statement: "<誰が、何をしたいか、なぜか>"
+
+business_flows:
+  - id: BF-001
+    status: in_scope
+    name: "<業務フロー名>"
+    steps:
+      - id: BF-001-S01
+        action: "<利用者または担当者が行う業務>"
+        user_story_ids: [US-001]
+
+requirements:
+  - id: BR-001
+    status: in_scope
+    type: business # business / functional / non_functional
+    statement: "<満たすべき業務要件・機能要件・非機能要件>"
+    user_story_ids: [US-001]
+    flow_step_ids: [BF-001-S01]
+
+acceptance_tests:
+  - id: AC-001
+    status: in_scope
+    user_story_ids: [US-001]
+    requirement_ids: [BR-001]
+    flow_step_ids: [BF-001-S01]
+    preconditions: ["<事前条件>"]
+    steps: ["<利用者または業務担当者の操作>"]
+    expected_results: ["<受入可能と判断できる結果>"]
+
+system_tests:
+  - id: ST-001
+    status: in_scope
+    test_type: functional # functional / integration / non_functional / performance / security / recovery / usability
+    requirement_ids: [BR-001]
+    acceptance_test_ids: [AC-001]
+    preconditions: ["<テストデータ・環境の条件>"]
+    steps: ["<システムへの入力・操作>"]
+    expected_results: ["<システムが返す結果・状態>"]

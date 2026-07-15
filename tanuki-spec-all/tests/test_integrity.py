@@ -9,6 +9,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "evaluation"))
 import generate_templates
+import traceability_gate
 
 
 class IntegrityTest(unittest.TestCase):
@@ -32,3 +33,8 @@ class IntegrityTest(unittest.TestCase):
             expected = generate_templates.render_phase(phase, self.data)
             actual = (ROOT / "templates" / filename).read_text(encoding="utf-8")
             self.assertEqual(actual, expected)
+
+    def test_traceability_template_requires_real_content(self):
+        template = yaml.safe_load((ROOT / "templates" / "traceability-template.yaml").read_text(encoding="utf-8"))
+        failures = traceability_gate.validate(template)
+        self.assertTrue(any("statement が必要です" in failure for failure in failures))
