@@ -26,7 +26,7 @@ DM手動受付による予約漏れ・二重予約・講師の手間を解消し
 
 ### [必須] ステークホルダー・関係者体制（役割・権限・組織）  <!-- spec-item: req-stakeholder -->
 <!-- FILL:START req-stakeholder -->
-生徒（予約する利用者）／講師・KEIGO（予約枠の登録・運営）／システム管理者（KEIGO兼務）。
+生徒（予約する利用者）／講師・ユーザ（予約枠の登録・運営）／システム管理者（ユーザ兼務）。
 <!-- FILL:END req-stakeholder -->
 
 ### [必須] 業務フロー（As-Is／To-Be、インパクト分析）  <!-- spec-item: req-bizflow -->
@@ -139,7 +139,7 @@ DM手動受付による予約漏れ・二重予約・講師の手間を解消し
 
 ### [必須] 運用要件（通常/障害時/保守運用の作業分担）  <!-- spec-item: req-operation -->
 <!-- FILL:START req-operation -->
-通常: 講師が月次で枠を登録。障害時: 手動予約受付にフォールバックし後で台帳反映。保守: 枠テンプレの更新はKEIGO。
+通常: 講師が月次で枠を登録。障害時: 手動予約受付にフォールバックし後で台帳反映。保守: 枠テンプレの更新はユーザ。
 <!-- FILL:END req-operation -->
 
 ### [任意] 業務改善効果・KPI測定項目  <!-- spec-item: req-kpi -->
@@ -162,7 +162,7 @@ DM手動受付による予約漏れ・二重予約・講師の手間を解消し
 
 ### [必須] 開発体制・スキル要件（要員計画）  <!-- spec-item: req-team -->
 <!-- FILL:START req-team -->
-KEIGO（設計判断・運営）／Claude（設計・レビュー）／Codex（実装）。
+ユーザ（設計判断・運営）／Claude（設計・レビュー）／Codex（実装）。
 <!-- FILL:END req-team -->
 
 ### [必須] 法規制・コンプライアンス対応要件  <!-- spec-item: req-compliance -->

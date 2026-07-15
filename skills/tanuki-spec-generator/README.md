@@ -23,5 +23,5 @@ Claude Codeではスキルの配置先からこのディレクトリを読み込
 .venv/bin/python evaluation/spec_gate.py path/to/spec.md
 ```
 
-`spec-items.yaml`の`approval_status`が`pending_owner_approval`の間は、作成物をドラフトとして扱い、実装へ渡す前にKEIGOの承認を得ます。
+`spec-items.yaml`の`approval_status`が`pending_owner_approval`の間は、作成物をドラフトとして扱い、実装へ渡す前にユーザの承認を得ます。
 承認後は、根拠資料とマスター項目表を確認したうえで、`approval_status`を`approved`へ変更してください。

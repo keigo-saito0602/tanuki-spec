@@ -20,7 +20,7 @@
 #   required  … true=必須 / false=任意 / conditional=条件付き必須（conditionに条件）
 #   source    … 出典（資料名＋シート/スライド）
 #   aspects   … 関連するISO25010系品質特性（カバレッジの観点タグ）
-#   new       … true=KEIGO叩き台に無かった新規項目
+#   new       … true=ユーザの叩き台に無かった新規項目
 # =============================================================================
 
 meta:
@@ -29,7 +29,7 @@ meta:
   language: ja
   description: 業務システム/Webアプリの要件定義・設計に載せるべき品質項目マスター
   approval_status: pending_owner_approval
-  approval_note: Phase 0の品質項目表はKEIGOの承認待ち。承認前の生成物はドラフト扱い。
+  approval_note: Phase 0の品質項目表はユーザの承認待ち。承認前の生成物はドラフト扱い。
 
 # ISO25010系の品質特性タクソノミー（aspects で参照するタグの正体）
 quality_characteristics:

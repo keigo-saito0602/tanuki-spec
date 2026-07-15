@@ -53,7 +53,7 @@ def main() -> None:
         + evidence_failures(document, results)
     )
     if data["meta"].get("approval_status") != "approved":
-        failures.insert(0, "品質項目マスターはKEIGOの承認待ちです。承認前の仕様書は実装へ引き渡せません")
+        failures.insert(0, "品質項目マスターはユーザの承認待ちです。承認前の仕様書は実装へ引き渡せません")
     report = {"summary": summary["overall"], "gate_passed": not failures, "failures": failures}
 
     if args.json:
