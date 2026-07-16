@@ -14,6 +14,17 @@
         "traceability_gate_passed": {"type": "boolean"},
         "design_traceability_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "design_traceability_gate_passed": {"type": "boolean"},
+        "evaluation": {
+          "type": "object",
+          "description": "評価レポート機能の構造説明。実際の検証は validate_review.py が行う。",
+          "properties": {
+            "generated_at": {"type": "string"},
+            "rules_version": {"type": "string"},
+            "report_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "item_results": {"type": "array"},
+            "requirement_results": {"type": "array"}
+          }
+        },
         "dod_passed": {"type": "boolean"}
       }
     }

@@ -1,0 +1,10 @@
+review_context:
+  workload_types: [web_ui, api]
+  change_type: existing_system_change
+  data_classifications: []
+  has_stateful_workflow: true
+  has_user_roles: true
+  has_external_api: false
+  deployment_required: true
+  assumptions:
+    - 生徒と講師で閲覧できる予約情報が異なる

@@ -29,3 +29,12 @@ ai_quality_review:
   dod_passed: false
   dod_note: "<DoD判定の理由>"
   diff_from_prev: "<前回との差分。初回は初回と記載>"
+  # 評価レポート機能を使うときは evaluate_review_items.py がこのブロックを部分更新する。
+  # 採点（status/evidence/reason/recommended_action）は独立したレビュー担当が記入する。
+  evaluation:
+    rules_version: "<review-rules.yaml の version>"
+    generated_at: "<--aggregate --now で確定する時刻>"
+    report_sha256: "<quality-evaluation.md のSHA-256>"
+    summary: {}
+    item_results: []
+    requirement_results: []

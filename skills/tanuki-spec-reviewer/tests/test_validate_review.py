@@ -101,3 +101,13 @@ class ValidateReviewTest(unittest.TestCase):
         entry["design_traceability_gate_passed"] = True
         errors = validate_review.validate(review, spec, TRACEABILITY, DESIGN_TRACEABILITY)
         self.assertTrue(any("design_traceability_sha256" in error for error in errors))
+
+    def test_evaluation_item_without_reason_is_rejected(self):
+        spec = self.make_spec()
+        self.addCleanup(spec.unlink)
+        review = self.make_review(spec)
+        review["ai_quality_review"]["evaluation"] = {
+            "item_results": [{"id": "SEC-001", "status": "not_evaluable", "importance": "required", "evidence": []}]
+        }
+        errors = validate_review.validate(review, spec, TRACEABILITY)
+        self.assertTrue(any("reason と recommended_action" in error for error in errors))
