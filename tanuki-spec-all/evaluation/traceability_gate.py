@@ -116,6 +116,28 @@ def validate_references(
     return valid
 
 
+def validate_scenario(acceptance: dict, failures: list[str]) -> None:
+    """受入試験の Gherkin シナリオ（Given/When/Then）を検証する。"""
+    identifier = acceptance.get("id", "<IDなし>")
+    scenario = acceptance.get("scenario")
+    if not isinstance(scenario, dict):
+        failures.append(f"受入試験 {identifier}: scenario（Gherkinシナリオ）が必要です")
+        return
+    if not nonempty_text(scenario.get("name")):
+        failures.append(f"受入試験 {identifier}: scenario.name が必要です")
+    for field in ("given", "when", "then"):
+        if not nonempty_list(scenario.get(field)):
+            failures.append(f"受入試験 {identifier}: scenario.{field} は1件以上必要です")
+    examples = scenario.get("examples")
+    if examples is not None:
+        if not isinstance(examples, list) or not examples or not all(isinstance(row, dict) and row for row in examples):
+            failures.append(f"受入試験 {identifier}: scenario.examples は1件以上のオブジェクトで指定してください")
+        else:
+            expected_keys = set(examples[0])
+            if any(set(row) != expected_keys for row in examples):
+                failures.append(f"受入試験 {identifier}: scenario.examples の各行はキーを揃えてください")
+
+
 def validate(data: dict) -> list[str]:
     """構造、参照、孤立した成果物を順に検出する。"""
     failures: list[str] = []
@@ -194,8 +216,7 @@ def validate(data: dict) -> list[str]:
     for acceptance in acceptances.values():
         if not validate_status(acceptance, "受入試験", failures):
             continue
-        for field in ("preconditions", "steps", "expected_results"):
-            require_list(acceptance, field, "受入試験", failures)
+        validate_scenario(acceptance, failures)
         story_ids = validate_references(acceptance, "user_story_ids", users, "受入試験", "ユーザーストーリー", failures)
         requirement_ids = validate_references(acceptance, "requirement_ids", reqs, "受入試験", "要件", failures)
         step_ids = validate_references(acceptance, "flow_step_ids", flow_steps, "受入試験", "業務フロー手順", failures)

@@ -61,28 +61,37 @@ requirements:
 acceptance_tests:
   - id: AC-001
     status: in_scope
+    feature: "レッスン枠の予約・キャンセル"
     user_story_ids: [US-001]
     requirement_ids: [FR-001]
     flow_step_ids: [BF-001-S01]
-    preconditions: ["ログイン済みで、予約可能な枠が1件以上ある"]
-    steps: ["空き枠一覧を開く"]
-    expected_results: ["日時・講師・残席を含む予約可能な枠だけが表示される"]
+    scenario:
+      name: "空き枠一覧を閲覧する"
+      given: ["生徒がログイン済みである", "予約可能な枠が1件以上ある"]
+      when: ["生徒が空き枠一覧を開く"]
+      then: ["日時・講師・残席を含む予約可能な枠だけが表示される"]
   - id: AC-002
     status: in_scope
+    feature: "レッスン枠の予約・キャンセル"
     user_story_ids: [US-001, US-003]
     requirement_ids: [BR-001, FR-002, NFR-001]
     flow_step_ids: [BF-001-S02]
-    preconditions: ["ログイン済みで、残席が1以上の枠がある"]
-    steps: ["空き枠を選択し予約を確定する"]
-    expected_results: ["予約が1件作成され、残席が減り、確定通知が届く"]
+    scenario:
+      name: "空き枠を予約して確定通知を受け取る"
+      given: ["生徒がログイン済みである", "残席が1以上の枠がある"]
+      when: ["生徒が空き枠を選択して予約を確定する"]
+      then: ["予約が1件作成される", "対象枠の残席が1減る", "確定通知が届く"]
   - id: AC-003
     status: in_scope
+    feature: "レッスン枠の予約・キャンセル"
     user_story_ids: [US-002]
     requirement_ids: [BR-001, FR-003]
     flow_step_ids: [BF-001-S03]
-    preconditions: ["ログイン済みで、前日以前の自分の予約がある"]
-    steps: ["対象の予約をキャンセルする"]
-    expected_results: ["予約がキャンセルされ、対象枠が空きへ戻る"]
+    scenario:
+      name: "予約をキャンセルして枠を空きへ戻す"
+      given: ["生徒がログイン済みである", "前日以前の自分の予約がある"]
+      when: ["生徒が対象の予約をキャンセルする"]
+      then: ["予約がキャンセルされる", "対象枠が空きへ戻る"]
 
 system_tests:
   - id: ST-001

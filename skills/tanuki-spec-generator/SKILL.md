@@ -53,13 +53,15 @@ NOの軸は質問リストにして仕様書へ残す。ドラフト生成は止
 ユーザーの要望が一文にまとまっている場合は、利用者・したいこと・得たい価値・通常/例外時の流れを質問し、独立した `US-xxx` へ分割してから②へ進む。
 開発初期は、`templates/product-backlog-template.md` を使ってUS・優先度・リリース単位を整理してから開始する。
 
+**振る舞いの洗い出し（BDD発見・軽量）**: 各USについて正常系・異常系・境界値の振る舞いを洗い出す。「ルール→具体例→疑問」（Example Mapping風）で広げ、ビジネス/開発/QA の3視点（疑似Three Amigos）で「本当にこれで正しいか」を自問する。洗い出した振る舞いは②でGherkinの受入試験(AC)になる。
+
 ### ②穴埋め生成
 1. `spec-items.yaml` の対象工程の項目と、`templates/<工程>-template.md` を読む。
    - **各項目の記入ガイド・出典・品質観点・記入例はHTMLコメントに格納されている**（`<!-- 記入ガイド: … ／ 出典: … ／ 品質観点: … -->` と `<!-- 記入例: … -->`）。読み手の認知負荷を下げるため本文から隠しているだけで、生成側からは読める。**記入前に必ずコメント内も読み、ガイドと記入例に沿って記入する**。
    - テンプレは `python3 evaluation/generate_templates.py` でSSOTから再生成できる（手で編集せずSSOTを直す）。
 2. `templates/traceability-template.yaml` をコピーして `traceability.yaml` を作る。ユーザーストーリーと業務フロー手順に `US-xxx` / `BF-xxx-Sxx` を付け、次をすべて洗い出す。
    - 業務要件・機能要件・非機能要件は `BR-xxx` / `FR-xxx` / `NFR-xxx` とし、各要件に `user_story_ids` と `flow_step_ids` を必ず指定する。
-   - 受入試験は `AC-xxx` とし、対象US・要件・業務フロー手順・前提条件・操作・期待結果を指定する。
+   - 受入試験は `AC-xxx` とし、対象US・要件・業務フロー手順を指定し、`scenario`（name/given/when/then、任意でexamples）にGherkinで振る舞いを書く。書き方は共有コアの `references/ears-gherkin-guidelines.md` に従う（1シナリオ1振る舞い・Thenは観測可能・プレースホルダ禁止）。
    - システムテストは `ST-xxx` とし、対象要件・受入試験・テスト種別・前提条件・操作・期待結果を指定する。
 3. 各項目の `<!-- FILL:START id -->` … `END` の間を、ユーザーストーリー（＋参照仕様）から記入する。対応する `US-xxx` / `BR-xxx` 等を本文にも記載する。
 4. **根拠・不確実性ルール（必須）**:
@@ -77,6 +79,7 @@ python3 evaluation/coverage.py <記入済み仕様書.md> --strict
 ```bash
 python3 evaluation/traceability_gate.py <traceability.yaml>
 python3 evaluation/render_traceability_docs.py <traceability.yaml> --output-dir <成果物ディレクトリ>
+python3 evaluation/render_feature_files.py <traceability.yaml> --output-dir <成果物ディレクトリ>/features
 ```
 最後に根拠とトレーサビリティを含む出力ゲートを実行する。
 ```bash
@@ -95,7 +98,8 @@ python3 evaluation/spec_gate.py <記入済み仕様書.md> --traceability <trace
 - 記入済みの `<工程>` 仕様書（Markdown）
 - カバレッジ評価レポート（必須充足率／欠落リスト）
 - `traceability.yaml`（US → BR/FR/NFR → AC → ST の正本）
-- `requirements-traceability.md`、`acceptance-test-cases.md`、`system-test-cases.md`
+- `requirements-traceability.md`、`system-test-cases.md`
+- `features/*.feature`（受入試験はGherkinの `.feature` として生成。将来E2E（Cucumber/playwright-bdd）へ直接投入できる）
 
 実例は `examples/sample-user-story/` を参照（サンプルストーリー1件のE2E成果物）。
 
@@ -113,6 +117,7 @@ tanuki-spec-generator/
 │   ├── coverage.py                ← 共有コアへのsymlink
 │   ├── traceability_gate.py        ← US〜試験の孤立・リンク切れ検査
 │   ├── render_traceability_docs.py ← 要件対応表・試験項目書の生成
+│   ├── render_feature_files.py     ← 受入試験のGherkinから .feature を生成
 │   ├── spec_gate.py               ← 根拠・未確定事項を含む出力ゲート
 │   └── run_harness.py             ← 共有コア＋生成側の回帰テスト
 ├── evals/cases.yaml               ← モデルを使う評価シナリオ
