@@ -1,0 +1,10 @@
+# レビュー開始前に案件ごとの特性を記入する。複数の workload_types を指定できる。
+review_context:
+  workload_types: [web_ui] # web_ui / api / batch / external_integration
+  change_type: existing_system_change # new_system / existing_system_change
+  data_classifications: [] # personal_data / confidential / payment
+  has_stateful_workflow: false
+  has_user_roles: false
+  has_external_api: false
+  deployment_required: true
+  assumptions: []

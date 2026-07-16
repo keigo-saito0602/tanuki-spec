@@ -1,0 +1,74 @@
+version: "1.0"
+rules:
+  - id: UI-SCREEN-001
+    category: ui_ux
+    applies_to_targets: [basic_design]
+    source: {kind: spec_item, id: bd-screen}
+    applies_when: {any_workload_types: [web_ui]}
+    importance: required
+    evidence: {required: [document_section, design_element]}
+    display_name: 画面一覧・画面遷移が定義されている
+  - id: UI-MESSAGE-001
+    category: ui_ux
+    applies_to_targets: [basic_design]
+    source: {kind: spec_item, id: bd-message}
+    applies_when: {any_workload_types: [web_ui]}
+    importance: important
+    evidence: {required: [document_section]}
+    display_name: エラーメッセージ仕様が定義されている
+  - id: API-SPEC-001
+    category: api_contract
+    applies_to_targets: [basic_design]
+    source: {kind: spec_item, id: bd-api}
+    applies_when: {any_workload_types: [api]}
+    importance: required
+    evidence: {required: [document_section, design_element]}
+    display_name: APIの入出力・認証・エラー契約が定義されている
+  - id: EXTIF-001
+    category: integration
+    applies_to_targets: [basic_design]
+    source: {kind: spec_item, id: bd-ext-if}
+    applies_when: {any_workload_types: [external_integration]}
+    importance: required
+    evidence: {required: [document_section, design_element]}
+    display_name: 外部インターフェース仕様が定義されている
+  - id: DATA-ERD-001
+    category: data_design
+    applies_to_targets: [basic_design]
+    source: {kind: spec_item, id: bd-erd}
+    applies_when: {any_workload_types: [web_ui, api, batch]}
+    importance: required
+    evidence: {required: [document_section, design_element]}
+    display_name: ER図・DB論理設計が定義されている
+  - id: SEC-001
+    category: security
+    applies_to_targets: [basic_design]
+    source: {kind: nonfunctional_major_item, id: nf-security}
+    applies_when: {data_classifications_any: [personal_data, confidential, payment]}
+    importance: required
+    evidence: {required: [document_section, test_case]}
+    display_name: 取り扱うデータ区分に応じた保護方針が定義されている
+  - id: SEC-AUTHZ-001
+    category: security
+    applies_to_targets: [basic_design]
+    source: {kind: spec_item, id: bd-security}
+    applies_when: {flags_all: [has_user_roles]}
+    importance: required
+    evidence: {required: [document_section, test_case]}
+    display_name: 認証・アクセス制御の外部仕様が定義されている
+  - id: BATCH-OPS-001
+    category: batch_operations
+    applies_to_targets: [basic_design]
+    source: {kind: nonfunctional_major_item, id: nf-operation}
+    applies_when: {any_workload_types: [batch]}
+    importance: required
+    evidence: {required: [document_section, test_case]}
+    display_name: 再実行・失敗時対応が定義されている
+  - id: NFR-AVAIL-001
+    category: nonfunctional
+    applies_to_targets: [basic_design]
+    source: {kind: nonfunctional_major_item, id: nf-availability}
+    applies_when: {flags_all: [deployment_required]}
+    importance: important
+    evidence: {required: [document_section]}
+    display_name: 可用性の目標と根拠が定義されている
