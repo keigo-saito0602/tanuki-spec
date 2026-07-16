@@ -54,10 +54,52 @@ phases:
   requirements:
     label: 要件定義
     goal: ユーザーストーリー/顧客のしたいことを起点に、作るべきものの範囲と品質水準を確定する
+    audience: 非技術者（クライアント・経営視点）
+    reading_hint: まずサマリだけ読んで違和感を洗い出し、本論で裏取りする（2パス読み）
+    legend:
+      - "**太字** = 決定事項"
+      - "⚠️ = リスク"
+      - "❓ = 未決事項"
     categories:
+
+      - id: req-summary
+        label: サマリ（最初に読む）
+        items:
+          - id: req-exec-summary
+            name: エグゼクティブサマリ（何を作る／なぜ／意思決定のお願い）
+            purpose: 忙しい非技術者が1画面で判断できるよう結論を冒頭に置く
+            required: true
+            source: 認知科学(Minto/BLUF)
+            aspects: [documentation]
+            new: true
+          - id: req-open-questions
+            name: 未決事項・スコープ外
+            purpose: 決めていないことを可視化し空白を指摘できるようにする
+            required: true
+            source: 認知科学(未決明示)
+            aspects: [documentation]
+            new: true
+          - id: req-decision-summary
+            name: 決定事項サマリ（表）
+            purpose: 決定を一覧化しスキャン読みで追えるようにする
+            required: false
+            source: 認知科学(チャンク化)
+            aspects: [documentation]
+            new: true
+          - id: req-glossary
+            name: 用語集
+            purpose: 専門用語を集約し本文の探索コストを下げる
+            required: false
+            source: 認知科学(Plain Language)
+            aspects: [documentation]
+            new: true
 
       - id: req-business
         label: 業務要件
+        review_checklist:
+          - 目的は事業のねらいと整合しているか
+          - スコープ内/外の線引きは明確で漏れがないか
+          - 関係者の役割・権限に抜けはないか
         items:
           - id: req-purpose
             name: システム化の目的・背景（経営戦略との紐づけ）
@@ -97,6 +139,10 @@ phases:
 
       - id: req-function
         label: 機能要件
+        review_checklist:
+          - 各機能に「誰が・いつ・何を」が書かれているか
+          - 優先度（Must/Should/Could）が付いているか
+          - 例外・エラー時の振る舞いに触れているか
         items:
           - id: req-func-list
             name: 機能要件一覧・詳細（P5W2Hで整理）
@@ -115,6 +161,10 @@ phases:
 
       - id: req-data
         label: データ要件
+        review_checklist:
+          - 扱うデータの種類・項目に漏れはないか
+          - 個人情報・機微データの扱いが明示されているか
+          - 画面・帳票の入出力が業務と一致しているか
         items:
           - id: req-datamodel
             name: データ要件・データモデル（ERD/DFD、CRUD分析）
@@ -147,6 +197,9 @@ phases:
 
       - id: req-platform
         label: システム基盤・処理方式
+        review_checklist:
+          - 処理方式（オンライン/バッチ等）が機能と整合しているか
+          - 外部システム連携の授受方式・タイミングが明確か
         items:
           - id: req-processing
             name: 処理方式・システム構成要件（オンライン/バッチ等の選定）
@@ -166,6 +219,9 @@ phases:
 
       - id: req-nfr
         label: 非機能要件
+        review_checklist:
+          - 性能・可用性・セキュリティの目標が数値で書かれているか
+          - 「対象外」とした非機能に理由があるか
         items:
           - id: req-nfr-breakdown
             name: 非機能要件の観点別ブレークダウン
@@ -185,6 +241,9 @@ phases:
 
       - id: req-quality
         label: 品質・受け入れ
+        review_checklist:
+          - 受け入れ条件が合否判定できる形になっているか
+          - サービス開始判定（カットオーバー基準）があるか
         items:
           - id: req-acceptance
             name: 受け入れ条件・検収基準
@@ -210,6 +269,9 @@ phases:
 
       - id: req-migration
         label: 移行・運用
+        review_checklist:
+          - 移行方式と失敗時の切り戻し手順があるか
+          - 通常時・障害時の運用分担が決まっているか
         items:
           - id: req-migration-plan
             name: 移行要件・移行計画（方式・切り戻し・リハーサル・PoNR）
@@ -235,6 +297,10 @@ phases:
 
       - id: req-pm
         label: プロジェクト管理・ドキュメント
+        review_checklist:
+          - 予算・期間・技術の制約が明示されているか
+          - 廃案・不採用の理由が記録されているか
+          - 法規制・コンプライアンス対応が確認されているか
         items:
           - id: req-constraints
             name: 制約・前提条件
@@ -276,9 +342,34 @@ phases:
   basic_design:
     label: 基本設計
     goal: 外部から見える仕様（画面/API/帳票/外部IF/データ/非機能方針）を確定する
+    audience: 第三者の技術者
+    reading_hint: 実装者/テスター/運用セキュリティの3視点で読み分ける（PBR）
+    legend:
+      - "**太字** = 決定事項"
+      - "⚠️ = リスク"
+      - "❓ = 未決事項"
+    pbr_guide:
+      - "実装者視点で確認: I/F・データ型・例外は実装可能な粒度か"
+      - "テスター視点で確認: 各仕様に検証可能な合否条件があるか"
+      - "運用/セキュリティ視点で確認: 認証・ログ・権限・障害時が定義されているか"
     categories:
-      - id: bd-main
-        label: 基本設計項目
+      - id: bd-summary
+        label: サマリ（最初に読む）
+        items:
+          - id: bd-adr-summary
+            name: "設計判断サマリ（ADR: 決定／代替案／トレードオフ）"
+            purpose: 主要な設計判断を第三者が検証できる形で一覧化する
+            required: true
+            source: 認知科学(ADR/Nygard)
+            aspects: [maintainability, documentation]
+            new: true
+
+      - id: bd-cat-biz
+        label: 業務・機能設計
+        review_checklist:
+          - 業務の分割・処理形態は変更に強いか
+          - 各機能のINPUT/PROCESS/OUTPUTが定義されているか
+          - 処理起動条件（バッチ/オンライン）に漏れはないか
         items:
           - id: bd-biz-system
             name: 業務体系・業務処理概要
@@ -298,6 +389,26 @@ phases:
             required: true
             source: 設計品質観点(機能性)
             aspects: [functional]
+          - id: bd-func-spec
+            name: 機能一覧・機能仕様（入力/処理/出力定義）
+            purpose: INPUT/PROCESS/OUTPUT単位で外部仕様を確定する
+            required: true
+            source: 設計観点 S16
+            aspects: [functional]
+          - id: bd-processing
+            name: 処理方式の選定・確認
+            purpose: 処理方式を選定し非機能要件と整合させる
+            required: true
+            source: 設計観点 S13
+            aspects: [performance]
+
+      - id: bd-cat-ui
+        label: 画面・帳票・インターフェース設計
+        review_checklist:
+          - 画面遷移に抜け・重複はないか／権限で見えない画面を考慮したか
+          - API・外部IFの契約（要求/応答/エラー/認証）が定義されているか
+          - メッセージ・エラー表示の体系が統一されているか
+        items:
           - id: bd-screen
             name: 画面一覧・画面遷移設計
             purpose: 触れる画面と遷移を確定し漏れ・重複のないUI仕様にする
@@ -341,6 +452,14 @@ phases:
             condition: WebAPI/RESTやモバイル連携を持つ場合
             source: 叩き台(API)を外部IF仕様として具体化
             aspects: [functional]
+
+      - id: bd-cat-data
+        label: データ設計
+        review_checklist:
+          - ER図のリレーション・キーに矛盾はないか
+          - 容量・拡張の見積りがあるか
+          - コード体系が標準・外部接続先と整合しているか
+        items:
           - id: bd-erd
             name: ER図・DB論理設計
             purpose: テーブル間リレーションとデータ構造を明確化する
@@ -359,18 +478,13 @@ phases:
             required: true
             source: 設計品質観点(機能性)
             aspects: [functional]
-          - id: bd-func-spec
-            name: 機能一覧・機能仕様（入力/処理/出力定義）
-            purpose: INPUT/PROCESS/OUTPUT単位で外部仕様を確定する
-            required: true
-            source: 設計観点 S16
-            aspects: [functional]
-          - id: bd-processing
-            name: 処理方式の選定・確認
-            purpose: 処理方式を選定し非機能要件と整合させる
-            required: true
-            source: 設計観点 S13
-            aspects: [performance]
+
+      - id: bd-cat-nfr
+        label: 非機能・横断設計
+        review_checklist:
+          - 認証・認可・ログ・監視が方針として定義されているか
+          - 非機能のトレードオフが明示されているか
+        items:
           - id: bd-nfr-policy
             name: 非機能要件方針（可用性/性能拡張性/保守性/業務運用性/移行性/セキュリティ/環境）
             purpose: 横断で揃える非機能レベルを基本設計段階で方針化する
@@ -378,19 +492,6 @@ phases:
             source: 設計観点 S50／非機能観点
             aspects: [reliability, performance, scalability, operability, maintainability, portability, security, environment]
             expands: non_functional
-          - id: bd-critical
-            name: 重点整理事項の識別
-            purpose: クリティカルな処理を洗い出し優先して方針を固める
-            required: true
-            source: 設計観点 S79
-            aspects: [reliability]
-          - id: bd-alternatives
-            name: 代替案・採否理由・設計リスク
-            purpose: 実現案の比較、採用理由、未解決リスクを記録し、後続の判断を再現可能にする
-            required: true
-            source: "設計品質観点(Google: alternatives/risk)"
-            aspects: [maintainability, reliability, documentation]
-            new: true
           - id: bd-cross-cutting
             name: 横断的関心事（セキュリティ・プライバシー・可観測性）
             purpose: 機能ごとに見落としやすい横断要件を設計方針として明示する
@@ -405,18 +506,38 @@ phases:
             source: "設計品質観点(Microsoft: Well-Architected)"
             aspects: [reliability, security, operability, performance]
             new: true
-          - id: bd-axis
-            name: 設計展開の軸・観点の設定
-            purpose: 詳細設計への展開軸を仮検討し手戻りを防ぐ
-            required: false
-            source: 設計観点 S25
-            aspects: [maintainability]
           - id: bd-security
             name: セキュリティ方針（認証・アクセス制御の外部仕様）
             purpose: 認証方式・権限レベルを外部仕様として定義する
             required: true
             source: 設計品質観点(セキュリティ)
             aspects: [security]
+
+      - id: bd-cat-decision
+        label: 設計判断・品質・移行
+        review_checklist:
+          - 重要な設計判断に代替案と採否理由があるか
+          - 未解決の設計リスクが列挙されているか
+        items:
+          - id: bd-critical
+            name: 重点整理事項の識別
+            purpose: クリティカルな処理を洗い出し優先して方針を固める
+            required: true
+            source: 設計観点 S79
+            aspects: [reliability]
+          - id: bd-alternatives
+            name: 代替案・採否理由・設計リスク
+            purpose: 実現案の比較、採用理由、未解決リスクを記録し、後続の判断を再現可能にする
+            required: true
+            source: "設計品質観点(Google: alternatives/risk)"
+            aspects: [maintainability, reliability, documentation]
+            new: true
+          - id: bd-axis
+            name: 設計展開の軸・観点の設定
+            purpose: 詳細設計への展開軸を仮検討し手戻りを防ぐ
+            required: false
+            source: 設計観点 S25
+            aspects: [maintainability]
           - id: bd-migration
             name: 移行方式・移行対象概要
             purpose: 一括/段階移行の方式・対象範囲を明確化する
@@ -440,9 +561,34 @@ phases:
   detailed_design:
     label: 詳細設計
     goal: 内部ロジック・処理詳細を、網羅的整理技法で漏れなく定義する
+    audience: 第三者の技術者
+    reading_hint: 実装者/テスター/運用セキュリティの3視点で読み分ける（PBR）
+    legend:
+      - "**太字** = 決定事項"
+      - "⚠️ = リスク"
+      - "❓ = 未決事項"
+    pbr_guide:
+      - "実装者視点で確認: ロジック・分岐・例外は実装可能な粒度か"
+      - "テスター視点で確認: 状態・条件の組合せが網羅され検証可能か"
+      - "運用/セキュリティ視点で確認: 障害時の再開・ログ・監視が定義されているか"
     categories:
-      - id: dd-main
-        label: 詳細設計項目
+      - id: dd-summary
+        label: サマリ（最初に読む）
+        items:
+          - id: dd-adr-summary
+            name: "実装判断サマリ（ADR: 決定／代替案／トレードオフ）"
+            purpose: 内部設計の主要判断を第三者が検証できる形で一覧化する
+            required: true
+            source: 認知科学(ADR/Nygard)
+            aspects: [maintainability, documentation]
+            new: true
+
+      - id: dd-cat-logic
+        label: ロジック・制御設計
+        review_checklist:
+          - 状態×イベントが総当たりで網羅されているか
+          - 条件分岐の組合せに漏れはないか
+          - モジュール分割は再利用・試験しやすいか
         items:
           - id: dd-state-matrix
             name: 状態遷移図・状態遷移マトリクス
@@ -456,12 +602,6 @@ phases:
             required: true
             source: 設計観点 S43
             aspects: [functional, maintainability]
-          - id: dd-crud
-            name: CRUD分析（詳細設計版）
-            purpose: 重要データへのC/U/Dを整理し内部データ管理の網羅性を確認する
-            required: true
-            source: 設計観点 S29
-            aspects: [functional]
           - id: dd-flow
             name: 処理フロー・構造化チャート設計
             purpose: 順次・分岐・反復の3構造で記述しスパゲッティ化を防ぐ
@@ -474,18 +614,26 @@ phases:
             required: true
             source: 設計観点 S86
             aspects: [maintainability, scalability]
-          - id: dd-input-check
-            name: 入力データチェック仕様
-            purpose: チェック順序・内容・規定外/省略時対処を詳細化し不正データ混入を防ぐ
+          - id: dd-sequence
+            name: 内部処理シーケンス設計（階層別シーケンス図）
+            purpose: 階層別に処理シーケンスを詳細化し区間・共通処理の実装方針を明確化する
+            required: false
+            source: 設計観点 S89
+            aspects: [maintainability]
+
+      - id: dd-cat-data
+        label: データ・整合性設計
+        review_checklist:
+          - 重要データのC/U/Dが整理されているか
+          - 排他制御（ロック方式）が選定されデッドロック回避が考慮されているか
+          - DB物理構造が性能・拡張要件に合っているか
+        items:
+          - id: dd-crud
+            name: CRUD分析（詳細設計版）
+            purpose: 重要データへのC/U/Dを整理し内部データ管理の網羅性を確認する
             required: true
-            source: 設計品質観点(機能性)
-            aspects: [functional, security]
-          - id: dd-exception
-            name: 例外処理・準正常系設計
-            purpose: 業務例外（在庫切れ等）を正常系に組み込んで設計し想定外障害を防ぐ
-            required: true
-            source: 設計観点 S71
-            aspects: [reliability]
+            source: 設計観点 S29
+            aspects: [functional]
           - id: dd-transaction
             name: 排他制御・トランザクション設計（悲観/楽観ロック）
             purpose: ロック方式を明示選択しデッドロック回避・区間最小化を設計に落とす
@@ -498,6 +646,41 @@ phases:
             required: true
             source: 設計品質観点(機能性:RDB)
             aspects: [performance, scalability]
+
+      - id: dd-cat-error
+        label: 入力・例外・エラー設計
+        review_checklist:
+          - 入力チェックの順序・規定外時の対処が定義されているか
+          - 業務例外が正常系に組み込まれているか
+          - エラーごとに一意なID/メッセージがあるか
+        items:
+          - id: dd-input-check
+            name: 入力データチェック仕様
+            purpose: チェック順序・内容・規定外/省略時対処を詳細化し不正データ混入を防ぐ
+            required: true
+            source: 設計品質観点(機能性)
+            aspects: [functional, security]
+          - id: dd-exception
+            name: 例外処理・準正常系設計
+            purpose: 業務例外（在庫切れ等）を正常系に組み込んで設計し想定外障害を防ぐ
+            required: true
+            source: 設計観点 S71
+            aspects: [reliability]
+
+          - id: dd-errorcode
+            name: エラーコード・メッセージ詳細仕様
+            purpose: エラー条件ごとに一意なID/メッセージを割当て原因調査性を高める
+            required: true
+            source: 設計観点 S45
+            aspects: [maintainability, usability]
+
+      - id: dd-cat-reliability
+        label: 信頼性・性能・運用設計
+        review_checklist:
+          - 障害後の再開・リカバリ手順があるか
+          - ピーク負荷で性能目標を満たせる算定があるか
+          - 障害検知・原因特定に必要なログ/メトリクスが定義されているか
+        items:
           - id: dd-batch
             name: バッチ処理詳細設計（リラン/リスタート、ジョブスケジュール）
             purpose: 起動サイクル・処理時間・リラン救済単位を詳細化し運用トラブルに備える
@@ -517,31 +700,25 @@ phases:
             required: true
             source: 設計品質観点(性能)
             aspects: [performance]
-          - id: dd-errorcode
-            name: エラーコード・メッセージ詳細仕様
-            purpose: エラー条件ごとに一意なID/メッセージを割当て原因調査性を高める
-            required: true
-            source: 設計観点 S45
-            aspects: [maintainability, usability]
-          - id: dd-sequence
-            name: 内部処理シーケンス設計（階層別シーケンス図）
-            purpose: 階層別に処理シーケンスを詳細化し区間・共通処理の実装方針を明確化する
-            required: false
-            source: 設計観点 S89
-            aspects: [maintainability]
-          - id: dd-spec-quality
-            name: 機能仕様の完全性・明確性・実装可能性確認
-            purpose: 前後機能との整合、解釈の一意性、実装と見積りに十分な具体性を確認する
-            required: true
-            source: "設計品質観点(NTTデータ: 機能仕様チェック)"
-            aspects: [functional, maintainability, documentation]
-            new: true
           - id: dd-observability
             name: 監視・診断・インシデント対応の詳細設計
             purpose: 障害の検知、原因特定、復旧判断に必要なログ・メトリクス・手順を実装可能にする
             required: true
             source: "設計品質観点(Microsoft: Operational Excellence)"
             aspects: [operability, reliability, security]
+            new: true
+
+      - id: dd-cat-quality
+        label: 品質確認
+        review_checklist:
+          - 前後機能との整合・解釈の一意性・実装可能性が確認されているか
+        items:
+          - id: dd-spec-quality
+            name: 機能仕様の完全性・明確性・実装可能性確認
+            purpose: 前後機能との整合、解釈の一意性、実装と見積りに十分な具体性を確認する
+            required: true
+            source: "設計品質観点(NTTデータ: 機能仕様チェック)"
+            aspects: [functional, maintainability, documentation]
             new: true
 
 # =============================================================================

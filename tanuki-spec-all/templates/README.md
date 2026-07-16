@@ -4,7 +4,7 @@
 
 | 書類 | テンプレートまたは生成元 | 役割 | 編集方法 |
 | --- | --- | --- | --- |
-| 開発初期プロダクトバックログ | [product-backlog-template.md](./product-backlog-template.md) | 要望をユーザーストーリーと優先順位へ整理する | コピーして記入 |
+| 開発初期プロダクトバックログ | [product-backlog-template.md](./product-backlog-template.md) | 要望をユーザーストーリーと優先順位へ整理する | 人間工学構成を手編集で維持し、コピーして記入 |
 | 要件定義書 | [requirements-template.md](./requirements-template.md) | 業務・機能・非機能・受入条件を定義する | `generate_templates.py` で再生成後にコピーして記入 |
 | 基本設計書 | [basic-design-template.md](./basic-design-template.md) | 画面・API・データ・外部連携・方式を定義する | `generate_templates.py` で再生成後にコピーして記入 |
 | 詳細設計書 | [detailed-design-template.md](./detailed-design-template.md) | 状態遷移・条件分岐・内部処理・例外を定義する | `generate_templates.py` で再生成後にコピーして記入 |
