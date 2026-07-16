@@ -24,4 +24,4 @@
 
 ## 出典
 
-詳細な出典URLは設計調査ログ（`docs/superpowers/specs/2026-07-16-human-review-cognitive-templates-design.md` の「3. 認知科学の根拠」）を参照。
+各原則の一次情報（URL・取得日）は [`../research/web-sources.md`](../research/web-sources.md) の「認知科学に基づく資料構成」節を参照する。番号は上の11原則と対応している。テンプレート改訂で原則の解釈を変える場合は、同節の出典に当たって根拠を確認すること。
