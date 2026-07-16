@@ -26,12 +26,18 @@ requirements:
 acceptance_tests:
   - id: AC-001
     status: in_scope
+    feature: "<.feature のグルーピング名。未指定なら『受入シナリオ』へ集約>"
     user_story_ids: [US-001]
     requirement_ids: [BR-001]
     flow_step_ids: [BF-001-S01]
-    preconditions: ["<事前条件>"]
-    steps: ["<利用者または業務担当者の操作>"]
-    expected_results: ["<受入可能と判断できる結果>"]
+    scenario:
+      name: "<シナリオ名（単一の振る舞い）>"
+      given: ["<前提状態（操作ではない）>"]
+      when: ["<利用者の操作・イベント（原則1つ）>"]
+      then: ["<観測可能な期待結果>"]
+      # examples は任意（同一振る舞いのデータ違いのときだけ）
+      # examples:
+      #   - {列名A: "値1", 列名B: "値2"}
 
 system_tests:
   - id: ST-001

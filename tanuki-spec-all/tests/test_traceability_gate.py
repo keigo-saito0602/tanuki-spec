@@ -28,9 +28,13 @@ def complete_traceability() -> dict:
             "user_story_ids": ["US-001"],
             "requirement_ids": [requirement["id"]],
             "flow_step_ids": ["BF-001-S01"],
-            "preconditions": ["予約可能なレッスン枠がある"],
-            "steps": ["生徒が予約を確定する"],
-            "expected_results": [requirement["statement"]],
+            "feature": "レッスン予約",
+            "scenario": {
+                "name": f"予約シナリオ{index}",
+                "given": ["生徒がログイン済みである"],
+                "when": ["生徒が予約を確定する"],
+                "then": [requirement["statement"]],
+            },
         })
         system_tests.append({
             "id": system_id,
@@ -102,10 +106,27 @@ class TraceabilityGateTest(unittest.TestCase):
     def test_renderer_includes_requirement_and_test_ids(self):
         data = complete_traceability()
         self.assertIn("BR-001", render_traceability_docs.render_requirements(data))
-        self.assertIn("AC-001", render_traceability_docs.render_acceptance(data))
         self.assertIn("ST-001", render_traceability_docs.render_system(data))
 
     def test_renderer_excludes_deferred_items_from_execution_documents(self):
         data = complete_traceability()
         data["requirements"].append({"id": "FR-999", "status": "deferred", "reason": "次期リリースで検討する"})
         self.assertNotIn("FR-999", render_traceability_docs.render_requirements(data))
+
+    def test_acceptance_requires_given_when_then(self):
+        data = complete_traceability()
+        del data["acceptance_tests"][0]["scenario"]["when"]
+        failures = traceability_gate.validate(data)
+        self.assertTrue(any("scenario.when は1件以上必要です" in failure for failure in failures))
+
+    def test_acceptance_requires_scenario_object(self):
+        data = complete_traceability()
+        data["acceptance_tests"][0]["scenario"] = "not-a-dict"
+        failures = traceability_gate.validate(data)
+        self.assertTrue(any("scenario（Gherkinシナリオ）が必要です" in failure for failure in failures))
+
+    def test_scenario_outline_examples_keys_must_align(self):
+        data = complete_traceability()
+        data["acceptance_tests"][0]["scenario"]["examples"] = [{"入力": "A"}, {"別キー": "B"}]
+        failures = traceability_gate.validate(data)
+        self.assertTrue(any("scenario.examples の各行はキーを揃えて" in failure for failure in failures))
