@@ -43,16 +43,6 @@ def render_requirements(data: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
-def render_acceptance(data: dict) -> str:
-    lines = ["# 受入試験項目書", ""]
-    rows = [[
-        item["id"], item.get("user_story_ids", []), item.get("requirement_ids", []), item.get("flow_step_ids", []),
-        item.get("preconditions", []), item.get("steps", []), item.get("expected_results", []),
-    ] for item in in_scope(data["acceptance_tests"])]
-    lines.extend(table(["ID", "対象US", "対象要件", "対象フロー手順", "前提条件", "操作", "期待結果"], rows))
-    return "\n".join(lines) + "\n"
-
-
 def render_system(data: dict) -> str:
     lines = ["# システムテスト項目書", ""]
     rows = [[
@@ -77,7 +67,6 @@ def main() -> None:
         raise SystemExit("トレーサビリティゲート不通過のため帳票を生成できません")
     outputs = {
         "requirements-traceability.md": render_requirements(data),
-        "acceptance-test-cases.md": render_acceptance(data),
         "system-test-cases.md": render_system(data),
     }
     if args.check:
