@@ -21,6 +21,14 @@ def main() -> None:
         str(sample_dir),
         "--check",
     ], cwd=ROOT, check=True)
+    subprocess.run([
+        sys.executable,
+        "evaluation/render_feature_files.py",
+        str(sample_dir / "traceability.yaml"),
+        "--output-dir",
+        str(sample_dir / "features"),
+        "--check",
+    ], cwd=ROOT, check=True)
     subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], cwd=ROOT, check=True)
 
 
