@@ -188,7 +188,7 @@ phases:
         items:
           - id: req-acceptance
             name: 受け入れ条件・検収基準
-            purpose: 完成の合格判定基準を明確にする
+            purpose: 完成の合格判定基準を明確にする。受け入れ条件はEARS 5パターン（常時/イベント駆動/状態駆動/異常系/オプション）で書き、具体シナリオは受入試験(AC)のGherkinへ落とす（references/ears-gherkin-guidelines.md）
             required: true
             source: 叩き台／cc-sdd(EARS受け入れ基準)
             aspects: [functional]
