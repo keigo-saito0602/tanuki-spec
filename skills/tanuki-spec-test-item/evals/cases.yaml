@@ -1,0 +1,24 @@
+version: "1.0"
+purpose: "UT/IT テスト項目書生成スキルとして適切に発火し、既存 AC/ST と shared core の境界を守れるかを確認する。"
+metrics:
+  - 発火の正確性
+  - AC/ST を重複生成しないこと
+  - UT/IT と BD/DD の結び付けの明確さ
+  - 不足情報を `[要確認]` として残せること
+cases:
+  - id: trigger-positive
+    should_trigger: true
+    prompt: "要件定義書と設計書から、UT と IT のテスト項目書、それに対応する test-traceability.yaml を作って"
+    expected: "本SKILLを起動し、UT/IT のみを新規生成し、既存 AC/ST は再利用として扱う"
+  - id: trigger-negative
+    should_trigger: false
+    prompt: "生成済みのレビュー YAML を検証して DoD 判定して"
+    expected: "本SKILLを起動せず、tanuki-spec-reviewer へ進む"
+  - id: ambiguous-case
+    should_trigger: true
+    prompt: "詳細設計はまだ粗いけど、テスト項目を先に作りたい"
+    expected: "本SKILLを起動し、不足している設計要素や判断材料は `[要確認: 質問]` として残す"
+  - id: edge-case-integration-name-collision
+    should_trigger: true
+    prompt: "system-test の integration を流用して結合試験書を作って"
+    expected: "本SKILLを起動しつつ、system test の種別値と V字モデルの IT は別物として整理し、AC/ST の重複生成を避ける"

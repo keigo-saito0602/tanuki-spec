@@ -24,6 +24,7 @@ reviewer:        # 例: codex / claude-new-session。生成担当と別である
 5. `review.schema.json`に沿って、`date`、`target`、`reviewer`、`generated_spec_sha256`、`traceability_sha256`、`traceability_gate_passed`、`coverage`、`rubric`、`dod_passed`を持つYAMLを作る。設計工程では`design_traceability_sha256`と`design_traceability_gate_passed: true`も必須。各SHA-256は`shasum -a 256 <対象ファイル>`で算出する。
 6. `python3 evaluation/validate_review.py <review.yaml> --spec <対象仕様書> --traceability <traceability.yaml>`を実行する。設計工程は`--design-traceability <design-traceability.yaml>`も付け、記録の整合性を確認する。
 7. DoD判定と、要改善・判断不可が残った軸をユーザに報告する。
+8. 機械判定に加えて人間レビューを行う場合は、[references/human-review-guide.md](./references/human-review-guide.md) の「2パス読み＋PBR＋節別チェック」に従う。非技術者（要件）または第三者技術者（設計）が、Pythonを実行せずに網羅性と品質を確認できる。
 
 ## 出力
 

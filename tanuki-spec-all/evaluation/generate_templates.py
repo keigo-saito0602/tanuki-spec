@@ -8,8 +8,7 @@
 各項目は次の形式で出力する（カバレッジ評価が突き合わせるマーカー付き）:
 
     ### [必須] 項目名  <!-- spec-item: id -->
-    - **記入ガイド**: purpose
-    - **出典**: source ／ **品質観点**: aspects
+    <!-- 記入ガイド: purpose ／ 出典: source ／ 品質観点: aspects -->
     <!-- FILL:START id -->
     （未記入）
     <!-- FILL:END id -->
@@ -48,11 +47,12 @@ def badge(required) -> str:
 def render_item(item: dict, char_labels: dict, non_functional: dict) -> list[str]:
     iid = item["id"]
     lines = [f'### {badge(item["required"])} {item["name"]}  <!-- spec-item: {iid} -->']
-    lines.append(f'- **記入ガイド**: {item["purpose"]}')
     if item.get("required") == "conditional" and item.get("condition"):
         lines.append(f'- **適用条件**: {item["condition"]}')
     aspects = "、".join(char_labels.get(a, a) for a in item.get("aspects", [])) or "―"
-    lines.append(f'- **出典**: {item.get("source", "―")} ／ **品質観点**: {aspects}')
+    lines.append(
+        f'<!-- 記入ガイド: {item["purpose"]} ／ 出典: {item.get("source", "―")} ／ 品質観点: {aspects} -->'
+    )
     lines.append("<!-- 記入例: - 結論: <決めた内容・数値・条件>\\n- 根拠: [入力] ユーザーストーリー「<該当箇所>」 -->")
     lines.append(f"<!-- FILL:START {iid} -->")
     lines.append(UNFILLED)
@@ -94,12 +94,27 @@ def render_phase(phase_key: str, data: dict) -> str:
     out.append(f"> **ゴール**: {ph['goal']}")
     out.append("> 各項目の `<!-- FILL:START ... -->` と `END` の間に内容を記入する。")
     out.append(f"> 「{UNFILLED}」のまま残っている項目はカバレッジ評価で未充足として数えられる。")
+    if ph.get("audience"):
+        out.append(f"> 👥 **読み手**: {ph['audience']}")
+    if ph.get("reading_hint"):
+        out.append(f"> 🧭 **読み方**: {ph['reading_hint']}")
+    if ph.get("legend"):
+        out.append("> 🔤 **凡例**: " + " / ".join(ph["legend"]))
+    if ph.get("pbr_guide"):
+        out.append("> 🔎 **第三者レビュー視点（PBR）**:")
+        for guide in ph["pbr_guide"]:
+            out.append(f"> - {guide}")
     out.append("")
     for cat in ph["categories"]:
         out.append(f"## {cat['label']}")
         out.append("")
         for item in cat["items"]:
             out.extend(render_item(item, char_labels, nf))
+        if cat.get("review_checklist"):
+            out.append("> 🔍 **この節で確認すべきこと**")
+            for check in cat["review_checklist"]:
+                out.append(f"> - {check}")
+            out.append("")
     return "\n".join(out) + "\n"
 
 
