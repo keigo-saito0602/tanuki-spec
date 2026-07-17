@@ -20,7 +20,7 @@ tanuki-spec-design
 
 ## 手順
 
-1. 入力の要件定義書、`spec-items.yaml`、`templates/basic-design-template.md`、`templates/detailed-design-template.md`を読む。各項目の記入ガイド・出典・品質観点・記入例はHTMLコメント（`<!-- 記入ガイド: … -->`、`<!-- 記入例: … -->`）に格納されているため、記入前に必ずコメント内も読む。要件IDが無い場合は、`traceability-template.yaml`を使い`BR-`、`FR-`、`NFR-`を採番する。
+1. 入力の要件定義書、`spec-items.yaml`、`templates/basic-design-template.md`、`templates/detailed-design-template.md`を読む。各項目の記入ガイド・出典・品質観点は、本文ではなくテンプレート末尾の「付録: 項目の根拠一覧」に表として集約されている。記入前に必ず付録の該当ID行を読み、ガイドに沿って記入する。要件IDが無い場合は、`traceability-template.yaml`を使い`BR-`、`FR-`、`NFR-`を採番する。
 2. 既存コードがある場合、調査担当を分けてリポジトリ構成、実行経路、データ、外部連携、認証、テストを調べる。調査結果は事実と推測を分け、設計の根拠に使う。
 3. 要件にないが設計に必要な決定事項を質問する。例: 利用者と権限、保存期間、外部連携、性能目標、障害時の復旧、移行、運用担当。回答なしは勝手に確定せず`[要確認: 質問]`を残す。
 4. 基本設計書・詳細設計書のFILLブロックを記入する。各ブロックは`[入力] 要件ID`、`[参照] 既存コード`、または確認済みの回答を根拠として先頭に明記する。
