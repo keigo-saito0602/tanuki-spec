@@ -25,6 +25,7 @@ status: draft
 <!-- FILL:START req-decision-summary -->（未記入）<!-- FILL:END req-decision-summary -->
 
 ### [任意] 用語集
+> 📝 **記入形式**: `| 用語 | 定義 |`
 <!-- FILL:START req-glossary -->（未記入）<!-- FILL:END req-glossary -->
 
 ## 業務要件
@@ -37,6 +38,7 @@ status: draft
 <!-- FILL:START req-scope -->（未記入）<!-- FILL:END req-scope -->
 
 ### [必須] ステークホルダー・関係者体制（役割・権限・組織）
+> 📝 **記入形式**: `| 関係者 | 役割 | 権限 |`
 <!-- FILL:START req-stakeholder -->（未記入）<!-- FILL:END req-stakeholder -->
 
 ### [必須] 業務フロー（As-Is／To-Be、インパクト分析）
@@ -209,9 +211,11 @@ status: draft
 <!-- FILL:START req-constraints -->（未記入）<!-- FILL:END req-constraints -->
 
 ### [必須] 課題管理・検討経緯記録（不採用案・廃案理由を含む）
+> 📝 **記入形式**: `| 課題 | 検討経緯 | 結論／廃案理由 |`
 <!-- FILL:START req-issue-log -->（未記入）<!-- FILL:END req-issue-log -->
 
 ### [必須] 開発体制・スキル要件（要員計画）
+> 📝 **記入形式**: `| 役割 | 必要スキル | 人数 |`
 <!-- FILL:START req-team -->（未記入）<!-- FILL:END req-team -->
 
 ### [必須] 法規制・コンプライアンス対応要件

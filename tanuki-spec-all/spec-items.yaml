@@ -90,6 +90,7 @@ phases:
           - id: req-glossary
             name: 用語集
             purpose: 専門用語を集約し本文の探索コストを下げる
+            table_hint: "| 用語 | 定義 |"
             required: false
             source: 認知科学(Plain Language)
             aspects: [documentation]
@@ -120,6 +121,7 @@ phases:
           - id: req-stakeholder
             name: ステークホルダー・関係者体制（役割・権限・組織）
             purpose: 所掌の違いによる要求スコープ・実現レベルの食い違いを防ぐ
+            table_hint: "| 関係者 | 役割 | 権限 |"
             required: true
             source: 要件定義観点 S22/S56/S107
             aspects: [functional]
@@ -316,6 +318,7 @@ phases:
           - id: req-issue-log
             name: 課題管理・検討経緯記録（不採用案・廃案理由を含む）
             purpose: 論点の蒸し返し時に判断根拠を遡れるようにし手戻りを防ぐ
+            table_hint: "| 課題 | 検討経緯 | 結論／廃案理由 |"
             required: true
             source: 要件定義観点 S5/S111
             aspects: [documentation]
@@ -323,6 +326,7 @@ phases:
           - id: req-team
             name: 開発体制・スキル要件（要員計画）
             purpose: 必要な業務知識・技術知識を持つ人材確保を確認する
+            table_hint: "| 役割 | 必要スキル | 人数 |"
             required: true
             source: 要件定義観点 S22/S108
             aspects: [functional]
@@ -646,6 +650,7 @@ phases:
           - id: dd-crud
             name: CRUD分析（詳細設計版）
             purpose: 重要データへのC/U/Dを整理し内部データ管理の網羅性を確認する
+            table_hint: "| 機能・処理＼データ | C | R | U | D |"
             required: true
             source: 設計観点 S29
             aspects: [functional]
@@ -672,6 +677,7 @@ phases:
           - id: dd-input-check
             name: 入力データチェック仕様
             purpose: チェック順序・内容・規定外/省略時対処を詳細化し不正データ混入を防ぐ
+            table_hint: "| 項目 | チェック内容 | 規定外・省略時の対処 |"
             required: true
             source: 設計品質観点(機能性)
             aspects: [functional, security]
