@@ -5,6 +5,8 @@ description: Use when independently reviewing a generated requirements or design
 
 # tanuki-spec-reviewer
 
+> 📖 わからない用語は [用語集（GLOSSARY.md）](../GLOSSARY.md) を参照。
+
 ## 起動テンプレート
 
 ```text

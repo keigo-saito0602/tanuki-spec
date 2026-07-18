@@ -5,6 +5,8 @@ description: Use when decomposing approved requirements or a feature request int
 
 # tanuki-task-planner
 
+> 📖 わからない用語は [用語集（GLOSSARY.md）](../GLOSSARY.md) を参照。
+
 ## 起動テンプレート
 
 ```text

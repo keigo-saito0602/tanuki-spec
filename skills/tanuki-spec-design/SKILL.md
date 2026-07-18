@@ -5,6 +5,8 @@ description: 未完成でもよい要件定義書を入力に、既存コード�
 
 # tanuki-spec-design
 
+> 📖 わからない用語は [用語集（GLOSSARY.md）](../GLOSSARY.md) を参照。
+
 要件定義書を入力に、基本設計書・詳細設計書と設計トレーサビリティを作る設計特化フロー。既存`tanuki-spec-generator`の設計工程は置き換えず、併用する。
 
 ## 起動テンプレート
