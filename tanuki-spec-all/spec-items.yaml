@@ -208,7 +208,7 @@ phases:
           - 外部システム連携の授受方式・タイミングが明確か
         items:
           - id: req-processing
-            name: 処理方式・システム構成要件（オンライン/バッチ等の選定）
+            name: 処理方式・システム構成要件（どのやり方で処理するか＝オンライン/バッチ等の選定）
             purpose: 機能要件と方式を整合させ開発規模・予算の見誤りを防ぐ
             required: true
             source: 要件定義観点 S26-27/S33
@@ -384,7 +384,7 @@ phases:
           - 処理起動条件（バッチ/オンライン）に漏れはないか
         items:
           - id: bd-biz-system
-            name: 業務体系・業務処理概要
+            name: 業務体系・業務処理概要（業務の全体像と、何をどう処理するかのあらまし）
             purpose: 仕様変更に強い業務分割・処理形態を明確化する
             required: true
             source: 設計品質観点(機能性)
@@ -410,7 +410,7 @@ phases:
             source: 設計観点 S16
             aspects: [functional]
           - id: bd-processing
-            name: 処理方式の選定・確認
+            name: 処理方式の選定・確認（どのやり方で処理するかを決めて確かめる）
             purpose: 処理方式を選定し非機能要件と整合させる
             required: true
             source: 設計観点 S13
@@ -514,7 +514,7 @@ phases:
             aspects: [reliability, performance, scalability, operability, maintainability, portability, security, environment]
             expands: non_functional
           - id: bd-cross-cutting
-            name: 横断的関心事（セキュリティ・プライバシー・可観測性）
+            name: 横断的関心事（多くの機能に共通で必要な事柄：セキュリティ・プライバシー・可観測性）
             purpose: 機能ごとに見落としやすい横断要件を設計方針として明示する
             required: true
             source: "設計品質観点(Google: cross-cutting concerns)"
