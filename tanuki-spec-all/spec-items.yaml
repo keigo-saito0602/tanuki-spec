@@ -24,12 +24,12 @@
 # =============================================================================
 
 meta:
-  version: "1.1.0"
-  updated: "2026-07-14"
+  version: "1.2.0"
+  updated: "2026-07-18"
   language: ja
   description: 業務システム/Webアプリの要件定義・設計に載せるべき品質項目マスター
-  approval_status: pending_owner_approval
-  approval_note: Phase 0の品質項目表はユーザの承認待ち。承認前の生成物はドラフト扱い。
+  approval_status: approved
+  approval_note: オーナー(KEIGO)承認済み(2026-07-18)。Webアプリ向け軽量化(codex-task-04)を反映のうえ承認。
 
 # ISO25010系の品質特性タクソノミー（aspects で参照するタグの正体）
 quality_characteristics:
@@ -261,7 +261,8 @@ phases:
           - id: req-cutover-criteria
             name: カットオーバークライテリア（サービス開始判定基準）
             purpose: 本番移行可否を業務・システム・試験網羅性・品質・体制から段階判定する
-            required: true
+            required: conditional
+            condition: 本番リリース可否を正式なゲートで判定する場合
             source: 要件定義観点 S109-110
             aspects: [portability, reliability]
             new: true
@@ -282,7 +283,8 @@ phases:
           - id: req-migration-plan
             name: 移行要件・移行計画（方式・切り戻し・リハーサル・PoNR）
             purpose: 移行方式と失敗時の切り戻し手順を事前定義しトラブルを防ぐ
-            required: true
+            required: conditional
+            condition: 既存システム・既存データからの移行がある場合
             source: 要件品質観点(移行性)／要件定義観点 S51
             aspects: [portability]
             new: true
@@ -327,7 +329,8 @@ phases:
             name: 開発体制・スキル要件（要員計画）
             purpose: 必要な業務知識・技術知識を持つ人材確保を確認する
             table_hint: "| 役割 | 必要スキル | 人数 |"
-            required: true
+            required: conditional
+            condition: 複数名または外部委託を含む開発体制の場合
             source: 要件定義観点 S22/S108
             aspects: [functional]
             new: true
@@ -431,7 +434,8 @@ phases:
             name: 帳票一覧・帳票仕様
             purpose: 出力帳票の種類・様式・条件を明確化する
             table_hint: "| 帳票ID | 帳票名 | 出力条件 | 様式／媒体 |"
-            required: true
+            required: conditional
+            condition: 帳票・PDF等の出力機能がある場合
             source: 設計品質観点(機能性)
             aspects: [functional]
           - id: bd-io-item
@@ -491,7 +495,8 @@ phases:
             name: コード設計（コード体系）
             purpose: コード体系化・標準採用・外部接続先との整合を取る
             table_hint: "| コード名 | 桁数・形式 | 採番規則／準拠標準 |"
-            required: true
+            required: conditional
+            condition: 業務コード体系・採番規則を定義する場合
             source: 設計品質観点(機能性)
             aspects: [functional]
 

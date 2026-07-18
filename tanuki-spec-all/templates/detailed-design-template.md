@@ -1,6 +1,6 @@
 ---
 template: detailed_design
-spec_items_version: "1.1.0"
+spec_items_version: "1.2.0"
 status: draft
 ---
 
