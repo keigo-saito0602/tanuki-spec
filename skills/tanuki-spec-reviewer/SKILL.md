@@ -5,6 +5,8 @@ description: Use when independently reviewing a generated requirements or design
 
 # tanuki-spec-reviewer
 
+> 🚀 **30秒でわかる**: できあがった仕様書を別の視点で点検し、抜けや矛盾を洗い出して「これで進めてよいか」を判定する。作り始める前の最終チェック役。
+
 > 📖 わからない用語は [用語集（GLOSSARY.md）](../GLOSSARY.md) を参照。
 
 ## 起動テンプレート
