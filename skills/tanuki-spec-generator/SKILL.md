@@ -82,8 +82,8 @@ python3 evaluation/coverage.py <記入済み仕様書.md> --strict
 続けてトレーサビリティを検証し、受入試験項目書・システムテスト項目書を生成する。
 ```bash
 python3 evaluation/traceability_gate.py <traceability.yaml>
-python3 evaluation/render_traceability_docs.py <traceability.yaml> --output-dir <成果物ディレクトリ>
-python3 evaluation/render_feature_files.py <traceability.yaml> --output-dir <成果物ディレクトリ>/features
+python3 evaluation/render_traceability_docs.py <traceability.yaml> --output-dir <phase>/tests
+python3 evaluation/render_feature_files.py <traceability.yaml> --output-dir <phase>/features
 ```
 最後に根拠とトレーサビリティを含む出力ゲートを実行する。
 ```bash
@@ -99,11 +99,13 @@ python3 evaluation/spec_gate.py <記入済み仕様書.md> --traceability <trace
 
 ## 出力
 
-- 記入済みの `<工程>` 仕様書（Markdown）
-- カバレッジ評価レポート（必須充足率／欠落リスト）
-- `traceability.yaml`（US → BR/FR/NFR → AC → ST の正本）
-- `requirements-traceability.md`、`system-test-cases.md`
-- `features/*.feature`（受入試験はGherkinの `.feature` として生成。将来E2E（Cucumber/playwright-bdd）へ直接投入できる）
+> 置き場所・命名は [`../docs/spec-directory-standard.md`](../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
+
+- `<phase>/01_要件定義書.md`（記入済み要件定義書）
+- `<phase>/traceability.yaml`（US → BR/FR/NFR → AC → ST の正本）
+- `<phase>/tests/requirements-traceability.md`、`<phase>/tests/system-test-cases.md`
+- `<phase>/features/*.feature`（受入試験はGherkinの `.feature` として標準で生成。将来E2E（Cucumber/playwright-bdd）へ直接投入できる）
+- `<phase>/reports/01_差分・未決事項.md`（カバレッジ評価レポート：必須充足率／欠落リスト）
 
 実例は `examples/sample-user-story/` を参照（サンプルストーリー1件のE2E成果物）。
 
