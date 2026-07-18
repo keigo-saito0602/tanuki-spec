@@ -5,6 +5,10 @@ description: Use when generating or updating unit/integration test case document
 
 # tanuki-spec-test-item
 
+> 🚀 **30秒でわかる**: 要件と設計から、テストすべき項目の一覧と「どこまで確かめられているか」を洗い出す。
+
+> 📖 わからない用語は [用語集（GLOSSARY.md）](../GLOSSARY.md) を参照。
+
 要件定義書・設計書・既存トレーサビリティ正本を入力に、UT/IT のテスト項目書、`test-traceability.yaml`、`v-model-coverage.md` を作るためのスキル。既存の AC/ST を重複生成せず、V字モデルの下半分だけを新規に扱う。
 
 ## 起動テンプレート

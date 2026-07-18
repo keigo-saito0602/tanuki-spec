@@ -24,12 +24,12 @@
 # =============================================================================
 
 meta:
-  version: "1.1.0"
-  updated: "2026-07-14"
+  version: "1.2.0"
+  updated: "2026-07-18"
   language: ja
   description: 業務システム/Webアプリの要件定義・設計に載せるべき品質項目マスター
-  approval_status: pending_owner_approval
-  approval_note: Phase 0の品質項目表はユーザの承認待ち。承認前の生成物はドラフト扱い。
+  approval_status: approved
+  approval_note: オーナー(KEIGO)承認済み(2026-07-18)。Webアプリ向け軽量化(codex-task-04)を反映のうえ承認。
 
 # ISO25010系の品質特性タクソノミー（aspects で参照するタグの正体）
 quality_characteristics:
@@ -91,7 +91,8 @@ phases:
             name: 用語集
             purpose: 専門用語を集約し本文の探索コストを下げる
             table_hint: "| 用語 | 定義 |"
-            required: false
+            required: conditional
+            condition: 本書に固有の専門用語がある場合。一般的な開発用語は共通用語集にあるため、ここには本書固有の用語のみ記載する。
             source: 認知科学(Plain Language)
             aspects: [documentation]
             new: true
@@ -208,7 +209,7 @@ phases:
           - 外部システム連携の授受方式・タイミングが明確か
         items:
           - id: req-processing
-            name: 処理方式・システム構成要件（オンライン/バッチ等の選定）
+            name: 処理方式・システム構成要件（どのやり方で処理するか＝オンライン/バッチ等の選定）
             purpose: 機能要件と方式を整合させ開発規模・予算の見誤りを防ぐ
             required: true
             source: 要件定義観点 S26-27/S33
@@ -261,7 +262,8 @@ phases:
           - id: req-cutover-criteria
             name: カットオーバークライテリア（サービス開始判定基準）
             purpose: 本番移行可否を業務・システム・試験網羅性・品質・体制から段階判定する
-            required: true
+            required: conditional
+            condition: 本番リリース可否を正式なゲートで判定する場合
             source: 要件定義観点 S109-110
             aspects: [portability, reliability]
             new: true
@@ -282,7 +284,8 @@ phases:
           - id: req-migration-plan
             name: 移行要件・移行計画（方式・切り戻し・リハーサル・PoNR）
             purpose: 移行方式と失敗時の切り戻し手順を事前定義しトラブルを防ぐ
-            required: true
+            required: conditional
+            condition: 既存システム・既存データからの移行がある場合
             source: 要件品質観点(移行性)／要件定義観点 S51
             aspects: [portability]
             new: true
@@ -327,7 +330,8 @@ phases:
             name: 開発体制・スキル要件（要員計画）
             purpose: 必要な業務知識・技術知識を持つ人材確保を確認する
             table_hint: "| 役割 | 必要スキル | 人数 |"
-            required: true
+            required: conditional
+            condition: 複数名または外部委託を含む開発体制の場合
             source: 要件定義観点 S22/S108
             aspects: [functional]
             new: true
@@ -372,6 +376,15 @@ phases:
             source: 認知科学(ADR/Nygard)
             aspects: [maintainability, documentation]
             new: true
+          - id: bd-glossary
+            name: 用語集
+            purpose: 専門用語を集約し本文の探索コストを下げる
+            table_hint: "| 用語 | 定義 |"
+            required: conditional
+            condition: 本書に固有の専門用語がある場合。一般的な開発用語は共通用語集にあるため、ここには本書固有の用語のみ記載する。
+            source: 認知科学(Plain Language)
+            aspects: [documentation]
+            new: true
 
       - id: bd-cat-biz
         label: 業務・機能設計
@@ -381,7 +394,7 @@ phases:
           - 処理起動条件（バッチ/オンライン）に漏れはないか
         items:
           - id: bd-biz-system
-            name: 業務体系・業務処理概要
+            name: 業務体系・業務処理概要（業務の全体像と、何をどう処理するかのあらまし）
             purpose: 仕様変更に強い業務分割・処理形態を明確化する
             required: true
             source: 設計品質観点(機能性)
@@ -407,7 +420,7 @@ phases:
             source: 設計観点 S16
             aspects: [functional]
           - id: bd-processing
-            name: 処理方式の選定・確認
+            name: 処理方式の選定・確認（どのやり方で処理するかを決めて確かめる）
             purpose: 処理方式を選定し非機能要件と整合させる
             required: true
             source: 設計観点 S13
@@ -431,7 +444,8 @@ phases:
             name: 帳票一覧・帳票仕様
             purpose: 出力帳票の種類・様式・条件を明確化する
             table_hint: "| 帳票ID | 帳票名 | 出力条件 | 様式／媒体 |"
-            required: true
+            required: conditional
+            condition: 帳票・PDF等の出力機能がある場合
             source: 設計品質観点(機能性)
             aspects: [functional]
           - id: bd-io-item
@@ -491,7 +505,8 @@ phases:
             name: コード設計（コード体系）
             purpose: コード体系化・標準採用・外部接続先との整合を取る
             table_hint: "| コード名 | 桁数・形式 | 採番規則／準拠標準 |"
-            required: true
+            required: conditional
+            condition: 業務コード体系・採番規則を定義する場合
             source: 設計品質観点(機能性)
             aspects: [functional]
 
@@ -509,7 +524,7 @@ phases:
             aspects: [reliability, performance, scalability, operability, maintainability, portability, security, environment]
             expands: non_functional
           - id: bd-cross-cutting
-            name: 横断的関心事（セキュリティ・プライバシー・可観測性）
+            name: 横断的関心事（多くの機能に共通で必要な事柄：セキュリティ・プライバシー・可観測性）
             purpose: 機能ごとに見落としやすい横断要件を設計方針として明示する
             required: true
             source: "設計品質観点(Google: cross-cutting concerns)"
@@ -598,6 +613,15 @@ phases:
             required: true
             source: 認知科学(ADR/Nygard)
             aspects: [maintainability, documentation]
+            new: true
+          - id: dd-glossary
+            name: 用語集
+            purpose: 専門用語を集約し本文の探索コストを下げる
+            table_hint: "| 用語 | 定義 |"
+            required: conditional
+            condition: 本書に固有の専門用語がある場合。一般的な開発用語は共通用語集にあるため、ここには本書固有の用語のみ記載する。
+            source: 認知科学(Plain Language)
+            aspects: [documentation]
             new: true
 
       - id: dd-cat-logic
