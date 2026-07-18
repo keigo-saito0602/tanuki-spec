@@ -36,17 +36,19 @@ tanuki-spec-design
 python3 evaluation/coverage.py <基本設計書.md> --phase basic_design --strict
 python3 evaluation/coverage.py <詳細設計書.md> --phase detailed_design --strict
 python3 evaluation/design_traceability_gate.py <design-traceability.yaml>
-python3 evaluation/render_design_traceability_docs.py <design-traceability.yaml> --output-dir <成果物ディレクトリ>
+python3 evaluation/render_design_traceability_docs.py <design-traceability.yaml> --output-dir <phase>/tests
 ```
 
 8. レビューは`tanuki-spec-reviewer`へ渡す。設計工程は`--design-traceability`付きでレビュー記録を検証する。
 
 ## 出力
 
-- 基本設計書・詳細設計書
-- `design-traceability.yaml`（要件とBD/DDの正本）
-- `design-traceability.md`（正本から生成する対応表）
-- 要確認事項、既存コード調査結果、update時の影響範囲
+> 置き場所・命名は [`../docs/spec-directory-standard.md`](../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
+
+- `<phase>/02_基本設計書.md`、`<phase>/03_詳細設計書.md`
+- `<phase>/design-traceability.yaml`（要件とBD/DDの正本）
+- `<phase>/tests/design-traceability.md`（正本から生成する対応表）
+- `<phase>/reports/01_差分・未決事項.md`（要確認事項、既存コード調査結果、update時の影響範囲）
 
 ## 共有コア
 

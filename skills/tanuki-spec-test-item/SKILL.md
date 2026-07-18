@@ -36,18 +36,19 @@ tanuki-spec-test-item
 
 ```bash
 python3 evaluation/test_traceability_gate.py <test-traceability.yaml>
-python3 evaluation/render_test_item_docs.py <test-traceability.yaml> --output-dir <成果物ディレクトリ> --check
+python3 evaluation/render_test_item_docs.py <test-traceability.yaml> --output-dir <phase>/tests --check
 ```
 
 8. テスト工程のレビューが必要な場合は `tanuki-spec-reviewer` に渡し、`unit_test` または `integration_test` を `target` にしたレビュー記録を検証する。この工程では `--spec` や `coverage.py` を使わない。
 
 ## 出力
 
-- `test-traceability.yaml`（UT/IT と設計・要件の正本）
-- `unit-test-cases.md`
-- `integration-test-cases.md`
-- `v-model-coverage.md`
-- 要確認事項、差分追従時の影響範囲、既存 AC/ST の再利用方針
+> 置き場所・命名は [`../docs/spec-directory-standard.md`](../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
+
+- `<phase>/test-traceability.yaml`（UT/IT と設計・要件の正本）
+- `<phase>/tests/04_テスト項目書.md`（単体・結合・V字カバレッジを1本に統合。見出しは `## 単体テスト（UT）`、`## 結合テスト（IT）`、`## V字モデルカバレッジ`）
+- `<phase>/reports/01_差分・未決事項.md`（要確認事項、差分追従時の影響範囲、既存 AC/ST の再利用方針）
+- 現在レンダラは未実装のため、上記の統合形は実装時の出力仕様である。
 
 ## 禁止事項
 
