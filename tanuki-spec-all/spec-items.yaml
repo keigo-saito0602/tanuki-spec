@@ -91,7 +91,8 @@ phases:
             name: 用語集
             purpose: 専門用語を集約し本文の探索コストを下げる
             table_hint: "| 用語 | 定義 |"
-            required: false
+            required: conditional
+            condition: 本書に固有の専門用語がある場合。一般的な開発用語は共通用語集にあるため、ここには本書固有の用語のみ記載する。
             source: 認知科学(Plain Language)
             aspects: [documentation]
             new: true
@@ -375,6 +376,15 @@ phases:
             source: 認知科学(ADR/Nygard)
             aspects: [maintainability, documentation]
             new: true
+          - id: bd-glossary
+            name: 用語集
+            purpose: 専門用語を集約し本文の探索コストを下げる
+            table_hint: "| 用語 | 定義 |"
+            required: conditional
+            condition: 本書に固有の専門用語がある場合。一般的な開発用語は共通用語集にあるため、ここには本書固有の用語のみ記載する。
+            source: 認知科学(Plain Language)
+            aspects: [documentation]
+            new: true
 
       - id: bd-cat-biz
         label: 業務・機能設計
@@ -603,6 +613,15 @@ phases:
             required: true
             source: 認知科学(ADR/Nygard)
             aspects: [maintainability, documentation]
+            new: true
+          - id: dd-glossary
+            name: 用語集
+            purpose: 専門用語を集約し本文の探索コストを下げる
+            table_hint: "| 用語 | 定義 |"
+            required: conditional
+            condition: 本書に固有の専門用語がある場合。一般的な開発用語は共通用語集にあるため、ここには本書固有の用語のみ記載する。
+            source: 認知科学(Plain Language)
+            aspects: [documentation]
             new: true
 
       - id: dd-cat-logic
