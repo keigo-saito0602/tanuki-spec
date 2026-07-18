@@ -82,6 +82,7 @@ phases:
           - id: req-decision-summary
             name: 決定事項サマリ（表）
             purpose: 決定を一覧化しスキャン読みで追えるようにする
+            table_hint: "| 決定事項 | 決めた内容 | 根拠 |"
             required: false
             source: 認知科学(チャンク化)
             aspects: [documentation]
@@ -89,6 +90,7 @@ phases:
           - id: req-glossary
             name: 用語集
             purpose: 専門用語を集約し本文の探索コストを下げる
+            table_hint: "| 用語 | 定義 |"
             required: false
             source: 認知科学(Plain Language)
             aspects: [documentation]
@@ -111,6 +113,7 @@ phases:
           - id: req-scope
             name: システム化対象業務・スコープ定義（対象/対象外/範囲）
             purpose: システム化範囲を確定し対象漏れ・認識齟齬を防ぐ
+            table_hint: "| 業務／機能 | 対象／対象外 | 理由 |"
             required: true
             source: 要件品質観点(機能性)／要件定義観点 S21
             aspects: [functional]
@@ -118,6 +121,7 @@ phases:
           - id: req-stakeholder
             name: ステークホルダー・関係者体制（役割・権限・組織）
             purpose: 所掌の違いによる要求スコープ・実現レベルの食い違いを防ぐ
+            table_hint: "| 関係者 | 役割 | 権限 |"
             required: true
             source: 要件定義観点 S22/S56/S107
             aspects: [functional]
@@ -147,6 +151,7 @@ phases:
           - id: req-func-list
             name: 機能要件一覧・詳細（P5W2Hで整理）
             purpose: Priority/Who/When&条件/What&量/Where/Why/How/HowMuchの見落としを防ぐ
+            table_hint: "| 機能ID | 機能名 | 誰が・いつ・何を | 優先度 |"
             required: true
             source: 要件定義観点 S111
             aspects: [functional]
@@ -176,6 +181,7 @@ phases:
           - id: req-code
             name: コード設計・コード体系
             purpose: JIS/業界標準・既存コード表との整合を事前確認する
+            table_hint: "| コード名 | 桁数・形式 | 準拠標準／既存表 |"
             required: false
             source: 要件品質観点(機能性)
             aspects: [functional]
@@ -312,6 +318,7 @@ phases:
           - id: req-issue-log
             name: 課題管理・検討経緯記録（不採用案・廃案理由を含む）
             purpose: 論点の蒸し返し時に判断根拠を遡れるようにし手戻りを防ぐ
+            table_hint: "| 課題 | 検討経緯 | 結論／廃案理由 |"
             required: true
             source: 要件定義観点 S5/S111
             aspects: [documentation]
@@ -319,6 +326,7 @@ phases:
           - id: req-team
             name: 開発体制・スキル要件（要員計画）
             purpose: 必要な業務知識・技術知識を持つ人材確保を確認する
+            table_hint: "| 役割 | 必要スキル | 人数 |"
             required: true
             source: 要件定義観点 S22/S108
             aspects: [functional]
@@ -333,6 +341,7 @@ phases:
           - id: req-doc-system
             name: ドキュメント体系・成果物一覧・用語統一
             purpose: 粒度・用語を統一し後工程・保守での解釈齟齬を防ぐ
+            table_hint: "| 成果物 | 目的 | 作成タイミング |"
             required: false
             source: 要件品質観点(ドキュメンテーション)／要件定義観点 S113-115
             aspects: [documentation]
@@ -380,6 +389,7 @@ phases:
           - id: bd-trigger
             name: 処理起動条件一覧
             purpose: バッチ/オンライン/センタカットの起動条件を運用設計・試験の基礎にする
+            table_hint: "| 処理 | 種別（バッチ／オンライン） | 起動条件・契機 |"
             required: true
             source: 設計品質観点(機能性)
             aspects: [functional, operability]
@@ -392,6 +402,7 @@ phases:
           - id: bd-func-spec
             name: 機能一覧・機能仕様（入力/処理/出力定義）
             purpose: INPUT/PROCESS/OUTPUT単位で外部仕様を確定する
+            table_hint: "| 機能ID | 機能名 | INPUT | PROCESS | OUTPUT |"
             required: true
             source: 設計観点 S16
             aspects: [functional]
@@ -412,24 +423,28 @@ phases:
           - id: bd-screen
             name: 画面一覧・画面遷移設計
             purpose: 触れる画面と遷移を確定し漏れ・重複のないUI仕様にする
+            table_hint: "| 画面ID | 画面名 | 遷移元→遷移先 | 主な操作 |"
             required: true
             source: 設計品質観点(機能性)
             aspects: [usability, functional]
           - id: bd-report
             name: 帳票一覧・帳票仕様
             purpose: 出力帳票の種類・様式・条件を明確化する
+            table_hint: "| 帳票ID | 帳票名 | 出力条件 | 様式／媒体 |"
             required: true
             source: 設計品質観点(機能性)
             aspects: [functional]
           - id: bd-io-item
             name: 入出力項目定義（データ項目・CRUD整理）
             purpose: 桁数・精度・編集書式を統一し漏れ・重複を防ぐ
+            table_hint: "| 項目名 | 型・桁・精度 | 編集書式 | CRUD |"
             required: true
             source: 設計品質観点(機能性)
             aspects: [functional]
           - id: bd-message
             name: メッセージ一覧・エラーメッセージ仕様
             purpose: 通知・警告・エラーの内容と形式を統一する
+            table_hint: "| メッセージID | 区分（通知／警告／エラー） | 文言 | 発生条件 |"
             required: true
             source: 設計品質観点(機能性)
             aspects: [usability, functional]
@@ -475,6 +490,7 @@ phases:
           - id: bd-code
             name: コード設計（コード体系）
             purpose: コード体系化・標準採用・外部接続先との整合を取る
+            table_hint: "| コード名 | 桁数・形式 | 採番規則／準拠標準 |"
             required: true
             source: 設計品質観点(機能性)
             aspects: [functional]
@@ -547,6 +563,7 @@ phases:
           - id: bd-quality-select
             name: 品質項目一覧の選択・設計方針への反映
             purpose: ISO25010系の観点を選択しプロジェクト特性に応じた設計方針として明文化する
+            table_hint: "| 品質特性（ISO25010） | 採否 | 設計方針 |"
             required: true
             source: 設計観点 S102
             aspects: [documentation]
@@ -593,12 +610,14 @@ phases:
           - id: dd-state-matrix
             name: 状態遷移図・状態遷移マトリクス
             purpose: 状態×イベントを総当たりで整理し網羅的内部仕様と試験項目を導出する
+            table_hint: "| 状態＼イベント | E1 | E2 | … |（セルは遷移先状態／-）"
             required: true
             source: 設計観点 S26
             aspects: [functional, reliability]
           - id: dd-decision-table
             name: デシジョンテーブル・真理値表
             purpose: 処理条件の全組合せを漏れなく列挙し正当性・保守性を担保する
+            table_hint: "| 条件／規則 | R1 | R2 | … |（条件 Y/N/-、動作 X）"
             required: true
             source: 設計観点 S43
             aspects: [functional, maintainability]
@@ -631,6 +650,7 @@ phases:
           - id: dd-crud
             name: CRUD分析（詳細設計版）
             purpose: 重要データへのC/U/Dを整理し内部データ管理の網羅性を確認する
+            table_hint: "| 機能・処理＼データ | C | R | U | D |"
             required: true
             source: 設計観点 S29
             aspects: [functional]
@@ -657,6 +677,7 @@ phases:
           - id: dd-input-check
             name: 入力データチェック仕様
             purpose: チェック順序・内容・規定外/省略時対処を詳細化し不正データ混入を防ぐ
+            table_hint: "| 項目 | チェック内容 | 規定外・省略時の対処 |"
             required: true
             source: 設計品質観点(機能性)
             aspects: [functional, security]
@@ -670,6 +691,7 @@ phases:
           - id: dd-errorcode
             name: エラーコード・メッセージ詳細仕様
             purpose: エラー条件ごとに一意なID/メッセージを割当て原因調査性を高める
+            table_hint: "| エラーID | メッセージ | 発生条件 | 対処 |"
             required: true
             source: 設計観点 S45
             aspects: [maintainability, usability]

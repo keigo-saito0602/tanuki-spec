@@ -27,3 +27,17 @@
 11. **Plain Language**: [Plain Language Principles (digital.gov)](https://digital.gov/guides/plain-language/principles): 読者に合わせ専門用語を避け、短文・能動態・具体語・箇条書きで書く根拠。
 
 本設計では、上記を「読み手モデルを書類ごとに分ける（要件＝非技術者／設計＝第三者技術者）」「サマリ層を冒頭に必須化」「著者メタを本文から隔離」「カテゴリ単位の節末チェックリスト」として採用した。
+
+---
+
+## テンプレート本文の可読性（取得日: 2026-07-17）
+
+上記11原則の適用後も、テンプレート本文の49〜56%の行がAI向けマーカーで占められていた（実測）。
+マーカーを本文から付録へ移す判断の根拠を、次の一次情報に求めた。番号は上の11原則と独立している。
+
+12. **段階的開示の適用範囲**: [Progressive Disclosure (NN/g)](https://www.nngroup.com/articles/progressive-disclosure/) ／ [Progressive Disclosure (NN/g 動画)](https://www.nngroup.com/videos/progressive-disclosure/): 初期表示と二次表示の分割は「頻繁に必要なものを前に、まれにしか使わないものを後ろへ」で決める。カード分類で重要度を順位づけ、低優先の項目を二次表示の候補にする。テンプレートでは、記入ガイド・出典・品質観点（記入時とレビュー時にしか要らない）を付録へ、決定内容（常に読む）を本文へ置く根拠。
+13. **フォームの認知負荷**: [Placeholders in Form Fields Are Harmful (NN/g)](https://www.nngroup.com/articles/form-design-placeholders/) ／ [4 Principles to Reduce Cognitive Load in Forms (NN/g)](https://www.nngroup.com/articles/4-principles-reduce-cognitive-load/): フィールド内に消えるヒントを置くと記憶負荷が増え、エラーと所要時間が増える。ラベルは常時可視にし、ヒントは書式の補助に限る。テンプレートは実質「記入フォーム」であり、記入ガイドを表として常時可視の付録に置き、本文の見出し（＝ラベル）を残す根拠。
+14. **Markdownソースの可読性**: [Google Markdown style guide](https://google.github.io/styleguide/docguide/style.html) ／ [Semantic Line Breaks](https://github.com/bobheadxi/readable): 1行に1つの意味単位を置くと、横方向の視線移動が減り、差分も1行に収まる。レンダリング結果とソースの見え方は別物として扱う。FILLブロックを1行へ畳み、項目1つを「見出し＋1行」に収めた根拠。
+
+これらを「本文＝見出しとFILLブロックのみ」「根拠＝末尾の付録表」「節内は必須→条件付→任意の順」として採用した。
+`spec-item` マーカーは、どのコードも読まない死んだ出力だったため削除した。
