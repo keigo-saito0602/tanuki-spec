@@ -27,3 +27,20 @@ class CoverageTest(unittest.TestCase):
         data = yaml.safe_load((Path(__file__).resolve().parents[1] / "spec-items.yaml").read_text(encoding="utf-8"))
         failures = coverage.structural_failures("---\ntemplate: requirements\nspec_items_version: '0.0.0'\n---", data, "requirements")
         self.assertTrue(any("spec_items_version が不一致" in failure for failure in failures))
+
+    def test_not_applicable_allows_evidence_line(self):
+        """根拠を書く規約と対象外判定を両立させる（GAP-017）。"""
+        body = (
+            "- **根拠**: [参照] `_project/profile.md`対象外リスト\n"
+            "- **結論**: [対象外: 業務パッケージを導入しない。FirebaseはBaaS基盤である]"
+        )
+        self.assertEqual(coverage.classify_body(body, "conditional"), (False, "対象外"))
+
+    def test_not_applicable_with_evidence_still_rejects_empty_reason(self):
+        body = "- **根拠**: [参照] profile.md\n- **結論**: [対象外: ]"
+        self.assertEqual(coverage.classify_body(body, "conditional"), (False, "対象外（不正）"))
+
+    def test_not_applicable_rejects_extra_content(self):
+        """対象外と書きつつ別の内容も書いてある場合は認めない。"""
+        body = "- **根拠**: [参照] profile.md\n- **結論**: [対象外: 理由]\n- 補足: ただし一部は実施する"
+        self.assertEqual(coverage.classify_body(body, "conditional"), (False, "対象外（不正）"))
