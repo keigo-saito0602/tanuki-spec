@@ -44,3 +44,13 @@ class CoverageTest(unittest.TestCase):
         """対象外と書きつつ別の内容も書いてある場合は認めない。"""
         body = "- **根拠**: [参照] profile.md\n- **結論**: [対象外: 理由]\n- 補足: ただし一部は実施する"
         self.assertEqual(coverage.classify_body(body, "conditional"), (False, "対象外（不正）"))
+
+    def test_not_applicable_allows_evidence_on_the_same_line(self):
+        """表のセルは1行しか持てないため、根拠と結論が同一行に並ぶ（GAP-017）。"""
+        body = "- **根拠**: [参照] `_project/profile.md`。 [対象外: 新規アプリで一括移行元がない]"
+        self.assertEqual(coverage.classify_body(body, "conditional"), (False, "対象外"))
+
+    def test_same_line_evidence_still_rejects_missing_not_applicable(self):
+        """同一行に根拠しかない場合、対象外にはならず通常の充足判定になる。"""
+        body = "- **根拠**: [参照] profile.md。移行は将来検討する"
+        self.assertEqual(coverage.classify_body(body, "conditional"), (True, "充足"))
