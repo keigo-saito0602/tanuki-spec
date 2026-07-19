@@ -50,7 +50,7 @@ class CoverageTest(unittest.TestCase):
         body = "- **根拠**: [参照] `_project/profile.md`。 [対象外: 新規アプリで一括移行元がない]"
         self.assertEqual(coverage.classify_body(body, "conditional"), (False, "対象外"))
 
-    def test_same_line_evidence_still_rejects_missing_not_applicable(self):
+    def test_same_line_evidence_without_marker_is_filled(self):
         """同一行に根拠しかない場合、対象外にはならず通常の充足判定になる。"""
         body = "- **根拠**: [参照] profile.md。移行は将来検討する"
         self.assertEqual(coverage.classify_body(body, "conditional"), (True, "充足"))
