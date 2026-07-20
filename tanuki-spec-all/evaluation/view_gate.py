@@ -45,6 +45,11 @@ def table_row(view_text: str, identifier: str) -> str | None:
     return None
 
 
+def table_cells(row: str) -> list[str]:
+    """表の行をセルへ分解する。前後の | と余白を落とす。"""
+    return [cell.strip() for cell in row.strip().strip("|").split("|")]
+
+
 def validate(view_text: str, data: dict) -> list[str]:
     failures: list[str] = []
     known = known_ids(data)
@@ -65,6 +70,8 @@ def validate(view_text: str, data: dict) -> list[str]:
             failures.append(f"サマリに要件が載っていません: {identifier}")
             continue
         row = table_row(view_text, identifier)
+        cells = table_cells(row) if row is not None else []
+        matched_cells: set[int] = set()
         for field in STATE_FIELDS:
             expected = requirement.get(field)
             if expected is None:
@@ -72,8 +79,13 @@ def validate(view_text: str, data: dict) -> list[str]:
             if row is None:
                 failures.append(f"{identifier}: {field} を持つ要件は表の行で書いてください")
                 break
-            if not re.search(rf"\b{re.escape(str(expected))}\b", row):
-                failures.append(f"{identifier}: {field} が正本と一致しません（正本={expected}）")
+            hits = [i for i, cell in enumerate(cells) if cell == str(expected) and i not in matched_cells]
+            if not hits:
+                failures.append(
+                    f"{identifier}: {field} が正本と一致しません（正本={expected}、サマリの行={row}）"
+                )
+                continue
+            matched_cells.add(hits[0])
     return failures
 
 

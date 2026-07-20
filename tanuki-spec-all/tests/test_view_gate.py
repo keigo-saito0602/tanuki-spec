@@ -105,3 +105,35 @@ class StateConsistencyTest(unittest.TestCase):
 
     def test_requirement_without_state_skips_the_check(self):
         self.assertEqual(view_gate.validate(COMPLETE_VIEW, traceability()), [])
+
+    def test_state_word_in_another_column_does_not_count_as_match(self):
+        """備考列に状態語が偶然含まれても、乖離列の不一致を見逃さない。"""
+        data = traceability()
+        data["requirements"][0]["implementation_status"] = "implemented"
+        data["requirements"][0]["gap_severity"] = "critical"
+        view = (
+            "# サマリ\n"
+            "| ID | 要件 | 実装 | 乖離 | 備考 |\n"
+            "| --- | --- | --- | --- | --- |\n"
+            "| FR-101 | 予約を作成する | implemented | minor | critical な影響が出うる |\n"
+            "| FR-102 | 予約を取り消す | partial | minor | |\n"
+        )
+        failures = view_gate.validate(view, data)
+        self.assertTrue(
+            any("FR-101" in f and "gap_severity" in f for f in failures),
+            f"備考列の語で不一致を見逃している: {failures}",
+        )
+
+    def test_exact_cell_match_is_required(self):
+        """セルが期待値を含むだけでは一致とみなさない。"""
+        data = traceability()
+        data["requirements"][0]["gap_severity"] = "none"
+        view = (
+            "# サマリ\n"
+            "| ID | 要件 | 実装 | 乖離 |\n"
+            "| --- | --- | --- | --- |\n"
+            "| FR-101 | 予約を作成する | implemented | none相当 |\n"
+            "| FR-102 | 予約を取り消す | partial | minor |\n"
+        )
+        failures = view_gate.validate(view, data)
+        self.assertTrue(any("FR-101" in f and "gap_severity" in f for f in failures))
