@@ -101,7 +101,7 @@ python3 evaluation/spec_gate.py <記入済み仕様書.md> --traceability <trace
 
 1. `spec-items.yaml` の `summary_view` を読み、節と順序を確認する。
 2. `item_id` を持つ節は、記入済み仕様書の該当FILLブロックを**凝縮して書き直す**。本文をコピーしない。
-3. `source: traceability` の節は `traceability.yaml` から表を起こす。`implementation_status` と `gap_severity` があれば列に含める。
+3. `source: traceability` の節は `traceability.yaml` から表を起こす。`implementation_status` と `gap_severity` があれば列に含める。**1つの要件IDは状態を持つ表に1回だけ載せる**（`view_gate.py` は最初に見つけた表行で状態一致を判定するため、同じIDを複数の表行に書くと検査が曖昧になる）。
 4. `- **根拠**:` は書かない。根拠は本論層（`01_要件定義書.md`）の責務。
 5. 表の1セルは1行に収める。長くなるものは `note` へ逃がす。
 6. 全体で100行程度に収める。超えたら節を減らすのではなく表へ畳む。
