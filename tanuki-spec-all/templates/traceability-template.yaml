@@ -17,11 +17,15 @@ business_flows:
 
 requirements:
   - id: BR-001
-    status: in_scope
+    status: in_scope # in_scope / deferred / out_of_scope / draft（in_scope以外は reason 必須）
     type: business # business / functional / non_functional
     statement: "<満たすべき業務要件・機能要件・非機能要件>"
     user_story_ids: [US-001]
     flow_step_ids: [BF-001-S01]
+    # 以下3つは任意。既存システムへ追従して仕様を書く場合だけ記入する。
+    # implementation_status: implemented # implemented / partial / not_implemented
+    # gap_severity: none # none / minor / critical
+    # note: "<乖離の内容。gap_severity だけでは伝わらない詳細をここへ>"
 
 acceptance_tests:
   - id: AC-001
