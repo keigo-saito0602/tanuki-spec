@@ -132,7 +132,7 @@ class StateConsistencyTest(unittest.TestCase):
             "# サマリ\n"
             "| ID | 要件 | 実装 | 乖離 |\n"
             "| --- | --- | --- | --- |\n"
-            "| FR-101 | 予約を作成する | implemented | none相当 |\n"
+            "| FR-101 | 予約を作成する | implemented | none 相当 |\n"
             "| FR-102 | 予約を取り消す | partial | minor |\n"
         )
         failures = view_gate.validate(view, data)
