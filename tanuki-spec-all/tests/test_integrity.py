@@ -66,10 +66,20 @@ class SummaryViewTest(unittest.TestCase):
         known_ids = {item["id"] for _, _, item in coverage.iter_items(self.data, "requirements")}
         for entry in self.data["summary_view"]["requirements"]:
             self.assertIn("section", entry)
+            # item_id と source は排他。両方あると消費側がどちらを使うか決められない。
+            self.assertNotEqual(
+                "item_id" in entry, "source" in entry,
+                f"item_id と source はどちらか一方だけ指定してください: {entry}",
+            )
             if "item_id" in entry:
                 self.assertIn(entry["item_id"], known_ids, f"未知の item_id: {entry['item_id']}")
             else:
                 self.assertEqual(entry.get("source"), "traceability", f"source が不正: {entry}")
+
+    def test_item_ids_are_not_reused_across_sections(self):
+        """同じFILLブロックを2つの節に貼ると内容が重複する。"""
+        item_ids = [e["item_id"] for e in self.data["summary_view"]["requirements"] if "item_id" in e]
+        self.assertEqual(len(item_ids), len(set(item_ids)), "item_id が複数の節で使い回されている")
 
     def test_sections_are_unique(self):
         sections = [entry["section"] for entry in self.data["summary_view"]["requirements"]]
