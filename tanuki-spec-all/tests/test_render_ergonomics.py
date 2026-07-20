@@ -55,8 +55,8 @@ class ItemOrderTest(unittest.TestCase):
         self.assertEqual([i["id"] for i in generate_templates.by_priority(items)], ["b", "d", "c", "a"])
 
 
-class NonFunctionalTableTest(unittest.TestCase):
-    """35の非機能明細は大項目ごとの表にする。親のFILL内へ入れ子にはしない。"""
+class NonFunctionalSectionTest(unittest.TestCase):
+    """35の非機能明細は大項目ごとの節にする。親のFILL内へ入れ子にはしない。"""
 
     NF = {
         "source": "非機能観点",
