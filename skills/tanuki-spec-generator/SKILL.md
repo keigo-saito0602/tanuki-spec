@@ -113,6 +113,10 @@ python3 evaluation/spec_gate.py <記入済み仕様書.md> --traceability <trace
 python3 evaluation/view_gate.py <phase>/00_サマリ.md --traceability <phase>/traceability.yaml
 ```
 
+**このゲートが見るのはIDの実在性・網羅性・状態一致の3つだけで、文章表現は一切検査しない。**書きぶり・言い回し・凝縮の仕方はAIの裁量に委ね、正本とのズレだけを機械が担保する設計（美しさはAI、網羅性は機械）。通過は文章品質の保証ではない。
+
+**サマリ層はDoDの条件に含めない。**DoDの判定対象は本論層（`01_要件定義書.md`）のままであり、[`../FLOW.md`](../FLOW.md) ⑥のチェックリストに `view_gate.py` は加えない。層2だけ読んで層1が形骸化するのを防ぐため。
+
 不通過なら、サマリではなく**正本のどちらが正しいかを判断してから**直す。サマリだけ辻褄を合わせない。
 
 ---
@@ -121,6 +125,7 @@ python3 evaluation/view_gate.py <phase>/00_サマリ.md --traceability <phase>/t
 
 > 置き場所・命名は [`../docs/spec-directory-standard.md`](../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
 
+- `<phase>/00_サマリ.md`（サマリ層。人が普段読む100行程度。要件定義書のぶんだけ作る）
 - `<phase>/01_要件定義書.md`（記入済み要件定義書）
 - `<phase>/traceability.yaml`（US → BR/FR/NFR → AC → ST の正本）
 - `<phase>/tests/requirements-traceability.md`、`<phase>/tests/system-test-cases.md`
