@@ -864,3 +864,23 @@ ai_quality_perspectives:
     - {id: aiq-poc-metrics,   name: PoCの定量・定性評価項目,    purpose: 網羅率/適用率/安定性(再実行のばらつき)で検証, source: "AI品質観点 5.3"}
     - {id: aiq-case-feedback, name: プロジェクト事例の反映,     purpose: レビューのボトルネック化/出力ばらつき等を踏まえ継続改善, source: "AI品質観点 6.2"}
     - {id: aiq-role-split,    name: 生成AI活用の作業配分見直し, purpose: AIが生成/判定・人が補完/最終判定と役割分担し責任所在を保つ, source: "AI品質観点 6.2-5"}
+
+# =============================================================================
+# summary_view — サマリ層（00_サマリ.md）に載せる節と順序
+# -----------------------------------------------------------------------------
+# 人が普段読む100行の文書を、どの節でどの順に組み立てるかの宣言。
+# item_id を持つ節は、記入済み仕様書の該当FILLブロックを凝縮して書く。
+# source: traceability の節は traceability.yaml から表を起こす。
+# 節の追加・削除はこのファイルで行う。SKILL.md には節名を書かない。
+# =============================================================================
+summary_view:
+  requirements:
+    - {section: "目的", item_id: req-purpose}
+    - {section: "利用者", item_id: req-stakeholder}
+    - {section: "ユーザーストーリー", source: traceability}
+    - {section: "機能要件", source: traceability}
+    - {section: "入力要件", item_id: req-io}
+    - {section: "データ要件", item_id: req-datamodel}
+    - {section: "非機能要件", source: traceability}
+    - {section: "受け入れ条件", source: traceability}
+    - {section: "未決事項・スコープ外", item_id: req-open-questions}
