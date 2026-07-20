@@ -148,13 +148,14 @@ class OptionalImplementationFieldsTest(unittest.TestCase):
 
     def test_valid_values_are_accepted(self):
         failures: list[str] = []
-        traceability_gate.validate_optional_choice(
-            self._requirement(implementation_status="implemented"),
-            "implementation_status",
-            traceability_gate.IMPLEMENTATION_STATUS_VALUES,
-            "要件",
-            failures,
-        )
+        for value in ("implemented", "partial", "not_implemented"):
+            traceability_gate.validate_optional_choice(
+                self._requirement(implementation_status=value),
+                "implementation_status",
+                traceability_gate.IMPLEMENTATION_STATUS_VALUES,
+                "要件",
+                failures,
+            )
         self.assertEqual(failures, [])
 
     def test_absent_field_is_accepted(self):
