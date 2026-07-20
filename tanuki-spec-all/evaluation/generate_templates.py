@@ -90,32 +90,28 @@ def render_item(item: dict, char_labels: dict, non_functional: dict, guides: lis
 
 
 def render_non_functional(parent_id: str, non_functional: dict) -> list[str]:
-    """35の非機能明細を大項目ごとの表にする。
+    """35の非機能明細を大項目ごとの節にする。
 
-    どの明細も「観点・項目名・確認指標・記入値ひとつ」の均一な構造で、リスト
-    展開すると1項目4行×35で140行を超える。確認指標を常時可視の列（消えない
-    ヒント）に固定し、1項目1行の表へ畳む。記入セルは1行しか持てないため、
-    非機能の記入は「目標値 ／ 根拠: US-xxx」のように1行へまとめる。
+    記入済み文書では各明細に根拠と結論が入る。表のセルへ押し込むと1セルが長大になり、
+    `-` は表セル内でリストとして描画されない。空テンプレートの行数より、記入後の
+    可読性を優先する（設計書 2026-07-19 §5.6）。
+    明細は見出しにせず太字ラベルにする。見出しにすると6階層目が生まれ、
+    「見出しは3階層まで」のチャンク化原則に反するため。
     """
     lines = ["#### 非機能要件の個別明細", ""]
-    lines.append("観点ごとに目標値・方式を記入する。確認指標は記入の手がかり。記入は1行にまとめ、")
-    lines.append(f"詳しい根拠が要る場合は付録を参照する。適用外は `[対象外: 理由]`、未定は `[要確認: 質問]` と書く。")
+    lines.append("観点ごとに目標値・方式を記入する。確認指標は記入の手がかり。")
+    lines.append("適用外は `[対象外: 理由]`、未定は `[要確認: 質問]` と書く。")
     lines.append("")
     for major in non_functional["major_items"]:
         lines.append(f"##### {major['label']}")
-        lines.append("| 必須 | 項目 | 確認指標 | 記入 |")
-        lines.append("| --- | --- | --- | --- |")
+        lines.append("")
         for index, sub in enumerate(major["sub_items"], start=1):
             is_required = bool(major.get("required", True) and sub.get("required", True))
             sub_id = f"{parent_id}--{major['id']}--{index:02d}"
-            cells = [
-                "必須" if is_required else "任意",
-                escape_cell(sub["name"]),
-                escape_cell(sub["metric"]),
-                fill_block(sub_id),
-            ]
-            lines.append("| " + " | ".join(cells) + " |")
-        lines.append("")
+            mark = "［必須］" if is_required else "［任意］"
+            lines.append(f"**{sub['name']}**{mark}（確認指標: {sub['metric']}）")
+            lines.append(fill_block(sub_id))
+            lines.append("")
     return lines
 
 
