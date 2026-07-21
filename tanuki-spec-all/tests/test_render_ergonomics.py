@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 import unittest
@@ -54,8 +55,8 @@ class ItemOrderTest(unittest.TestCase):
         self.assertEqual([i["id"] for i in generate_templates.by_priority(items)], ["b", "d", "c", "a"])
 
 
-class NonFunctionalTableTest(unittest.TestCase):
-    """35の非機能明細は大項目ごとの表にする。親のFILL内へ入れ子にはしない。"""
+class NonFunctionalSectionTest(unittest.TestCase):
+    """35の非機能明細は大項目ごとの節にする。親のFILL内へ入れ子にはしない。"""
 
     NF = {
         "source": "非機能観点",
@@ -82,17 +83,28 @@ class NonFunctionalTableTest(unittest.TestCase):
         self.assertFalse(filled, "空テンプレートの親項目が充足と判定されている")
         self.assertEqual(status, "未記入")
 
-    def test_each_major_becomes_a_table_with_child_fill_cells(self):
+    def test_each_major_becomes_a_section_with_bold_labels(self):
+        """明細は太字ラベル＋独立行のFILL。見出しにすると6階層目が生まれるため使わない。"""
         text = self._render()
         self.assertIn("##### 可用性", text)
-        self.assertIn("| 必須 | 項目 | 確認指標 | 記入 |", text)
-        self.assertIn("| 必須 | 継続性 | 稼働率/RTO | <!-- FILL:START x-demo--nf-a--01 -->（未記入）<!-- FILL:END x-demo--nf-a--01 -->", text)
-        self.assertIn("| 必須 | 耐障害性 | 冗長化 | <!-- FILL:START x-demo--nf-a--02 -->（未記入）<!-- FILL:END x-demo--nf-a--02 -->", text)
+        self.assertNotIn("| 必須 | 項目 | 確認指標 | 記入 |", text, "表形式が残っている")
+        self.assertNotIn("###### ", text, "見出し階層が6段目まで深くなっている")
+        self.assertIn("**継続性**［必須］（確認指標: 稼働率/RTO）", text)
+        self.assertIn(
+            "<!-- FILL:START x-demo--nf-a--01 -->（未記入）<!-- FILL:END x-demo--nf-a--01 -->",
+            text,
+        )
 
     def test_optional_major_marks_children_as_optional(self):
         text = self._render()
         self.assertIn("##### 移行性", text)
-        self.assertIn("| 任意 | 移行方式 | 展開ステップ数 | <!-- FILL:START x-demo--nf-mig--01 -->", text)
+        self.assertIn("**移行方式**［任意］（確認指標: 展開ステップ数）", text)
+
+    def test_marker_ids_and_count_are_unchanged(self):
+        """IDと個数が変わると既存の記入済み文書が壊れる。"""
+        text = self._render()
+        starts = re.findall(r"<!--\s*FILL:START\s+(x-demo--nf-[^\s]+)\s*-->", text)
+        self.assertEqual(starts, ["x-demo--nf-a--01", "x-demo--nf-a--02", "x-demo--nf-mig--01"])
 
     def test_non_functional_children_are_not_duplicated_into_the_appendix(self):
         guides: list = []

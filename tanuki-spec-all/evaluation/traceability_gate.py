@@ -15,7 +15,10 @@ except ImportError:
     sys.exit("PyYAML が必要です: python3 -m pip install -r requirements.txt")
 
 
-STATUS_VALUES = {"in_scope", "deferred", "out_of_scope"}
+# draft は「要件そのものが未確定」を表す。実装状態（implementation_status）とは別軸。
+STATUS_VALUES = {"in_scope", "deferred", "out_of_scope", "draft"}
+IMPLEMENTATION_STATUS_VALUES = {"implemented", "partial", "not_implemented"}
+GAP_SEVERITY_VALUES = {"none", "minor", "critical"}
 ID_PATTERNS = {
     "user_stories": re.compile(r"^US-\d{3,}$"),
     "business_flows": re.compile(r"^BF-\d{3,}$"),
@@ -57,7 +60,7 @@ def validate_status(record: dict, label: str, failures: list[str]) -> bool:
     identifier = record.get("id", "<IDなし>")
     status = record.get("status")
     if status not in STATUS_VALUES:
-        failures.append(f"{label} {identifier}: status は in_scope/deferred/out_of_scope で指定してください")
+        failures.append(f"{label} {identifier}: status は in_scope/deferred/out_of_scope/draft で指定してください")
         return False
     if status != "in_scope":
         if not nonempty_text(record.get("reason")):
@@ -92,6 +95,20 @@ def require_list(record: dict, field: str, label: str, failures: list[str]) -> l
         failures.append(f"{label} {record.get('id', '<IDなし>')}: {field} は1件以上必要です")
         return []
     return value
+
+
+def validate_optional_choice(record: dict, field: str, allowed: set[str], label: str, failures: list[str]) -> None:
+    """任意フィールドを検証する。未記入は許し、書いてあるなら値を閉じた集合に限る。
+
+    既存案件は実装状態を持たない。新規要件も実装前は書けない。よって必須にはしない。
+    ただし書くなら値を固定しないと、表記ゆれを機械が検出できなくなる。
+    """
+    value = record.get(field)
+    if value is None:
+        return
+    if value not in allowed:
+        allowed_text = "/".join(sorted(allowed))
+        failures.append(f"{label} {record.get('id', '<IDなし>')}: {field} は {allowed_text} で指定してください")
 
 
 def validate_references(
@@ -200,6 +217,8 @@ def validate(data: dict) -> list[str]:
         if not validate_status(requirement, "要件", failures):
             continue
         require_text(requirement, "statement", "要件", failures)
+        validate_optional_choice(requirement, "implementation_status", IMPLEMENTATION_STATUS_VALUES, "要件", failures)
+        validate_optional_choice(requirement, "gap_severity", GAP_SEVERITY_VALUES, "要件", failures)
         if requirement.get("type") not in REQUIREMENT_TYPES:
             failures.append(f"要件 {requirement.get('id', '<IDなし>')}: type は business/functional/non_functional で指定してください")
         story_ids = validate_references(requirement, "user_story_ids", users, "要件", "ユーザーストーリー", failures)

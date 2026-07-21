@@ -95,12 +95,37 @@ python3 evaluation/spec_gate.py <記入済み仕様書.md> --traceability <trace
 
 `quick` モードでは、必須項目のみを生成・評価する。
 
+### サマリ層を書く
+
+出力ゲートを通過したら、人が普段読む `00_サマリ.md` を書く。
+
+1. `spec-items.yaml` の `summary_view` を読み、節と順序を確認する。
+2. `item_id` を持つ節は、記入済み仕様書の該当FILLブロックを**凝縮して書き直す**。本文をコピーしない。
+3. `source: traceability` の節は `traceability.yaml` から表を起こす。`implementation_status` と `gap_severity` があれば列に含める。**1つの要件IDは状態を持つ表に1回だけ載せる**（`view_gate.py` は最初に見つけた表行で状態一致を判定するため、同じIDを複数の表行に書くと検査が曖昧になる）。
+4. `- **根拠**:` は書かない。根拠は本論層（`01_要件定義書.md`）の責務。
+5. 表の1セルは1行に収める。長くなるものは `note` へ逃がす。
+6. 全体で100行程度に収める。超えたら節を減らすのではなく表へ畳む。
+7. 文章は `tanuki-japanese-tech-writing` に従う。
+
+書き終えたら整合を検証する。
+
+```bash
+python3 evaluation/view_gate.py <phase>/00_サマリ.md --traceability <phase>/traceability.yaml
+```
+
+**このゲートが見るのはIDの実在性・網羅性・状態一致の3つだけで、文章表現は一切検査しない。**書きぶり・言い回し・凝縮の仕方はAIの裁量に委ね、正本とのズレだけを機械が担保する設計（美しさはAI、網羅性は機械）。通過は文章品質の保証ではない。
+
+**サマリ層はDoDの条件に含めない。**DoDの判定対象は本論層（`01_要件定義書.md`）のままであり、[`../FLOW.md`](../FLOW.md) ⑥のチェックリストに `view_gate.py` は加えない。層2だけ読んで層1が形骸化するのを防ぐため。
+
+不通過なら、サマリではなく**正本のどちらが正しいかを判断してから**直す。サマリだけ辻褄を合わせない。
+
 ---
 
 ## 出力
 
 > 置き場所・命名は [`../docs/spec-directory-standard.md`](../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
 
+- `<phase>/00_サマリ.md`（サマリ層。人が普段読む100行程度。要件定義書のぶんだけ作る）
 - `<phase>/01_要件定義書.md`（記入済み要件定義書）
 - `<phase>/traceability.yaml`（US → BR/FR/NFR → AC → ST の正本）
 - `<phase>/tests/requirements-traceability.md`、`<phase>/tests/system-test-cases.md`

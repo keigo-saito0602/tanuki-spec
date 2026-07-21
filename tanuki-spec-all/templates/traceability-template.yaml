@@ -4,7 +4,12 @@ version: "1.0"
 user_stories:
   - id: US-001
     status: in_scope
-    statement: "<誰が、何をしたいか、なぜか>"
+    # 形式（Who / What / Why を必ず含める。いつ は任意）:
+    #   [<いつ>、]<誰>は<何>をしたい。なぜなら<理由>だから。
+    # Why を省略しない。理由がないものはユーザーストーリーではなく単なる操作の列挙になる。
+    # いつ（きっかけ・状況）は、トリガーが本質のストーリーだけに付ける。常時できる操作には付けない
+    # （埋め草になる）。状況の詳細は acceptance_tests の given/when が正本なので、ここでは重複させない。
+    statement: "[<いつ>、]<誰>は<何>をしたい。なぜなら<理由>だから。"
 
 business_flows:
   - id: BF-001
@@ -17,11 +22,15 @@ business_flows:
 
 requirements:
   - id: BR-001
-    status: in_scope
+    status: in_scope # in_scope / deferred / out_of_scope / draft（in_scope以外は reason 必須）
     type: business # business / functional / non_functional
     statement: "<満たすべき業務要件・機能要件・非機能要件>"
     user_story_ids: [US-001]
     flow_step_ids: [BF-001-S01]
+    # 以下3つは任意。既存システムへ追従して仕様を書く場合だけ記入する。
+    # implementation_status: implemented # implemented / partial / not_implemented
+    # gap_severity: none # none / minor / critical
+    # note: "<乖離の内容。gap_severity だけでは伝わらない詳細をここへ>"
 
 acceptance_tests:
   - id: AC-001

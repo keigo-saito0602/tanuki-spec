@@ -18,6 +18,12 @@ ROOT = Path(__file__).resolve().parent.parent
 SSOT = ROOT / "spec-items.yaml"
 BLOCK_RE = r"<!--\s*FILL:START\s+{id}\s*-->(.*?)<!--\s*FILL:END\s+{id}\s*-->"
 UNFILLED_MARKERS = ("（未記入）", "(未記入)")
+EVIDENCE_LINE_RE = re.compile(r"^[-*]\s*\*\*根拠\*\*:")
+# 対象外は「- **結論**: [対象外: 理由]」のように箇条書き・ラベル付きで書かれる。
+# 行頭の記号とラベルを剥がした残りが [対象外: 理由] 単独であることを求める。
+# 表のセルは1行しか持てず、根拠と結論が同一行に並ぶことがある（without_evidence参照）。
+NOT_APPLICABLE_RE = re.compile(r"^(?:[-*]\s*)?(?:\*\*[^*]+\*\*:\s*)?\[対象外:\s*[^\]\s][^\]]*\]$")
+NOT_APPLICABLE_INLINE_RE = re.compile(r"\[対象外:\s*[^\]\s][^\]]*\]")
 
 
 def iter_items(data: dict, phase: str | None):
@@ -54,6 +60,29 @@ def clean_body(body: str) -> str:
     return "\n".join(lines).strip()
 
 
+def without_evidence(core: str) -> str:
+    """根拠の記述を取り除いた本体を返す。
+
+    SKILL.md は全FILLブロックの先頭に根拠を書くよう定めている。対象外の判定を
+    本文全体に対して行うと、規約どおり根拠を書いた瞬間に不正扱いになる（GAP-017）。
+    判定対象から根拠だけを外して両立させる。
+    表のセルは1行しか持てず、根拠と結論が同一行に並ぶ。行ごと落とすと
+    [対象外: 理由] を巻き添えにするため、その部分だけ残す。
+    """
+    lines = []
+    for raw in core.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if EVIDENCE_LINE_RE.match(line):
+            inline = NOT_APPLICABLE_INLINE_RE.search(line)
+            if inline:
+                lines.append(inline.group(0))
+            continue
+        lines.append(line)
+    return "\n".join(lines)
+
+
 def classify_body(body: str, required: bool | str) -> tuple[bool, str]:
     """内容の有無だけでなく、未確定・対象外を区別して返す。"""
     core = clean_body(body)
@@ -61,7 +90,8 @@ def classify_body(body: str, required: bool | str) -> tuple[bool, str]:
         return False, "未記入"
     if "[要確認" in core:
         return False, "要確認"
-    not_applicable = re.fullmatch(r"\[対象外:\s*[^\]\s][^\]]*\]", core)
+    remainder = without_evidence(core).splitlines()
+    not_applicable = len(remainder) == 1 and NOT_APPLICABLE_RE.match(remainder[0])
     if "[対象外:" in core:
         if required == "conditional" and not_applicable:
             return False, "対象外"

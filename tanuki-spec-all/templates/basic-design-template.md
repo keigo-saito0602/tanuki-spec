@@ -109,67 +109,125 @@ status: draft
 
 #### 非機能要件の個別明細
 
-観点ごとに目標値・方式を記入する。確認指標は記入の手がかり。記入は1行にまとめ、
-詳しい根拠が要る場合は付録を参照する。適用外は `[対象外: 理由]`、未定は `[要確認: 質問]` と書く。
+観点ごとに目標値・方式を記入する。確認指標は記入の手がかり。
+適用外は `[対象外: 理由]`、未定は `[要確認: 質問]` と書く。
 
 ##### 可用性
-| 必須 | 項目 | 確認指標 | 記入 |
-| --- | --- | --- | --- |
-| 必須 | 継続性 | 運用時間/稼働率/RTO/RPO | <!-- FILL:START bd-nfr-policy--nf-availability--01 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-availability--01 --> |
-| 必須 | 耐障害性 | 機器/コンポーネント/ディスクの冗長化レベル | <!-- FILL:START bd-nfr-policy--nf-availability--02 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-availability--02 --> |
-| 必須 | 災害対策 | DRサイト/データ外部保管/再開目標日数 | <!-- FILL:START bd-nfr-policy--nf-availability--03 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-availability--03 --> |
-| 必須 | 回復性 | 復旧作業の自動化/代替業務運用範囲 | <!-- FILL:START bd-nfr-policy--nf-availability--04 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-availability--04 --> |
+
+**継続性**［必須］（確認指標: 運用時間/稼働率/RTO/RPO）
+<!-- FILL:START bd-nfr-policy--nf-availability--01 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-availability--01 -->
+
+**耐障害性**［必須］（確認指標: 機器/コンポーネント/ディスクの冗長化レベル）
+<!-- FILL:START bd-nfr-policy--nf-availability--02 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-availability--02 -->
+
+**災害対策**［必須］（確認指標: DRサイト/データ外部保管/再開目標日数）
+<!-- FILL:START bd-nfr-policy--nf-availability--03 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-availability--03 -->
+
+**回復性**［必須］（確認指標: 復旧作業の自動化/代替業務運用範囲）
+<!-- FILL:START bd-nfr-policy--nf-availability--04 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-availability--04 -->
 
 ##### 性能・拡張性
-| 必須 | 項目 | 確認指標 | 記入 |
-| --- | --- | --- | --- |
-| 必須 | 業務処理量 | ユーザ数/同時数/データ量/処理件数 | <!-- FILL:START bd-nfr-policy--nf-performance--01 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-performance--01 --> |
-| 必須 | 性能目標値 | レスポンス順守率/スループット/帳票印刷能力 | <!-- FILL:START bd-nfr-policy--nf-performance--02 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-performance--02 --> |
-| 必須 | リソース拡張性 | 利用率上限/拡張倍率/スケールアップ・アウト | <!-- FILL:START bd-nfr-policy--nf-performance--03 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-performance--03 --> |
-| 必須 | 性能品質保証 | 帯域保証/性能テスト頻度/スパイク対応 | <!-- FILL:START bd-nfr-policy--nf-performance--04 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-performance--04 --> |
+
+**業務処理量**［必須］（確認指標: ユーザ数/同時数/データ量/処理件数）
+<!-- FILL:START bd-nfr-policy--nf-performance--01 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-performance--01 -->
+
+**性能目標値**［必須］（確認指標: レスポンス順守率/スループット/帳票印刷能力）
+<!-- FILL:START bd-nfr-policy--nf-performance--02 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-performance--02 -->
+
+**リソース拡張性**［必須］（確認指標: 利用率上限/拡張倍率/スケールアップ・アウト）
+<!-- FILL:START bd-nfr-policy--nf-performance--03 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-performance--03 -->
+
+**性能品質保証**［必須］（確認指標: 帯域保証/性能テスト頻度/スパイク対応）
+<!-- FILL:START bd-nfr-policy--nf-performance--04 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-performance--04 -->
 
 ##### 運用・保守性
-| 必須 | 項目 | 確認指標 | 記入 |
-| --- | --- | --- | --- |
-| 必須 | 通常運用 | 運用時間/バックアップ方式/監視レベル | <!-- FILL:START bd-nfr-policy--nf-operation--01 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-operation--01 --> |
-| 必須 | 保守運用 | 計画停止頻度/パッチ適用方針/保守自動化率 | <!-- FILL:START bd-nfr-policy--nf-operation--02 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-operation--02 --> |
-| 必須 | 障害時運用 | 復旧自動化/駆けつけ時間/交換部材 | <!-- FILL:START bd-nfr-policy--nf-operation--03 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-operation--03 --> |
-| 必須 | 運用環境 | 開発試験環境/マニュアル/リモート操作 | <!-- FILL:START bd-nfr-policy--nf-operation--04 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-operation--04 --> |
-| 必須 | サポート体制 | 保守契約範囲/ライフサイクル/対応時間帯 | <!-- FILL:START bd-nfr-policy--nf-operation--05 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-operation--05 --> |
-| 任意 | その他運用管理方針 | インシデント/問題/構成/変更/リリース管理 | <!-- FILL:START bd-nfr-policy--nf-operation--06 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-operation--06 --> |
+
+**通常運用**［必須］（確認指標: 運用時間/バックアップ方式/監視レベル）
+<!-- FILL:START bd-nfr-policy--nf-operation--01 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-operation--01 -->
+
+**保守運用**［必須］（確認指標: 計画停止頻度/パッチ適用方針/保守自動化率）
+<!-- FILL:START bd-nfr-policy--nf-operation--02 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-operation--02 -->
+
+**障害時運用**［必須］（確認指標: 復旧自動化/駆けつけ時間/交換部材）
+<!-- FILL:START bd-nfr-policy--nf-operation--03 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-operation--03 -->
+
+**運用環境**［必須］（確認指標: 開発試験環境/マニュアル/リモート操作）
+<!-- FILL:START bd-nfr-policy--nf-operation--04 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-operation--04 -->
+
+**サポート体制**［必須］（確認指標: 保守契約範囲/ライフサイクル/対応時間帯）
+<!-- FILL:START bd-nfr-policy--nf-operation--05 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-operation--05 -->
+
+**その他運用管理方針**［任意］（確認指標: インシデント/問題/構成/変更/リリース管理）
+<!-- FILL:START bd-nfr-policy--nf-operation--06 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-operation--06 -->
 
 ##### 移行性
-| 必須 | 項目 | 確認指標 | 記入 |
-| --- | --- | --- | --- |
-| 任意 | 移行時期 | 移行期間/停止可能日数/並行稼働 | <!-- FILL:START bd-nfr-policy--nf-portability--01 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-portability--01 --> |
-| 任意 | 移行方式 | 拠点・業務展開ステップ数 | <!-- FILL:START bd-nfr-policy--nf-portability--02 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-portability--02 --> |
-| 任意 | 移行対象(機器) | 設備入れ替え範囲 | <!-- FILL:START bd-nfr-policy--nf-portability--03 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-portability--03 --> |
-| 任意 | 移行対象(データ) | 移行データ量/形式差異/変換ルール数 | <!-- FILL:START bd-nfr-policy--nf-portability--04 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-portability--04 --> |
-| 任意 | 移行計画 | 作業分担/リハーサル回数/トラブル対処規定 | <!-- FILL:START bd-nfr-policy--nf-portability--05 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-portability--05 --> |
+
+**移行時期**［任意］（確認指標: 移行期間/停止可能日数/並行稼働）
+<!-- FILL:START bd-nfr-policy--nf-portability--01 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-portability--01 -->
+
+**移行方式**［任意］（確認指標: 拠点・業務展開ステップ数）
+<!-- FILL:START bd-nfr-policy--nf-portability--02 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-portability--02 -->
+
+**移行対象(機器)**［任意］（確認指標: 設備入れ替え範囲）
+<!-- FILL:START bd-nfr-policy--nf-portability--03 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-portability--03 -->
+
+**移行対象(データ)**［任意］（確認指標: 移行データ量/形式差異/変換ルール数）
+<!-- FILL:START bd-nfr-policy--nf-portability--04 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-portability--04 -->
+
+**移行計画**［任意］（確認指標: 作業分担/リハーサル回数/トラブル対処規定）
+<!-- FILL:START bd-nfr-policy--nf-portability--05 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-portability--05 -->
 
 ##### セキュリティ
-| 必須 | 項目 | 確認指標 | 記入 |
-| --- | --- | --- | --- |
-| 必須 | 前提条件・制約条件 | 準拠法令/資格認証/ガイドライン | <!-- FILL:START bd-nfr-policy--nf-security--01 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--01 --> |
-| 必須 | セキュリティリスク分析 | リスク分析対象範囲 | <!-- FILL:START bd-nfr-policy--nf-security--02 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--02 --> |
-| 必須 | セキュリティ診断 | NW/Web/DB脆弱性診断の実施 | <!-- FILL:START bd-nfr-policy--nf-security--03 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--03 --> |
-| 必須 | セキュリティリスク管理 | リスク見直し頻度/パッチ適用方針 | <!-- FILL:START bd-nfr-policy--nf-security--04 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--04 --> |
-| 必須 | アクセス・利用制限 | 認証方式/操作制限/認証情報管理 | <!-- FILL:START bd-nfr-policy--nf-security--05 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--05 --> |
-| 必須 | データの秘匿 | 伝送/蓄積の暗号化/鍵管理 | <!-- FILL:START bd-nfr-policy--nf-security--06 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--06 --> |
-| 必須 | 不正追跡・監視 | ログ取得/保管期間/監視範囲 | <!-- FILL:START bd-nfr-policy--nf-security--07 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--07 --> |
-| 必須 | ネットワーク対策 | FW/IPS/DoS対策 | <!-- FILL:START bd-nfr-policy--nf-security--08 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--08 --> |
-| 必須 | マルウェア対策 | 対策範囲/スキャン頻度 | <!-- FILL:START bd-nfr-policy--nf-security--09 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--09 --> |
-| 必須 | Web対策 | セキュアコーディング/WAF | <!-- FILL:START bd-nfr-policy--nf-security--10 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--10 --> |
-| 必須 | インシデント対応/復旧 | 対応体制の有無 | <!-- FILL:START bd-nfr-policy--nf-security--11 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--11 --> |
+
+**前提条件・制約条件**［必須］（確認指標: 準拠法令/資格認証/ガイドライン）
+<!-- FILL:START bd-nfr-policy--nf-security--01 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--01 -->
+
+**セキュリティリスク分析**［必須］（確認指標: リスク分析対象範囲）
+<!-- FILL:START bd-nfr-policy--nf-security--02 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--02 -->
+
+**セキュリティ診断**［必須］（確認指標: NW/Web/DB脆弱性診断の実施）
+<!-- FILL:START bd-nfr-policy--nf-security--03 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--03 -->
+
+**セキュリティリスク管理**［必須］（確認指標: リスク見直し頻度/パッチ適用方針）
+<!-- FILL:START bd-nfr-policy--nf-security--04 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--04 -->
+
+**アクセス・利用制限**［必須］（確認指標: 認証方式/操作制限/認証情報管理）
+<!-- FILL:START bd-nfr-policy--nf-security--05 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--05 -->
+
+**データの秘匿**［必須］（確認指標: 伝送/蓄積の暗号化/鍵管理）
+<!-- FILL:START bd-nfr-policy--nf-security--06 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--06 -->
+
+**不正追跡・監視**［必須］（確認指標: ログ取得/保管期間/監視範囲）
+<!-- FILL:START bd-nfr-policy--nf-security--07 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--07 -->
+
+**ネットワーク対策**［必須］（確認指標: FW/IPS/DoS対策）
+<!-- FILL:START bd-nfr-policy--nf-security--08 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--08 -->
+
+**マルウェア対策**［必須］（確認指標: 対策範囲/スキャン頻度）
+<!-- FILL:START bd-nfr-policy--nf-security--09 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--09 -->
+
+**Web対策**［必須］（確認指標: セキュアコーディング/WAF）
+<!-- FILL:START bd-nfr-policy--nf-security--10 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--10 -->
+
+**インシデント対応/復旧**［必須］（確認指標: 対応体制の有無）
+<!-- FILL:START bd-nfr-policy--nf-security--11 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-security--11 -->
 
 ##### システム環境・エコロジー
-| 必須 | 項目 | 確認指標 | 記入 |
-| --- | --- | --- | --- |
-| 任意 | システム制約/前提条件 | 社内基準/法令/条例 | <!-- FILL:START bd-nfr-policy--nf-environment--01 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-environment--01 --> |
-| 任意 | システム特性 | ユーザ数/拠点数/対応言語数 | <!-- FILL:START bd-nfr-policy--nf-environment--02 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-environment--02 --> |
-| 任意 | 適合規格 | UL60950/RoHS/VCCI等 | <!-- FILL:START bd-nfr-policy--nf-environment--03 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-environment--03 --> |
-| 任意 | 機材設置環境条件 | 耐震/床荷重/電源/温湿度/空調 | <!-- FILL:START bd-nfr-policy--nf-environment--04 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-environment--04 --> |
-| 任意 | 環境マネージメント | 省エネ/CO2/騒音値 | <!-- FILL:START bd-nfr-policy--nf-environment--05 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-environment--05 --> |
+
+**システム制約/前提条件**［任意］（確認指標: 社内基準/法令/条例）
+<!-- FILL:START bd-nfr-policy--nf-environment--01 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-environment--01 -->
+
+**システム特性**［任意］（確認指標: ユーザ数/拠点数/対応言語数）
+<!-- FILL:START bd-nfr-policy--nf-environment--02 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-environment--02 -->
+
+**適合規格**［任意］（確認指標: UL60950/RoHS/VCCI等）
+<!-- FILL:START bd-nfr-policy--nf-environment--03 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-environment--03 -->
+
+**機材設置環境条件**［任意］（確認指標: 耐震/床荷重/電源/温湿度/空調）
+<!-- FILL:START bd-nfr-policy--nf-environment--04 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-environment--04 -->
+
+**環境マネージメント**［任意］（確認指標: 省エネ/CO2/騒音値）
+<!-- FILL:START bd-nfr-policy--nf-environment--05 -->（未記入）<!-- FILL:END bd-nfr-policy--nf-environment--05 -->
 
 ### [必須] 横断的関心事（多くの機能に共通で必要な事柄：セキュリティ・プライバシー・可観測性）
 <!-- FILL:START bd-cross-cutting -->（未記入）<!-- FILL:END bd-cross-cutting -->

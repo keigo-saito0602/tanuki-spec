@@ -130,3 +130,71 @@ class TraceabilityGateTest(unittest.TestCase):
         data["acceptance_tests"][0]["scenario"]["examples"] = [{"入力": "A"}, {"別キー": "B"}]
         failures = traceability_gate.validate(data)
         self.assertTrue(any("scenario.examples の各行はキーを揃えて" in failure for failure in failures))
+
+
+class OptionalImplementationFieldsTest(unittest.TestCase):
+    """実装状態は任意フィールド。書かなければ何も要求しない。"""
+
+    def _requirement(self, **extra):
+        return {
+            "id": "FR-001",
+            "status": "in_scope",
+            "type": "functional",
+            "statement": "システムは予約を作成する",
+            "user_story_ids": ["US-001"],
+            "flow_step_ids": ["BF-001-S01"],
+            **extra,
+        }
+
+    def test_valid_values_are_accepted(self):
+        failures: list[str] = []
+        for value in ("implemented", "partial", "not_implemented"):
+            traceability_gate.validate_optional_choice(
+                self._requirement(implementation_status=value),
+                "implementation_status",
+                traceability_gate.IMPLEMENTATION_STATUS_VALUES,
+                "要件",
+                failures,
+            )
+        self.assertEqual(failures, [])
+
+    def test_absent_field_is_accepted(self):
+        failures: list[str] = []
+        traceability_gate.validate_optional_choice(
+            self._requirement(), "implementation_status",
+            traceability_gate.IMPLEMENTATION_STATUS_VALUES, "要件", failures,
+        )
+        self.assertEqual(failures, [])
+
+    def test_unknown_value_is_rejected(self):
+        failures: list[str] = []
+        traceability_gate.validate_optional_choice(
+            self._requirement(implementation_status="implemented_with_critical_gap"),
+            "implementation_status",
+            traceability_gate.IMPLEMENTATION_STATUS_VALUES, "要件", failures,
+        )
+        self.assertEqual(len(failures), 1)
+        self.assertIn("implementation_status", failures[0])
+
+    def test_gap_severity_values(self):
+        failures: list[str] = []
+        for value in ("none", "minor", "critical"):
+            traceability_gate.validate_optional_choice(
+                self._requirement(gap_severity=value), "gap_severity",
+                traceability_gate.GAP_SEVERITY_VALUES, "要件", failures,
+            )
+        self.assertEqual(failures, [])
+
+    def test_draft_status_is_accepted_with_reason(self):
+        self.assertIn("draft", traceability_gate.STATUS_VALUES)
+        failures: list[str] = []
+        record = {"id": "FR-401", "status": "draft", "reason": "Phase4構想段階のため未確定"}
+        in_scope = traceability_gate.validate_status(record, "要件", failures)
+        self.assertFalse(in_scope, "draft は in_scope として扱わない")
+        self.assertEqual(failures, [])
+
+    def test_draft_status_without_reason_is_rejected(self):
+        failures: list[str] = []
+        traceability_gate.validate_status({"id": "FR-401", "status": "draft"}, "要件", failures)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("reason", failures[0])
