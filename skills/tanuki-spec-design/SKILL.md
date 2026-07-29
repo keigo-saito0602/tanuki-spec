@@ -37,7 +37,11 @@ python3 evaluation/coverage.py <基本設計書.md> --phase basic_design --stric
 python3 evaluation/coverage.py <詳細設計書.md> --phase detailed_design --strict
 python3 evaluation/design_traceability_gate.py <design-traceability.yaml>
 python3 evaluation/render_design_traceability_docs.py <design-traceability.yaml> --output-dir <phase>/tests
+python3 evaluation/render_html_views.py <phase>
+python3 evaluation/render_html_views.py <phase> --check
 ```
+
+HTMLレンダラはフェーズ内に存在する文書だけを生成対象とし、未着手工程はエラーにせずスキップする。HTMLは閲覧用の派生物なので、内容を直す場合は正本Markdown/YAMLを更新して再生成する。
 
 8. レビューは`tanuki-spec-reviewer`へ渡す。設計工程は`--design-traceability`付きでレビュー記録を検証する。
 
@@ -48,6 +52,7 @@ python3 evaluation/render_design_traceability_docs.py <design-traceability.yaml>
 - `<phase>/02_基本設計書.md`、`<phase>/03_詳細設計書.md`
 - `<phase>/design-traceability.yaml`（要件とBD/DDの正本）
 - `<phase>/tests/design-traceability.md`（正本から生成する対応表）
+- `<phase>/views/`（`index.html`、`README.md`、存在する要件・設計・対応表の閲覧用HTML。正本ではなく再生成する派生物）
 - `<phase>/reports/01_差分・未決事項.md`（要確認事項、既存コード調査結果、update時の影響範囲）
 
 ## 共有コア

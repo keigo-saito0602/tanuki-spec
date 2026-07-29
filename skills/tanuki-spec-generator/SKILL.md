@@ -111,6 +111,8 @@ python3 evaluation/spec_gate.py <記入済み仕様書.md> --traceability <trace
 
 ```bash
 python3 evaluation/view_gate.py <phase>/00_サマリ.md --traceability <phase>/traceability.yaml
+python3 evaluation/render_html_views.py <phase>
+python3 evaluation/render_html_views.py <phase> --check
 ```
 
 **このゲートが見るのはIDの実在性・網羅性・状態一致の3つだけで、文章表現は一切検査しない。**書きぶり・言い回し・凝縮の仕方はAIの裁量に委ね、正本とのズレだけを機械が担保する設計（美しさはAI、網羅性は機械）。通過は文章品質の保証ではない。
@@ -130,6 +132,7 @@ python3 evaluation/view_gate.py <phase>/00_サマリ.md --traceability <phase>/t
 - `<phase>/traceability.yaml`（US → BR/FR/NFR → AC → ST の正本）
 - `<phase>/tests/requirements-traceability.md`、`<phase>/tests/system-test-cases.md`
 - `<phase>/features/*.feature`（受入試験はGherkinの `.feature` として標準で生成。将来E2E（Cucumber/playwright-bdd）へ直接投入できる）
+- `<phase>/views/`（`index.html`、`README.md`、存在する要件・サマリ・対応表の閲覧用HTML。正本ではなく再生成する派生物）
 - `<phase>/reports/01_差分・未決事項.md`（カバレッジ評価レポート：必須充足率／欠落リスト）
 
 実例は `examples/sample-user-story/` を参照（サンプルストーリー1件のE2E成果物）。
@@ -149,6 +152,7 @@ tanuki-spec-generator/
 │   ├── traceability_gate.py        ← US〜試験の孤立・リンク切れ検査
 │   ├── render_traceability_docs.py ← 要件対応表・試験項目書の生成
 │   ├── render_feature_files.py     ← 受入試験のGherkinから .feature を生成
+│   ├── render_html_views.py        ← フェーズ内の文書から閲覧用HTMLを生成・検査
 │   ├── spec_gate.py               ← 根拠・未確定事項を含む出力ゲート
 │   └── run_harness.py             ← 共有コア＋生成側の回帰テスト
 ├── evals/cases.yaml               ← モデルを使う評価シナリオ
