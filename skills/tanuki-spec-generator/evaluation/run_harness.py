@@ -29,6 +29,12 @@ def main() -> None:
         str(sample_dir / "features"),
         "--check",
     ], cwd=ROOT, check=True)
+    subprocess.run([
+        sys.executable,
+        "evaluation/render_html_views.py",
+        str(sample_dir / "phase-1_レッスン予約"),
+        "--check",
+    ], cwd=ROOT, check=True)
     subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], cwd=ROOT, check=True)
 
 

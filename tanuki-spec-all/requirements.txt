@@ -1,1 +1,4 @@
 PyYAML>=6.0,<7.0
+# Markdown→HTMLの安全な構文解析に使用（MIT License、Python 3.8+）。
+# lockfileを持たない既存運用に合わせ、互換性のあるメジャー範囲を固定する。
+markdown-it-py>=3.0,<5.0

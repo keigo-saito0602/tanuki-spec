@@ -41,3 +41,33 @@
 
 これらを「本文＝見出しとFILLブロックのみ」「根拠＝末尾の付録表」「節内は必須→条件付→任意の順」として採用した。
 `spec-item` マーカーは、どのコードも読まない死んだ出力だったため削除した。
+
+---
+
+## 初見者向け説明HTML（取得日: 2026-07-29）
+
+`tanuki-doc-html-generator`が、PDF・Excel・Markdownを人向けの説明HTMLへ再構成するときの追加根拠。
+
+15. **利用者の目的から構成する**: [Understand content design (GOV.UK)](https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/plan-manage-content/understand-content-design/): 読者が知りたいこと・実行したいことを先に定義し、量と形式を目的に合わせて選ぶ根拠。
+16. **専門語を初出で説明する**: [Use clear language (GOV.UK)](https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/writing-guidelines/clear-language/): 専門家向けでも内容が分かる平易な説明を用意し、専門語は初出時に説明する根拠。
+17. **意味のあるページ構造**: [Page Structure (W3C WAI)](https://www.w3.org/WAI/tutorials/page-structure/sections/): `header`、`nav`、`main`、`section`などを意味に沿って使い、見出しとランドマークで移動可能にする根拠。
+18. **データ表の構造**: [Tables Tutorial (W3C WAI)](https://www.w3.org/WAI/tutorials/tables/): 表はレイアウトではなくデータ関係にだけ使い、`caption`、`th`、`td`、`scope`で見出しと値の関係を示す根拠。
+19. **320 CSSピクセルでリフローする**: [Understanding Reflow (W3C WAI)](https://www.w3.org/WAI/WCAG22/Understanding/reflow): 情報や機能を失わず、原則として縦横2方向のスクロールを要求しないスマホ表示の根拠。
+20. **図へ同等のテキストを付ける**: [Understanding Non-text Content (W3C WAI)](https://www.w3.org/WAI/WCAG21/Understanding/non-text-content): グラフ・フロー・図の目的と同等情報を、短い説明または詳細説明で提供する根拠。
+
+本スキルでは、上記を「30秒要約→背景・前提→全体像→本論→例→注意→出典」「表・フロー・グラフは関係を理解しやすくする場合だけ使う」「320px、印刷、キーボード、読み上げを検証する」として採用する。
+
+---
+
+## 説明HTMLの配色（取得日: 2026-07-29）
+
+`tanuki-doc-html-generator/references/color-design.md`の根拠。
+
+21. **Zenn型の読み物配色**: [Zennの記事表示例](https://zenn.dev/nogu66/articles/claude-code-think-abount-skills-and-subagent): 淡い青灰色のページ背景、白い本文面、濃い灰色の本文、青いアクセント、濃紺のコード面を、長文説明HTMLの基本配色として採用する根拠。実表示のcomputed styleも確認した。
+22. **3色と使用比率**: [プレゼン資料における配色の基本 (Cone)](https://cone-c-slide.com/see-sla/blog/document-color-usage/): 色をメイン・サブ・アクセントへ絞り、約75:20:5で使い、濃淡で展開する根拠。
+23. **文字コントラスト**: [WCAG 2.2 Contrast Minimum](https://www.w3.org/TR/WCAG22/#contrast-minimum): 通常文字4.5:1以上、大きな文字3:1以上を最低条件にする根拠。
+24. **色以外の識別手段**: [Understanding Use of Color (W3C WAI)](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html): 色だけで意味・状態・操作を伝えず、文字・形・境界線などを併用する根拠。
+25. **明度差で配色を選ぶ**: [Using color (USWDS)](https://designsystem.digital.gov/design-tokens/color/overview/): 色相名ではなく相対輝度とコントラストを基準に組み合わせを検証する根拠。
+26. **多様な色覚で識別する**: [カラーユニバーサルデザイン推奨配色セット](https://jfly.uni-koeln.de/colorset/) ／ [CUDOの説明](https://cudo.jp/?page_id=1565): グラフや状態表示で、比較的小面積でも見分けやすいアクセント色と、広い面積向けの低彩度色を使い分ける根拠。
+
+本スキルでは、Zennの明るい青`#3ea8ff`を大きな図形・補助面へ限定し、白背景の通常文字にはコントラストを確保した濃い青`#0068b7`を使う。背景・本文・リンク・状態・コードを役割トークン化し、ライト・ダーク・印刷の各モードで検証する。

@@ -9,7 +9,7 @@ description: Use when generating or updating unit/integration test case document
 
 > 📖 わからない用語は [用語集（GLOSSARY.md）](../GLOSSARY.md) を参照。
 
-要件定義書・設計書・既存トレーサビリティ正本を入力に、UT/IT のテスト項目書、`test-traceability.yaml`、`v-model-coverage.md` を作るためのスキル。既存の AC/ST を重複生成せず、V字モデルの下半分だけを新規に扱う。
+要件定義書・設計書・既存トレーサビリティ正本を入力に、UT/ITとV字カバレッジを統合した `04_テスト項目書.md`、`test-traceability.yaml` を作るためのスキル。既存の AC/ST を重複生成せず、V字モデルの下半分だけを新規に扱う。
 
 ## 起動テンプレート
 
@@ -31,13 +31,18 @@ tanuki-spec-test-item
 3. テスト観点として、`spec-items.yaml` の `test_perspectives`、詳細設計にあるデシジョンテーブル・状態遷移、非機能要件、既存 AC/ST を確認する。要件外だが試験設計に必要な前提は質問し、回答がない場合は `[要確認: 質問]` を残す。
 4. `new` では `test-traceability-template.yaml` をもとに `test-traceability.yaml` を作る。`UT-xxx` は `DD-xxx`、`IT-xxx` は `BD-xxx` に紐づけ、各 `requirement_ids` は紐づく設計要素の `requirement_ids` の部分集合にする。横断テストが必要でも v1 では勝手に例外を作らない。
 5. `update` では前回成果物と今回の要件・設計正本を比較し、影響を受ける `UT/IT` だけを更新する。削除候補のテスト項目は即削除せず、`[要確認: 廃止してよいか]` を残す。
-6. `render_test_item_docs.py` で `unit-test-cases.md`、`integration-test-cases.md`、`v-model-coverage.md` を生成する。`v-model-coverage.md` には既存の `AC(UAT)` と `ST` を参照表示し、再定義しない。
+6. `render_test_item_docs.py` で `04_テスト項目書.md` を生成する。`## 単体テスト（UT）`、`## 結合テスト（IT）`、`## V字モデルカバレッジ` の3節を1本にまとめ、V字モデルカバレッジには既存の `AC(UAT)` と `ST` を参照表示して再定義しない。
 7. 次を実行し、未被覆・不整合・列崩れがあれば修正する。
 
 ```bash
 python3 evaluation/test_traceability_gate.py <test-traceability.yaml>
+python3 evaluation/render_test_item_docs.py <test-traceability.yaml> --output-dir <phase>/tests
 python3 evaluation/render_test_item_docs.py <test-traceability.yaml> --output-dir <phase>/tests --check
+python3 evaluation/render_html_views.py <phase>
+python3 evaluation/render_html_views.py <phase> --check
 ```
+
+HTMLレンダラはフェーズ内に存在する文書だけを生成対象とし、未着手工程はエラーにせずスキップする。HTMLは閲覧用の派生物なので、内容を直す場合は正本Markdown/YAMLを更新して再生成する。
 
 8. テスト工程のレビューが必要な場合は `tanuki-spec-reviewer` に渡し、`unit_test` または `integration_test` を `target` にしたレビュー記録を検証する。この工程では `--spec` や `coverage.py` を使わない。
 
@@ -47,6 +52,7 @@ python3 evaluation/render_test_item_docs.py <test-traceability.yaml> --output-di
 
 - `<phase>/test-traceability.yaml`（UT/IT と設計・要件の正本）
 - `<phase>/tests/04_テスト項目書.md`（単体・結合・V字カバレッジを1本に統合。見出しは `## 単体テスト（UT）`、`## 結合テスト（IT）`、`## V字モデルカバレッジ`）
+- `<phase>/views/`（`index.html`、`README.md`、存在する文書の閲覧用HTML。正本ではなく再生成する派生物）
 - `<phase>/reports/01_差分・未決事項.md`（要確認事項、差分追従時の影響範囲、既存 AC/ST の再利用方針）
 - 現在レンダラは未実装のため、上記の統合形は実装時の出力仕様である。
 
