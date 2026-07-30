@@ -116,3 +116,69 @@ def _validate_entry_screens(entry: Any, known: set[str], result: Result) -> None
     for screen_id in entry:
         if screen_id not in known:
             result.errors.append(f"meta.entry_screensの「{screen_id}」に対応する画面がありません")
+
+
+TRANSITION_KINDS = ("forward", "back", "cancel")
+
+
+def validate_transitions(data: Any) -> Result:
+    result = Result()
+    screens = _screens(data)
+    known = {s["id"] for s in screens if isinstance(s.get("id"), str)}
+    outgoing: dict[str, set[str]] = {}
+
+    for screen in screens:
+        screen_id = screen.get("id")
+        if not isinstance(screen_id, str):
+            continue
+        transitions = screen.get("transitions") or []
+        if not isinstance(transitions, list):
+            result.errors.append(f"{screen_id}のtransitionsは配列で指定してください")
+            transitions = []
+
+        targets: set[str] = set()
+        for index, transition in enumerate(transitions):
+            where = f"{screen_id}のtransitions[{index}]"
+            if not isinstance(transition, dict):
+                result.errors.append(f"{where}はマッピングで指定してください")
+                continue
+            if not isinstance(transition.get("on"), str) or not transition["on"]:
+                result.errors.append(f"{where}のonに操作名を書いてください")
+            kind = transition.get("kind")
+            if kind not in TRANSITION_KINDS:
+                result.errors.append(f"{where}のkind「{kind}」は{'/'.join(TRANSITION_KINDS)}のいずれかにしてください")
+            target = transition.get("to")
+            if not isinstance(target, str) or target not in known:
+                result.errors.append(f"{where}の遷移先「{target}」に対応する画面がありません")
+                continue
+            targets.add(target)
+
+        outgoing[screen_id] = targets
+        is_terminal = screen.get("terminal") is True
+        if not targets and not is_terminal:
+            result.errors.append(f"{screen_id}は遷移先がない行き止まりです。終端なら terminal: true を書いてください")
+        elif targets == {screen_id} and not is_terminal:
+            result.errors.append(f"{screen_id}は自分自身へ戻る遷移しかありません。他画面への導線を足してください")
+
+    _report_unreachable(data, known, outgoing, result)
+    return result
+
+
+def _report_unreachable(data: Any, known: set[str], outgoing: dict[str, set[str]], result: Result) -> None:
+    meta = data.get("meta") if isinstance(data, dict) else None
+    entry = meta.get("entry_screens") if isinstance(meta, dict) else None
+    seeds = [s for s in entry if s in known] if isinstance(entry, list) else []
+    if not seeds:
+        return
+
+    reached: set[str] = set()
+    queue = list(seeds)
+    while queue:
+        current = queue.pop()
+        if current in reached:
+            continue
+        reached.add(current)
+        queue.extend(outgoing.get(current, set()) - reached)
+
+    for screen_id in sorted(known - reached):
+        result.errors.append(f"{screen_id}はmeta.entry_screensのどこからも到達できません")

@@ -146,5 +146,58 @@ class SchemaTest(unittest.TestCase):
         self.assertTrue(any("SC-999" in error for error in result.errors))
 
 
+class TransitionTest(unittest.TestCase):
+    def _validate(self, mutate=None) -> "GATE.Result":
+        data = copy.deepcopy(VALID)
+        if mutate:
+            mutate(data)
+        return GATE.validate_transitions(data)
+
+    def test_valid_transitions_pass(self) -> None:
+        self.assertEqual([], self._validate().errors)
+
+    def test_transition_to_unknown_screen_is_error(self) -> None:
+        result = self._validate(
+            lambda d: d["screens"][0]["transitions"].append({"on": "詳細", "to": "SC-404", "kind": "forward"})
+        )
+        self.assertTrue(any("SC-404" in error for error in result.errors))
+
+    def test_unreachable_screen_is_error(self) -> None:
+        def mutate(d):
+            d["screens"][0]["transitions"] = []
+            d["screens"][0]["terminal"] = True
+
+        result = self._validate(mutate)
+        self.assertTrue(any("SC-002" in error and "到達" in error for error in result.errors))
+
+    def test_dead_end_without_terminal_is_error(self) -> None:
+        def mutate(d):
+            d["screens"][1]["transitions"] = []
+            d["screens"][1].pop("terminal")
+
+        result = self._validate(mutate)
+        self.assertTrue(any("SC-002" in error and "行き止まり" in error for error in result.errors))
+
+    def test_dead_end_with_terminal_flag_passes(self) -> None:
+        def mutate(d):
+            d["screens"][1]["transitions"] = []
+
+        self.assertEqual([], self._validate(mutate).errors)
+
+    def test_unknown_transition_kind_is_error(self) -> None:
+        result = self._validate(
+            lambda d: d["screens"][0]["transitions"][0].__setitem__("kind", "sideways")
+        )
+        self.assertTrue(any("sideways" in error for error in result.errors))
+
+    def test_self_loop_only_is_error(self) -> None:
+        def mutate(d):
+            d["screens"][1]["transitions"] = [{"on": "再読込", "to": "SC-002", "kind": "forward"}]
+            d["screens"][1].pop("terminal")
+
+        result = self._validate(mutate)
+        self.assertTrue(any("SC-002" in error and "自分自身" in error for error in result.errors))
+
+
 if __name__ == "__main__":
     unittest.main()
