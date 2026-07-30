@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "sources": [
+      {"kind": "principles", "ref": "uiux-principles.md の既定トークン", "confidence": "proposed"}
+    ]
+  },
+  "color": {
+    "primary": {"value": "#1a5fb4", "source": "principles", "confidence": "proposed"},
+    "surface": {"value": "#ffffff", "source": "principles", "confidence": "proposed"},
+    "text": {"value": "#1c1c1c", "source": "principles", "confidence": "proposed"},
+    "line": {"value": "#d0d0d0", "source": "principles", "confidence": "proposed"},
+    "accent": {"value": "#a33b00", "source": "principles", "confidence": "proposed"}
+  },
+  "typography": {
+    "font_family": {"value": "system-ui, sans-serif", "source": "principles", "confidence": "proposed"},
+    "size_base": {"value": "16px", "source": "principles", "confidence": "proposed"}
+  },
+  "spacing": {
+    "unit": {"value": "8px", "source": "principles", "confidence": "proposed"}
+  },
+  "radius": {
+    "md": {"value": "6px", "source": "principles", "confidence": "proposed"}
+  }
+}
