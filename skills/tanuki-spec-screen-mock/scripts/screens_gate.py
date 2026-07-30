@@ -142,8 +142,8 @@ def validate_transitions(data: Any) -> Result:
             if not isinstance(transition, dict):
                 result.errors.append(f"{where}はマッピングで指定してください")
                 continue
-            if not isinstance(transition.get("on"), str) or not transition["on"]:
-                result.errors.append(f"{where}のonに操作名を書いてください")
+            if not isinstance(transition.get("action"), str) or not transition["action"]:
+                result.errors.append(f"{where}のactionに操作名を書いてください")
             kind = transition.get("kind")
             if kind not in TRANSITION_KINDS:
                 result.errors.append(f"{where}のkind「{kind}」は{'/'.join(TRANSITION_KINDS)}のいずれかにしてください")

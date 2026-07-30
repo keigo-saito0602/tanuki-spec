@@ -60,7 +60,7 @@ VALID = {
                 },
             ],
             "states": dict(STATES),
-            "transitions": [{"on": "枠を選ぶ", "to": "SC-002", "kind": "forward"}],
+            "transitions": [{"action": "枠を選ぶ", "to": "SC-002", "kind": "forward"}],
         },
         {
             "id": "SC-002",
@@ -87,7 +87,7 @@ VALID = {
             ],
             "states": dict(STATES),
             "terminal": True,
-            "transitions": [{"on": "一覧へ戻る", "to": "SC-001", "kind": "back"}],
+            "transitions": [{"action": "一覧へ戻る", "to": "SC-001", "kind": "back"}],
         },
     ],
 }
@@ -158,7 +158,7 @@ class TransitionTest(unittest.TestCase):
 
     def test_transition_to_unknown_screen_is_error(self) -> None:
         result = self._validate(
-            lambda d: d["screens"][0]["transitions"].append({"on": "詳細", "to": "SC-404", "kind": "forward"})
+            lambda d: d["screens"][0]["transitions"].append({"action": "詳細", "to": "SC-404", "kind": "forward"})
         )
         self.assertTrue(any("SC-404" in error for error in result.errors))
 
@@ -192,7 +192,7 @@ class TransitionTest(unittest.TestCase):
 
     def test_self_loop_only_is_error(self) -> None:
         def mutate(d):
-            d["screens"][1]["transitions"] = [{"on": "再読込", "to": "SC-002", "kind": "forward"}]
+            d["screens"][1]["transitions"] = [{"action": "再読込", "to": "SC-002", "kind": "forward"}]
             d["screens"][1].pop("terminal")
 
         result = self._validate(mutate)

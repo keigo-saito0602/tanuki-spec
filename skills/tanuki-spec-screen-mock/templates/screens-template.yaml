@@ -31,7 +31,7 @@ screens:
       error: "<失敗理由と復旧手段>"
       forbidden: "該当なし: <理由>"
     transitions:
-      - "on": "詳細表示"
+      - action: "<操作名>"
         to: SC-002
         kind: forward
     notes: []
@@ -62,7 +62,7 @@ screens:
       forbidden: "<見えない・押せない場合の扱い>"
     terminal: true
     transitions:
-      - "on": "一覧へ戻る"
+      - action: "<戻る操作>"
         to: SC-001
         kind: back
     notes: []
