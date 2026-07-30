@@ -80,6 +80,18 @@ class CssVariableTest(unittest.TestCase):
         css = TOKENS.to_css_variables(data)
         self.assertNotIn("</style>", css)
 
+    def test_strips_css_backslash_escape(self) -> None:
+        data = copy.deepcopy(VALID)
+        data["typography"]["font_family"]["value"] = r"sans-serif\7d body\7b color:red"
+        css = TOKENS.to_css_variables(data)
+        self.assertNotIn("\\", css)
+
+    def test_strips_newline_and_control_characters(self) -> None:
+        data = copy.deepcopy(VALID)
+        data["typography"]["font_family"]["value"] = "sans-serif\n\tmonospace"
+        css = TOKENS.to_css_variables(data)
+        self.assertIn("--typography-font_family: sans-serifmonospace;", css)
+
 
 class UnconfirmedTest(unittest.TestCase):
     def test_lists_only_unconfirmed_tokens(self) -> None:

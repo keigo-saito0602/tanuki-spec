@@ -110,9 +110,13 @@ def _validate_contrast(colors: dict) -> list[str]:
 
 
 def _sanitize(value: str) -> str:
-    """CSS宣言から抜け出せる文字を落とす。"""
+    """CSS宣言から抜け出せる文字を落とす。
 
-    return re.sub(r"[<>{};]", "", value).strip()
+    バックスラッシュも落とす。CSSは `\\7d` のような数値エスケープを解釈するため、
+    リテラルの記号だけを除いても抜け道が残る。改行と制御文字も同様に落とす。
+    """
+
+    return re.sub(r"[<>{};\\\x00-\x1f\x7f]", "", value).strip()
 
 
 def to_css_variables(data: Any) -> str:
