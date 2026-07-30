@@ -44,6 +44,7 @@ python3 evaluation/render_html_views.py <phase> --check
 HTMLレンダラはフェーズ内に存在する文書だけを生成対象とし、未着手工程はエラーにせずスキップする。HTMLは閲覧用の派生物なので、内容を直す場合は正本Markdown/YAMLを更新して再生成する。
 
 8. レビューは`tanuki-spec-reviewer`へ渡す。設計工程は`--design-traceability`付きでレビュー記録を検証する。
+9. 設計書の散文を出力する前に、[`references/cognitive-doc-principles.md`](./references/cognitive-doc-principles.md) の「症状を二つに分ける」「文レベルの規範」「語彙の規範」「想起を組み込む規範」で自己点検する。設計判断は、代替案とトレードオフを示して読み手が検証できる形に残す。
 
 ## 出力
 

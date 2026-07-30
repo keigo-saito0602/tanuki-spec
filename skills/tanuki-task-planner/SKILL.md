@@ -29,6 +29,7 @@ python3 evaluation/task_plan_gate.py <task-plan.yaml> --traceability <traceabili
 python3 evaluation/render_task_plan.py <task-plan.yaml> --output <implementation-task-plan.md>
 ```
 5. ゲートが不通過なら、孤立した要件・試験、未記入、依存関係の循環を解消してから実装へ渡す。
+6. `implementation-task-plan.md` を出力する前に、[`references/cognitive-doc-principles.md`](./references/cognitive-doc-principles.md) の「文レベルの規範」「語彙の規範」で自己点検する。タスク名と完了条件は一文一動作で書き、実装者が読み返さずに着手できる状態にする。
 
 ## 出力
 

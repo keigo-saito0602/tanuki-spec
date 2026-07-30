@@ -123,6 +123,14 @@ python3 evaluation/render_html_views.py <phase> --check
 
 ---
 
+## 文章の点検（出力前）
+
+サマリ層と本論層の散文を出力する前に、[`references/cognitive-doc-principles.md`](./references/cognitive-doc-principles.md) の「症状を二つに分ける」「文レベルの規範」「語彙の規範」「想起を組み込む規範」で自己点検する。
+
+要件定義書の読み手は非技術者である。未決事項をなめらかな断定で埋めず、`[要確認]`として残す。判断が必要な箇所は、選択肢と判断基準を示して読み手の決定に残す。
+
+---
+
 ## 出力
 
 > 置き場所・命名は [`../docs/spec-directory-standard.md`](../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。

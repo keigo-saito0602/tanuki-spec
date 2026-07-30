@@ -45,6 +45,7 @@ python3 evaluation/render_html_views.py <phase> --check
 HTMLレンダラはフェーズ内に存在する文書だけを生成対象とし、未着手工程はエラーにせずスキップする。HTMLは閲覧用の派生物なので、内容を直す場合は正本Markdown/YAMLを更新して再生成する。
 
 8. テスト工程のレビューが必要な場合は `tanuki-spec-reviewer` に渡し、`unit_test` または `integration_test` を `target` にしたレビュー記録を検証する。この工程では `--spec` や `coverage.py` を使わない。
+9. テスト項目書の散文を出力する前に、[`references/cognitive-doc-principles.md`](./references/cognitive-doc-principles.md) の「文レベルの規範」「語彙の規範」で自己点検する。手順と期待結果は一文一動作で書き、指示語で前の項目を指さない。
 
 ## 出力
 

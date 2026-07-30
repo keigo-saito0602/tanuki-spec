@@ -38,6 +38,7 @@ reviewer:        # 例: codex / claude-new-session。生成担当と別である
    `quality-evaluation.md`は手編集せず再生成する。`report_sha256`、人間承認、`dod_passed`は本文へ出力しないため、ハッシュの循環を起こさない。
 8. DoD判定と、要改善・判断不可が残った軸をユーザに報告する。
 9. 機械判定に加えて人間レビューを行う場合は、[references/human-review-guide.md](./references/human-review-guide.md) の「2パス読み＋PBR＋節別チェック」に従う。非技術者（要件）または第三者技術者（設計）が、Pythonを実行せずに網羅性と品質を確認できる。
+10. 対象文書の読みやすさを [`references/cognitive-doc-principles.md`](./references/cognitive-doc-principles.md) で採点する。「文レベルの規範」「語彙の規範」の違反箇所と、なめらかな断定で未決事項を埋めている箇所を指摘する。レビュー所見自体も同じ規範で点検して出力する。
 
 ## 出力
 
