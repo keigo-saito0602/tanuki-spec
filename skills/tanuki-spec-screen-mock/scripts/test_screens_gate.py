@@ -199,5 +199,75 @@ class TransitionTest(unittest.TestCase):
         self.assertTrue(any("SC-002" in error and "自分自身" in error for error in result.errors))
 
 
+class StateAndFieldTest(unittest.TestCase):
+    def _states(self, mutate=None) -> "GATE.Result":
+        data = copy.deepcopy(VALID)
+        if mutate:
+            mutate(data)
+        return GATE.validate_states(data)
+
+    def _fields(self, mutate=None) -> "GATE.Result":
+        data = copy.deepcopy(VALID)
+        if mutate:
+            mutate(data)
+        return GATE.validate_fields(data)
+
+    def test_all_states_present_passes(self) -> None:
+        self.assertEqual([], self._states().errors)
+
+    def test_missing_state_key_is_error(self) -> None:
+        result = self._states(lambda d: d["screens"][0]["states"].pop("loading"))
+        self.assertTrue(any("loading" in error for error in result.errors))
+
+    def test_empty_state_value_is_error(self) -> None:
+        result = self._states(lambda d: d["screens"][0]["states"].__setitem__("error", ""))
+        self.assertTrue(any("error" in message for message in result.errors))
+
+    def test_not_applicable_needs_reason(self) -> None:
+        result = self._states(lambda d: d["screens"][0]["states"].__setitem__("forbidden", "該当なし"))
+        self.assertTrue(any("理由" in error for error in result.errors))
+
+    def test_not_applicable_with_reason_passes(self) -> None:
+        result = self._states(
+            lambda d: d["screens"][0]["states"].__setitem__("forbidden", "該当なし: 全員が閲覧できる画面のため")
+        )
+        self.assertEqual([], result.errors)
+
+    def test_complete_fields_have_no_warning(self) -> None:
+        self.assertEqual([], self._fields().warnings)
+
+    def test_required_field_without_error_message_is_warning(self) -> None:
+        result = self._fields(lambda d: d["screens"][1]["blocks"][1]["fields"][0].pop("error"))
+        self.assertEqual([], result.errors)
+        self.assertTrue(any("[要確認]" in warning and "連絡先" in warning for warning in result.warnings))
+
+    def test_required_field_without_constraint_is_warning(self) -> None:
+        result = self._fields(lambda d: d["screens"][1]["blocks"][1]["fields"][0].pop("constraint"))
+        self.assertTrue(any("[要確認]" in warning for warning in result.warnings))
+
+    def test_field_without_required_flag_is_error(self) -> None:
+        result = self._fields(lambda d: d["screens"][1]["blocks"][1]["fields"][0].pop("required"))
+        self.assertTrue(any("required" in error for error in result.errors))
+
+    def test_form_section_without_fields_is_error(self) -> None:
+        result = self._fields(lambda d: d["screens"][1]["blocks"][1].pop("fields"))
+        self.assertTrue(any("fields" in error for error in result.errors))
+
+
+class ValidateAllTest(unittest.TestCase):
+    def test_valid_definition_passes_every_check(self) -> None:
+        result = GATE.validate_all(copy.deepcopy(VALID), CATALOG.load_catalog())
+        self.assertEqual([], result.errors)
+        self.assertTrue(result.ok())
+
+    def test_template_file_passes_every_check(self) -> None:
+        import yaml
+
+        template = SCRIPT_DIR.parent / "templates" / "screens-template.yaml"
+        data = yaml.safe_load(template.read_text(encoding="utf-8"))
+        result = GATE.validate_all(data, CATALOG.load_catalog())
+        self.assertEqual([], result.errors)
+
+
 if __name__ == "__main__":
     unittest.main()

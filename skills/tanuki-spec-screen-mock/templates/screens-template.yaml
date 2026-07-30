@@ -1,0 +1,68 @@
+# 画面定義の雛形。<>で囲まれた箇所を実際の内容へ置き換える。
+# 根拠がない項目は埋めず、notesへ [要確認: 質問] を残す。
+meta:
+  phase: "<phase-N_フェーズ名>"
+  source_spec: "01_要件定義書.md"
+  generated_at: "<YYYY-MM-DD>"
+  entry_screens: ["SC-001"]
+
+screens:
+  - id: SC-001
+    name: "<画面名>"
+    purpose: "<この画面でユーザが達成すること。1文>"
+    actor: "<操作する役割>"
+    layout: list-with-filter
+    trace: ["<FR-001>"]
+    blocks:
+      - type: header
+        nav: ["<メニュー1>", "<メニュー2>"]
+      - type: filter-bar
+        fields:
+          - label: "<絞り込み項目>"
+            control: text
+            required: false
+      - type: card-grid
+        item_label: "<一覧の1件の呼び名>"
+        item_fields: ["<表示項目1>", "<表示項目2>"]
+    states:
+      normal: "<データがある平常時の表示>"
+      empty: "<0件のときの案内と次の行動>"
+      loading: "<待たせる場合の表示>"
+      error: "<失敗理由と復旧手段>"
+      forbidden: "該当なし: <理由>"
+    transitions:
+      - "on": "詳細表示"
+        to: SC-002
+        kind: forward
+    notes: []
+
+  - id: SC-002
+    name: "<画面名>"
+    purpose: "<この画面でユーザが達成すること。1文>"
+    actor: "<操作する役割>"
+    layout: form
+    trace: ["<FR-002>"]
+    blocks:
+      - type: header
+        nav: ["<メニュー1>"]
+      - type: form-section
+        fields:
+          - label: "<入力項目>"
+            control: text
+            required: true
+            constraint: "<入力制限>"
+            error: "<エラー文言>"
+      - type: button-row
+        buttons: ["<主操作>"]
+    states:
+      normal: "<データがある平常時の表示>"
+      empty: "該当なし: <理由>"
+      loading: "<待たせる場合の表示>"
+      error: "<失敗理由と復旧手段>"
+      forbidden: "<見えない・押せない場合の扱い>"
+    terminal: true
+    transitions:
+      - "on": "一覧へ戻る"
+        to: SC-001
+        kind: back
+    notes: []

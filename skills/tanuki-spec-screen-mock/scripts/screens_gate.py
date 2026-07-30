@@ -182,3 +182,109 @@ def _report_unreachable(data: Any, known: set[str], outgoing: dict[str, set[str]
 
     for screen_id in sorted(known - reached):
         result.errors.append(f"{screen_id}はmeta.entry_screensのどこからも到達できません")
+
+
+NOT_APPLICABLE = "該当なし"
+FIELD_BEARING_BLOCKS = ("filter-bar", "form-section")
+
+
+def validate_states(data: Any) -> Result:
+    result = Result()
+    for screen in _screens(data):
+        screen_id = screen.get("id", "(id未設定)")
+        states = screen.get("states")
+        if not isinstance(states, dict):
+            result.errors.append(f"{screen_id}のstatesをマッピングで定義してください")
+            continue
+        for key in STATE_KEYS:
+            value = states.get(key)
+            if not isinstance(value, str) or not value.strip():
+                result.errors.append(f"{screen_id}のstates.{key}に検討結果を書いてください")
+                continue
+            if value.strip().startswith(NOT_APPLICABLE) and ":" not in value and "：" not in value:
+                result.errors.append(f"{screen_id}のstates.{key}は「該当なし: 理由」の形で理由を書いてください")
+    return result
+
+
+def validate_fields(data: Any) -> Result:
+    result = Result()
+    for screen in _screens(data):
+        screen_id = screen.get("id", "(id未設定)")
+        blocks = screen.get("blocks")
+        if not isinstance(blocks, list):
+            continue
+        for block in blocks:
+            if not isinstance(block, dict) or block.get("type") not in FIELD_BEARING_BLOCKS:
+                continue
+            fields = block.get("fields")
+            if not isinstance(fields, list) or not fields:
+                result.errors.append(f"{screen_id}の{block.get('type')}にfieldsを1件以上定義してください")
+                continue
+            for index, item in enumerate(fields):
+                _validate_field(item, f"{screen_id}の{block['type']}.fields[{index}]", result)
+    return result
+
+
+def _validate_field(item: Any, where: str, result: Result) -> None:
+    if not isinstance(item, dict):
+        result.errors.append(f"{where}はマッピングで指定してください")
+        return
+    label = item.get("label")
+    if not isinstance(label, str) or not label:
+        result.errors.append(f"{where}のlabelに項目名を書いてください")
+        label = where
+    if not isinstance(item.get("control"), str) or not item["control"]:
+        result.errors.append(f"{where}のcontrolに入力方法を書いてください")
+    if not isinstance(item.get("required"), bool):
+        result.errors.append(f"{where}のrequiredをtrueまたはfalseで書いてください")
+        return
+    if not item["required"]:
+        return
+    if not isinstance(item.get("constraint"), str) or not item["constraint"]:
+        result.warnings.append(f"[要確認] {label}の入力制限が未定義です（{where}.constraint）")
+    if not isinstance(item.get("error"), str) or not item["error"]:
+        result.warnings.append(f"[要確認] {label}のエラー文言が未定義です（{where}.error）")
+
+
+def validate_all(data: Any, catalog: Catalog) -> Result:
+    result = validate_schema(data, catalog)
+    if not result.ok():
+        return result
+    result.merge(validate_transitions(data))
+    result.merge(validate_states(data))
+    result.merge(validate_fields(data))
+    return result
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+    from pathlib import Path
+
+    import yaml
+
+    from catalog import load_catalog
+
+    parser = argparse.ArgumentParser(description="screens.yamlの画面定義を検証する")
+    parser.add_argument("screens", type=Path, help="検証するscreens.yaml")
+    parser.add_argument("--catalog", type=Path, default=None, help="部品カタログのパス")
+    args = parser.parse_args(argv)
+
+    data = yaml.safe_load(args.screens.read_text(encoding="utf-8"))
+    result = validate_all(data, load_catalog(args.catalog))
+
+    for warning in result.warnings:
+        print(f"注意: {warning}")
+    for error in result.errors:
+        print(f"エラー: {error}")
+
+    if result.errors:
+        print(f"\n{len(result.errors)}件のエラーがあります。screens.yamlを直して再実行してください。")
+        return 1
+    print(f"\n検証を通過しました。注意は{len(result.warnings)}件です。")
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(main())
