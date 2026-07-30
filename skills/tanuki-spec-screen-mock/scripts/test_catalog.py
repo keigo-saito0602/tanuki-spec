@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,6 +13,10 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 SPEC = importlib.util.spec_from_file_location("catalog", SCRIPT_DIR / "catalog.py")
 assert SPEC and SPEC.loader
 CATALOG = importlib.util.module_from_spec(SPEC)
+# exec_moduleの前にsys.modulesへ登録する。`from __future__ import annotations`が
+# 効いたモジュール内のdataclassは、dataclasses._is_type()が
+# sys.modules[cls.__module__]を引くため、未登録だとAttributeErrorで落ちる。
+sys.modules["catalog"] = CATALOG
 SPEC.loader.exec_module(CATALOG)
 
 

@@ -3,22 +3,11 @@
 
 from __future__ import annotations
 
-import sys
-import types
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import yaml
-
-# importlib.util での読み込みに対応: モジュールを sys.modules に登録
-if __name__ not in sys.modules:
-    _module = types.ModuleType(__name__ or 'catalog')
-    _module.__file__ = __file__
-    _module.__loader__ = globals().get('__loader__')
-    _module.__package__ = globals().get('__package__')
-    _module.__spec__ = globals().get('__spec__')
-    sys.modules[__name__ or 'catalog'] = _module
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 CATALOG_PATH = SKILL_DIR / "references" / "component-catalog.yaml"
