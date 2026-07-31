@@ -91,6 +91,10 @@ class ValidateTest(unittest.TestCase):
         errors = self._validate(self.html.replace("Content-Security-Policy", "X-Removed"))
         self.assertTrue(any("Content-Security-Policy" in error for error in errors))
 
+    def test_pale_primary_is_error(self) -> None:
+        errors = self._validate(self.html.replace("--color-primary: #1a5fb4;", "--color-primary: #fef9e7;"))
+        self.assertTrue(any("primary" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

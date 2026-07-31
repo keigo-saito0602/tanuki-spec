@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""生成した画面モックHTMLが出力契約を満たすかを検証する。"""
+"""生成した画面モックHTMLが出力契約を満たすかを検証する。
+
+静的に読み取れる項目だけを見る。320pxでの横スクロール、タップ対象44px、
+色以外の手がかりの併用は、レイアウトエンジンが要るためここでは検証しない。
+これらは骨格テンプレート側のCSSで作り込んで担保する。
+"""
 
 from __future__ import annotations
 
@@ -7,7 +12,7 @@ import re
 from html.parser import HTMLParser
 from pathlib import Path
 
-from tokens import MIN_CONTRAST, contrast_ratio
+from tokens import BUTTON_TEXT_COLOR, MIN_CONTRAST, contrast_ratio
 
 FORBIDDEN_TAGS = ("script", "iframe", "object", "embed")
 EXTERNAL_PATTERN = re.compile(r"""(?:src|href)\s*=\s*["'](?:https?:)?//""", re.I)
@@ -104,6 +109,15 @@ def _validate_contrast(source: str) -> list[str]:
         ratio = contrast_ratio(color, surface)
         if ratio < MIN_CONTRAST:
             errors.append(f"--color-{role}と--color-surfaceのコントラストが{ratio:.2f}:1で{MIN_CONTRAST}:1を下回ります")
+    # .bar と .btn は --color-primary を背景に、文字色を白で固定している。
+    # surfaceではなく白文字との比を見ないと、淡いprimaryで文字が読めなくなる。
+    primary = values.get("primary")
+    if primary:
+        ratio = contrast_ratio(primary, BUTTON_TEXT_COLOR)
+        if ratio < MIN_CONTRAST:
+            errors.append(
+                f"--color-primaryとボタンの白文字のコントラストが{ratio:.2f}:1で{MIN_CONTRAST}:1を下回ります"
+            )
     return errors
 
 

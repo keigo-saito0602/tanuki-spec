@@ -12,6 +12,9 @@ REQUIRED_COLOR_ROLES = ("primary", "surface", "text", "line", "accent")
 HEX_PATTERN = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 VALUE_GROUPS = ("color", "typography", "spacing", "radius", "shadow")
 MIN_CONTRAST = 4.5
+# 骨格テンプレートの .bar と .btn は文字色を白で固定している。
+# primaryはその背景になるため、surfaceではなく白文字とのコントラストを見る。
+BUTTON_TEXT_COLOR = "#ffffff"
 
 
 def _expand(hex_color: str) -> tuple[int, int, int]:
@@ -105,6 +108,15 @@ def _validate_contrast(colors: dict) -> list[str]:
             errors.append(
                 f"color.{foreground}とcolor.{background}のコントラストが{ratio:.2f}:1で、"
                 f"必要な{MIN_CONTRAST}:1を下回っています"
+            )
+    primary = colors.get("primary", {})
+    primary_value = primary.get("value") if isinstance(primary, dict) else None
+    if isinstance(primary_value, str) and HEX_PATTERN.match(primary_value):
+        ratio = contrast_ratio(primary_value, BUTTON_TEXT_COLOR)
+        if ratio < MIN_CONTRAST:
+            errors.append(
+                f"color.primaryと白文字のコントラストが{ratio:.2f}:1で、必要な{MIN_CONTRAST}:1を"
+                f"下回っています。ボタンとヘッダーの文字が読めません"
             )
     return errors
 

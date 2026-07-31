@@ -62,6 +62,10 @@ class ValidateTokensTest(unittest.TestCase):
         errors = self._validate(lambda d: d["color"]["text"].__setitem__("value", "#c8c8c8"))
         self.assertTrue(any("4.5" in error for error in errors))
 
+    def test_pale_primary_against_button_text_is_error(self) -> None:
+        errors = self._validate(lambda d: d["color"]["primary"].__setitem__("value", "#fef9e7"))
+        self.assertTrue(any("primary" in error and "白文字" in error for error in errors))
+
 
 class CssVariableTest(unittest.TestCase):
     def test_emits_color_variables(self) -> None:
