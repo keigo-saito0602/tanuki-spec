@@ -128,3 +128,116 @@ def render_nav(screens: Any) -> str:
         if isinstance(s, dict)
     )
     return f"<h2>画面一覧</h2>{links}"
+
+
+def render_diagram(screens: Any) -> str:
+    rows: list[str] = []
+    for screen in screens if isinstance(screens, list) else []:
+        if not isinstance(screen, dict):
+            continue
+        transitions = screen.get("transitions") or []
+        if not transitions:
+            rows.append(
+                f'<tr><th scope="row">{esc(screen.get("id"))} {esc(screen.get("name", ""))}</th>'
+                f"<td>終端</td><td>—</td></tr>"
+            )
+            continue
+        for transition in transitions:
+            if not isinstance(transition, dict):
+                continue
+            rows.append(
+                f'<tr><th scope="row">{esc(screen.get("id"))} {esc(screen.get("name", ""))}</th>'
+                f'<td>{esc(transition.get("action", ""))}</td>'
+                f'<td><a href="#{esc(transition.get("to"))}">{esc(transition.get("to"))}</a></td></tr>'
+            )
+    body = "".join(rows) or '<tr><td colspan="3">遷移がありません</td></tr>'
+    return (
+        '<div class="tbl-wrap"><table><caption>遷移元・操作・遷移先の一覧</caption>'
+        '<thead><tr><th scope="col">遷移元</th><th scope="col">操作</th><th scope="col">遷移先</th></tr></thead>'
+        f"<tbody>{body}</tbody></table></div>"
+    )
+
+
+def render_trace(screens: Any, token_data: Any) -> str:
+    from tokens import unconfirmed
+
+    mapping: dict[str, list[str]] = {}
+    notes: list[str] = []
+    for screen in screens if isinstance(screens, list) else []:
+        if not isinstance(screen, dict):
+            continue
+        for requirement in screen.get("trace", []):
+            mapping.setdefault(str(requirement), []).append(str(screen.get("id")))
+        for note in screen.get("notes", []):
+            notes.append(f"{screen.get('id')}: {note}")
+
+    trace_rows = "".join(
+        f'<tr><th scope="row">{esc(requirement)}</th><td>{esc("／".join(ids))}</td></tr>'
+        for requirement, ids in sorted(mapping.items())
+    ) or '<tr><td colspan="2">対応する要件が書かれていません</td></tr>'
+
+    token_rows = "".join(
+        f'<tr><th scope="row">{esc(name)}</th><td>{esc(source)}</td><td>{esc(confidence)}</td></tr>'
+        for name, source, confidence in unconfirmed(token_data)
+    ) or '<tr><td colspan="3">すべて確定済みです</td></tr>'
+
+    note_items = "".join(f"<li>{esc(note)}</li>" for note in notes) or "<li>ありません</li>"
+
+    return f"""<h2>要件と画面の対応</h2>
+<div class="tbl-wrap"><table><caption>要件IDごとの担当画面</caption>
+<thead><tr><th scope="col">要件ID</th><th scope="col">画面</th></tr></thead>
+<tbody>{trace_rows}</tbody></table></div>
+<h2>確定していないデザイントークン</h2>
+<div class="tbl-wrap"><table><caption>抽出元と確度</caption>
+<thead><tr><th scope="col">トークン</th><th scope="col">抽出元</th><th scope="col">確度</th></tr></thead>
+<tbody>{token_rows}</tbody></table></div>
+<h2>要確認事項</h2>
+<ul>{note_items}</ul>"""
+
+
+def render(screens_data: Any, token_data: Any, template: str | None = None) -> str:
+    from tokens import to_css_variables
+
+    source = template if template is not None else TEMPLATE_PATH.read_text(encoding="utf-8")
+    screens = screens_data.get("screens", []) if isinstance(screens_data, dict) else []
+    meta = screens_data.get("meta", {}) if isinstance(screens_data, dict) else {}
+    title = esc(meta.get("phase", "画面"))
+
+    replacements = {
+        "<!--TITLE-->": title,
+        "<!--TOKENS-->": to_css_variables(token_data),
+        "<!--NAV-->": render_nav(screens),
+        "<!--SCREENS-->": "".join(render_screen(screen) for screen in screens),
+        "<!--DIAGRAM-->": render_diagram(screens),
+        "<!--TRACE-->": render_trace(screens, token_data),
+    }
+    for marker, value in replacements.items():
+        source = source.replace(marker, value)
+    return source
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+    import json
+
+    import yaml
+
+    parser = argparse.ArgumentParser(description="画面モックHTMLを生成する")
+    parser.add_argument("screens", type=Path, help="screens.yaml")
+    parser.add_argument("tokens", type=Path, help="design-tokens.json")
+    parser.add_argument("--output", type=Path, required=True, help="出力先HTML")
+    args = parser.parse_args(argv)
+
+    screens_data = yaml.safe_load(args.screens.read_text(encoding="utf-8"))
+    token_data = json.loads(args.tokens.read_text(encoding="utf-8"))
+
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(render(screens_data, token_data), encoding="utf-8")
+    print(f"画面モックを書き出しました: {args.output}")
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(main())

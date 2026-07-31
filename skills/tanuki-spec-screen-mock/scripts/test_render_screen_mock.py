@@ -112,5 +112,70 @@ class RenderNavTest(unittest.TestCase):
         self.assertIn("予約確認", html)
 
 
+TOKEN_DATA = {
+    "color": {
+        "primary": {"value": "#1a73e8", "source": "code", "confidence": "confirmed"},
+        "surface": {"value": "#ffffff", "source": "code", "confidence": "confirmed"},
+        "text": {"value": "#202124", "source": "screenshot", "confidence": "estimated"},
+        "line": {"value": "#dadce0", "source": "code", "confidence": "confirmed"},
+        "accent": {"value": "#b03a00", "source": "principles", "confidence": "proposed"},
+    },
+    "radius": {"md": {"value": "8px", "source": "code", "confidence": "confirmed"}},
+}
+
+SCREENS_DATA = {
+    "meta": {"phase": "phase-1_予約", "entry_screens": ["SC-001"]},
+    "screens": [SCREEN, dict(SCREEN, id="SC-002", name="予約確認", transitions=[], terminal=True, notes=[])],
+}
+
+
+class RenderDiagramTest(unittest.TestCase):
+    def test_lists_each_transition_as_a_row(self) -> None:
+        html = RENDER.render_diagram(SCREENS_DATA["screens"])
+        self.assertIn("SC-001", html)
+        self.assertIn("SC-002", html)
+        self.assertIn("枠を選ぶ", html)
+
+    def test_marks_terminal_screen(self) -> None:
+        html = RENDER.render_diagram(SCREENS_DATA["screens"])
+        self.assertIn("終端", html)
+
+
+class RenderTraceTest(unittest.TestCase):
+    def test_maps_requirement_to_screens(self) -> None:
+        html = RENDER.render_trace(SCREENS_DATA["screens"], TOKEN_DATA)
+        self.assertIn("FR-001", html)
+
+    def test_lists_unconfirmed_tokens(self) -> None:
+        html = RENDER.render_trace(SCREENS_DATA["screens"], TOKEN_DATA)
+        self.assertIn("color.text", html)
+        self.assertIn("color.accent", html)
+
+    def test_lists_screen_notes(self) -> None:
+        html = RENDER.render_trace(SCREENS_DATA["screens"], TOKEN_DATA)
+        self.assertIn("残席0の枠を出すか", html)
+
+
+class RenderDocumentTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.html = RENDER.render(SCREENS_DATA, TOKEN_DATA)
+
+    def test_no_marker_remains(self) -> None:
+        for marker in ("<!--TITLE-->", "<!--TOKENS-->", "<!--NAV-->", "<!--SCREENS-->", "<!--DIAGRAM-->", "<!--TRACE-->"):
+            self.assertNotIn(marker, self.html)
+
+    def test_injects_token_variables(self) -> None:
+        self.assertIn("--color-primary: #1a73e8;", self.html)
+
+    def test_contains_no_script_or_external_reference(self) -> None:
+        self.assertNotIn("<script", self.html)
+        self.assertNotIn("onclick", self.html)
+        self.assertNotIn("http://", self.html)
+
+    def test_contains_every_screen_section(self) -> None:
+        self.assertIn('id="SC-001"', self.html)
+        self.assertIn('id="SC-002"', self.html)
+
+
 if __name__ == "__main__":
     unittest.main()
