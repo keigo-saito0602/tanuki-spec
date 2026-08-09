@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""screens.yamlとdesign-tokens.jsonから単一HTMLの画面モックを合成する。"""
+"""screens.yamlとdesign-tokens.jsonから単一HTMLの画面モックを合成する。
+
+YAMLは `trace:` と書いて値を省くとNoneになる。dict.getの既定値はキーが無いときにしか
+働かないため、`get("trace", [])` ではNoneが素通りしてイテレートで落ちる。配列・辞書を
+受け取る箇所はすべて `screen.get("trace") or []` の形でNoneを既定値へ寄せる。
+"""
 
 from __future__ import annotations
 
@@ -48,26 +53,26 @@ def render_block(block: Any) -> str:
     kind = block.get("type", "unknown")
 
     if kind == "header":
-        items = "".join(f'<a href="#">{esc(item)}</a>' for item in block.get("nav", []))
+        items = "".join(f'<a href="#">{esc(item)}</a>' for item in (block.get("nav") or []))
         return _labelled(kind, f'<div class="bar">{items or "ナビゲーション"}</div>')
 
     if kind in ("filter-bar", "form-section"):
         cells = "".join(
             f'<div class="box">{esc(field.get("label", "項目"))}'
             f'{"<strong>（必須）</strong>" if field.get("required") else ""}</div>'
-            for field in block.get("fields", [])
+            for field in (block.get("fields") or [])
             if isinstance(field, dict)
         )
         return _labelled(kind, f'<div class="grid">{cells}</div>')
 
     if kind == "card-grid":
         label = esc(block.get("item_label", "項目"))
-        fields = "".join(f"<div>{esc(name)}</div>" for name in block.get("item_fields", []))
+        fields = "".join(f"<div>{esc(name)}</div>" for name in (block.get("item_fields") or []))
         card = f'<div class="box"><strong>{label}</strong>{fields}</div>'
         return _labelled(kind, f'<div class="grid">{card * 3}</div>')
 
     if kind == "table":
-        columns = block.get("columns", ["列1", "列2"])
+        columns = block.get("columns") or ["列1", "列2"]
         head = "".join(f'<th scope="col">{esc(name)}</th>' for name in columns)
         body = "".join("<td>—</td>" for _ in columns)
         table = (
@@ -77,7 +82,7 @@ def render_block(block: Any) -> str:
         return _labelled(kind, table)
 
     if kind == "button-row":
-        buttons = block.get("buttons", ["操作"])
+        buttons = block.get("buttons") or ["操作"]
         rendered = "".join(
             f'<span class="btn{"" if index == 0 else " btn-sub"}">{esc(name)}</span>'
             for index, name in enumerate(buttons)
@@ -85,7 +90,7 @@ def render_block(block: Any) -> str:
         return _labelled(kind, f"<div>{rendered}</div>")
 
     if kind == "list":
-        items = "".join(f'<li class="box">{esc(item)}</li>' for item in block.get("items", ["項目"]))
+        items = "".join(f'<li class="box">{esc(item)}</li>' for item in (block.get("items") or ["項目"]))
         return _labelled(kind, f'<ul style="list-style:none;padding:0;margin:0">{items}</ul>')
 
     if kind == "empty-state":
@@ -133,9 +138,9 @@ def render_screen(screen: Any) -> str:
     if not isinstance(screen, dict):
         return ""
     screen_id = esc(screen.get("id", "SC-000"))
-    blocks = "".join(render_block(block) for block in screen.get("blocks", []))
+    blocks = "".join(render_block(block) for block in (screen.get("blocks") or []))
 
-    states = screen.get("states", {})
+    states = screen.get("states") or {}
     state_rows = "".join(
         f"<tr><th scope=\"row\">{esc(STATE_LABELS.get(key, key))}</th><td>{esc(states.get(key, '未記入'))}</td></tr>"
         for key in STATE_LABELS
@@ -144,13 +149,13 @@ def render_screen(screen: Any) -> str:
     links = "".join(
         f'<a class="{KIND_CLASS.get(t.get("kind"), "btn btn-sub")}" href="#{esc(t.get("to"))}">'
         f'{esc(t.get("action", "遷移"))} → {esc(t.get("to"))}</a> '
-        for t in screen.get("transitions", [])
+        for t in (screen.get("transitions") or [])
         if isinstance(t, dict)
     )
-    trace = "／".join(esc(item) for item in screen.get("trace", [])) or "未対応"
+    trace = "／".join(esc(item) for item in (screen.get("trace") or [])) or "未対応"
     notes = "".join(
         f'<p><span class="badge badge-check">要確認</span> {esc(note)}</p>'
-        for note in screen.get("notes", [])
+        for note in (screen.get("notes") or [])
     )
 
     return f"""<section class="screen" id="{screen_id}">
@@ -217,9 +222,9 @@ def render_trace(screens: Any, token_data: Any) -> str:
     for screen in screens if isinstance(screens, list) else []:
         if not isinstance(screen, dict):
             continue
-        for requirement in screen.get("trace", []):
+        for requirement in (screen.get("trace") or []):
             mapping.setdefault(str(requirement), []).append(str(screen.get("id")))
-        for note in screen.get("notes", []):
+        for note in (screen.get("notes") or []):
             notes.append(f"{screen.get('id')}: {note}")
 
     trace_rows = "".join(
@@ -250,9 +255,9 @@ def render(screens_data: Any, token_data: Any, template: str | None = None) -> s
     from tokens import to_css_variables
 
     source = template if template is not None else TEMPLATE_PATH.read_text(encoding="utf-8")
-    screens = screens_data.get("screens", []) if isinstance(screens_data, dict) else []
-    meta = screens_data.get("meta", {}) if isinstance(screens_data, dict) else {}
-    title = esc(meta.get("phase", "画面"))
+    screens = (screens_data.get("screens") or []) if isinstance(screens_data, dict) else []
+    meta = (screens_data.get("meta") or {}) if isinstance(screens_data, dict) else {}
+    title = esc(meta.get("phase") or "画面")
 
     replacements = {
         "<!--TITLE-->": title,

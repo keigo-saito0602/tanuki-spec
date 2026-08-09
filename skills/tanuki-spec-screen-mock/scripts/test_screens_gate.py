@@ -182,6 +182,12 @@ class SchemaTest(unittest.TestCase):
         self.assertEqual([], result.errors)
         self.assertTrue(any("trace" in warning for warning in result.warnings))
 
+    def test_null_trace_is_error(self) -> None:
+        """`trace:` と値を省いた書き方はNoneになり、レンダラが落ちるためエラーにする。"""
+
+        result = self._validate(lambda d: d["screens"][0].__setitem__("trace", None))
+        self.assertTrue(any("trace" in error for error in result.errors))
+
     def test_entry_screen_must_exist(self) -> None:
         result = self._validate(lambda d: d["meta"].__setitem__("entry_screens", ["SC-999"]))
         self.assertTrue(any("SC-999" in error for error in result.errors))
@@ -308,6 +314,21 @@ class ValidateAllTest(unittest.TestCase):
         data = yaml.safe_load(template.read_text(encoding="utf-8"))
         result = GATE.validate_all(data, CATALOG.load_catalog())
         self.assertEqual([], result.errors)
+
+    def test_template_covers_the_error_layout_with_a_stateful_alert(self) -> None:
+        """error レイアウトは alert 必須、alert は state 必須。この組み合わせを見本で通す。"""
+
+        import yaml
+
+        template = SCRIPT_DIR.parent / "templates" / "screens-template.yaml"
+        data = yaml.safe_load(template.read_text(encoding="utf-8"))
+        error_screens = [s for s in data["screens"] if s.get("layout") == "error"]
+        self.assertTrue(error_screens, "layout: error の見本画面がテンプレートにありません")
+        for screen in error_screens:
+            alerts = [b for b in screen["blocks"] if b.get("type") == "alert"]
+            self.assertTrue(alerts)
+            for alert in alerts:
+                self.assertIn(alert.get("state"), ("error", "forbidden"))
 
 
 if __name__ == "__main__":

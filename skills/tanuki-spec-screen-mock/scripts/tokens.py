@@ -143,7 +143,9 @@ def to_css_variables(data: Any) -> str:
             value = entry.get("value")
             if not isinstance(value, str):
                 continue
-            lines.append(f"  --{group}-{name}: {_sanitize(value)};")
+            # 名前もサニタイズする。トークン名はdesign-tokens.jsonのキーで、
+            # そのまま<style>へ入るため `</style><script>` を仕込まれる余地がある。
+            lines.append(f"  --{group}-{_sanitize(str(name))}: {_sanitize(value)};")
     return "\n".join(lines)
 
 

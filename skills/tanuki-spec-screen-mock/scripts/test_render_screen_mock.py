@@ -147,6 +147,47 @@ class RenderScreenTest(unittest.TestCase):
         self.assertIn("[要確認] 残席0の枠を出すか", html)
 
 
+class RenderWithNullFieldsTest(unittest.TestCase):
+    """YAMLで `trace:` と値を省くとNoneになる。Noneでも落ちないことを確かめる。"""
+
+    NULLED = dict(
+        SCREEN,
+        trace=None,
+        notes=None,
+        transitions=None,
+        blocks=None,
+        states=None,
+        terminal=True,
+    )
+
+    def test_render_screen_tolerates_null_sequences(self) -> None:
+        html = RENDER.render_screen(self.NULLED)
+        self.assertIn('id="SC-001"', html)
+        self.assertIn("未対応", html)
+        self.assertIn("終端画面", html)
+
+    def test_render_diagram_and_trace_tolerate_null_sequences(self) -> None:
+        screens = [self.NULLED]
+        self.assertIn("終端", RENDER.render_diagram(screens))
+        self.assertIn("対応する要件が書かれていません", RENDER.render_trace(screens, TOKEN_DATA))
+
+    def test_render_block_tolerates_null_sequences(self) -> None:
+        for block in (
+            {"type": "header", "nav": None},
+            {"type": "filter-bar", "fields": None},
+            {"type": "card-grid", "item_fields": None},
+            {"type": "table", "columns": None},
+            {"type": "button-row", "buttons": None},
+            {"type": "list", "items": None},
+        ):
+            with self.subTest(block=block["type"]):
+                self.assertIn(block["type"], RENDER.render_block(block))
+
+    def test_render_document_tolerates_null_meta_and_screens(self) -> None:
+        html = RENDER.render({"meta": None, "screens": [self.NULLED]}, TOKEN_DATA)
+        self.assertIn('id="SC-001"', html)
+
+
 class RenderNavTest(unittest.TestCase):
     def test_lists_every_screen(self) -> None:
         html = RENDER.render_nav([SCREEN, dict(SCREEN, id="SC-002", name="予約確認")])
@@ -214,6 +255,39 @@ class RenderDocumentTest(unittest.TestCase):
         self.assertNotIn("<script", self.html)
         self.assertNotIn("onclick", self.html)
         self.assertNotIn("http://", self.html)
+
+    def test_malicious_token_name_cannot_escape_style_block(self) -> None:
+        """トークン名にタグを仕込んでも<style>から抜け出せない。
+
+        値だけをサニタイズしていた頃は、design-tokens.jsonのキー名が生のまま
+        <style>へ入り、scriptタグを出力できた。
+        """
+
+        poisoned = {
+            "color": dict(
+                TOKEN_DATA["color"],
+                **{"primary</style><script>alert(1)</script>": {"value": "#1a73e8", "confidence": "confirmed"}},
+            ),
+        }
+        html = RENDER.render(SCREENS_DATA, poisoned)
+        self.assertNotIn("<script", html)
+        self.assertNotIn("</style>", html.split("</style>", 1)[1])
+
+    def test_malicious_token_value_cannot_escape_style_block(self) -> None:
+        poisoned = {"color": {"primary": {"value": "#fff}</style><script>alert(1)</script>", "confidence": "confirmed"}}}
+        html = RENDER.render(SCREENS_DATA, poisoned)
+        self.assertNotIn("<script", html)
+
+    def test_surface_token_paints_the_screen_and_box_background(self) -> None:
+        """コントラスト検証が見る--color-surfaceを、実際の背景色にも使う。
+
+        `.screen`と`.box`が#fff固定だと、暗い配色のトークンで
+        「文字とsurfaceのコントラストは十分」と判定しつつ実画面は白背景になる。
+        """
+
+        for rule in (".screen {", ".box {"):
+            declaration = self.html.split(rule, 1)[1].split("}", 1)[0]
+            self.assertIn("background: var(--color-surface, #fff)", declaration)
 
     def test_contains_every_screen_section(self) -> None:
         self.assertIn('id="SC-001"', self.html)

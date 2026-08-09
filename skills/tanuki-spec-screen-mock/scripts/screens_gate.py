@@ -76,9 +76,14 @@ def validate_schema(data: Any, catalog: Catalog) -> Result:
         if rule is None:
             result.errors.append(f"{label}のlayout「{layout}」はカタログにありません")
 
-        trace = screen.get("trace")
-        if isinstance(trace, list) and not trace:
-            result.warnings.append(f"{label}のtraceが空です。対応する要件IDを書いてください")
+        # `trace:` と書いて値を省くとNoneになる。ここで配列以外を弾かないと、
+        # 警告も出ないままレンダラがNoneをイテレートして落ちる。
+        if "trace" in screen:
+            trace = screen.get("trace")
+            if not isinstance(trace, list):
+                result.errors.append(f"{label}のtraceは要件IDの配列で指定してください")
+            elif not trace:
+                result.warnings.append(f"{label}のtraceが空です。対応する要件IDを書いてください")
 
         block_types, block_states = _validate_blocks(screen.get("blocks"), label, catalog, result)
         if rule is not None:

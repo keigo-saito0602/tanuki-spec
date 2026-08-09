@@ -81,4 +81,35 @@ screens:
       - action: "<戻る操作>"
         to: SC-001
         kind: back
+      - action: "<保存に失敗したとき>"
+        to: SC-E01
+        kind: forward
+    notes: []
+
+  # エラー画面。layout: error は alert と button-row が必須で、
+  # alert には state（error または forbidden）が要る。
+  - id: SC-E01
+    name: "<エラー画面名>"
+    purpose: "<失敗した理由を伝え、元の作業へ戻す>"
+    actor: "<操作する役割>"
+    layout: error
+    trace: ["<FR-003>"]
+    blocks:
+      - type: header
+        nav: ["<メニュー1>"]
+      - type: alert
+        state: error
+        message: "<失敗理由と復旧手段>"
+      - type: button-row
+        buttons: ["<一覧へ戻る>"]
+    states:
+      normal: "該当なし: エラーを伝えるためだけの画面で平常時の表示がない"
+      empty: "該当なし: 一覧を持たない"
+      loading: "該当なし: 遷移した時点で表示が確定している"
+      error: "<失敗理由と復旧手段>"
+      forbidden: "該当なし: <理由>"
+    transitions:
+      - action: "<一覧へ戻る>"
+        to: SC-001
+        kind: back
     notes: []
