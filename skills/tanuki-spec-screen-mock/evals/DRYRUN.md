@@ -1,6 +1,6 @@
 # ドライラン観察ログ
 
-実施日: 2026-08-09（最終ブランチレビュー対応で `layout: error` の SC-E01 をテンプレートへ追加したため再実行）
+実施日: 2026-08-10（PRレビュー対応でフォーム項目のconstraint/error描画とテンプレートのgenerated_at修正を行ったため再実行）
 入力: `templates/screens-template.yaml` と `templates/design-tokens-template.json`
 
 実行環境の制約: 本ドライランはGUI（ディスプレイ）を持たないエージェント環境で実施した。
@@ -14,7 +14,7 @@
 | コマンド | 終了コード | 出力の要点 |
 | --- | --- | --- |
 | `screens_gate.py` | 0 | `検証を通過しました。注意は0件です。` |
-| `render_screen_mock.py` | 0 | `画面モックを書き出しました: /tmp/dryrun/views/画面モック.html`（生成HTMLは164行、15450バイト） |
+| `render_screen_mock.py` | 0 | `画面モックを書き出しました: /tmp/dryrun/views/画面モック.html`（生成HTMLは164行、15641バイト。フォーム項目のconstraint/error描画が加わったぶんバイト数が増加） |
 | `validate_screen_mock.py` | 0 | `出力契約を満たしています。` |
 | `render_screen_docs.py` | 0 | 画面一覧の表をMarkdownで標準出力。`SC-001→SC-002`、`SC-002→SC-001`／`SC-002→SC-E01`、`SC-E01→SC-001`の3行（テンプレートのプレースホルダ文言のまま） |
 
@@ -36,5 +36,5 @@
 - テンプレートをそのまま流した場合、`render_screen_docs.py`の出力は`<画面名>`や`<操作名>`のプレースホルダのままになる。これはテンプレート自体の仕様であり実案件では記入済みの`screens.yaml`を使うため、スクリプト側の不足ではない。
 - 初期表示の仕組みが`:has()`セレクタに依存している点は、`references/mock-html-contract.md`の「動作の前提」に対応ブラウザ（Chrome 105以降・Safari 15.4以降・Firefox 121以降）としてすでに明記されていることを確認した。参照資料・SKILL.mdとも追記の必要はない。
 - 320px幅・実クリック操作・印刷プレビューの3項目は、GUI環境がないため実際のレンダリングでの確認はできなかった。実機（人手）での目視レビューが別途必要。
-- `python3 -m unittest discover -s scripts -v`を併せて実行したところ、既存114件のテストはすべて成功した（AGENTS.mdに記載のテストコマンドが実際に機能することを確認）。
+- `python3 -m unittest discover -s scripts -v`を併せて実行したところ、既存127件のテストはすべて成功した（AGENTS.mdに記載のテストコマンドが実際に機能することを確認）。
 - 部品カタログ自体の過不足は感じなかった。

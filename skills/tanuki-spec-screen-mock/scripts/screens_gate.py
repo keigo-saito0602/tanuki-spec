@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Any
 
 from catalog import Catalog
@@ -12,6 +13,7 @@ from catalog import Catalog
 SCREEN_ID_PATTERN = re.compile(r"^SC-[EL]?\d+$")
 REQUIRED_SCREEN_FIELDS = ("id", "name", "purpose", "actor", "layout", "trace", "blocks", "states")
 REQUIRED_META_FIELDS = ("phase", "source_spec", "generated_at")
+GENERATED_AT_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 STATE_KEYS = ("normal", "empty", "loading", "error", "forbidden")
 
 
@@ -46,8 +48,19 @@ def validate_schema(data: Any, catalog: Catalog) -> Result:
         meta = {}
     else:
         for name in REQUIRED_META_FIELDS:
-            if not isinstance(meta.get(name), str) or not meta[name]:
+            value = meta.get(name)
+            if not isinstance(value, str) or not value.strip():
                 result.errors.append(f"metaに必須フィールド{name}がありません")
+        generated_at = meta.get("generated_at")
+        if isinstance(generated_at, str) and generated_at.strip():
+            if not GENERATED_AT_PATTERN.match(generated_at):
+                result.errors.append("meta.generated_atはYYYY-MM-DD形式で指定してください")
+            else:
+                year, month, day = (int(part) for part in generated_at.split("-"))
+                try:
+                    date(year, month, day)
+                except ValueError:
+                    result.errors.append(f"meta.generated_at「{generated_at}」は実在する日付ではありません")
 
     screens = data.get("screens")
     if not isinstance(screens, list) or not screens:

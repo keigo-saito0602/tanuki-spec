@@ -204,6 +204,30 @@ class SchemaTest(unittest.TestCase):
         result = self._validate(lambda d: d["meta"].pop("generated_at"))
         self.assertTrue(any("generated_at" in error for error in result.errors))
 
+    def test_blank_meta_phase_is_error(self) -> None:
+        """レビュー指摘の再現: 空白のみのphaseが非空文字として通過していた。"""
+
+        result = self._validate(lambda d: d["meta"].__setitem__("phase", "   "))
+        self.assertTrue(any("phase" in error for error in result.errors))
+
+    def test_blank_meta_source_spec_is_error(self) -> None:
+        result = self._validate(lambda d: d["meta"].__setitem__("source_spec", "   "))
+        self.assertTrue(any("source_spec" in error for error in result.errors))
+
+    def test_malformed_generated_at_is_error(self) -> None:
+        """レビュー指摘の再現: 2026-99-99（存在しない日付）がエラーにならなかった。"""
+
+        result = self._validate(lambda d: d["meta"].__setitem__("generated_at", "2026-99-99"))
+        self.assertTrue(any("generated_at" in error for error in result.errors))
+
+    def test_generated_at_not_matching_pattern_is_error(self) -> None:
+        result = self._validate(lambda d: d["meta"].__setitem__("generated_at", "2026/07/30"))
+        self.assertTrue(any("generated_at" in error for error in result.errors))
+
+    def test_valid_generated_at_passes(self) -> None:
+        result = self._validate(lambda d: d["meta"].__setitem__("generated_at", "2026-07-30"))
+        self.assertEqual([], result.errors)
+
     def test_meta_with_only_entry_screens_has_three_errors(self) -> None:
         """レビュー指摘の再現: entry_screensしかないmetaが警告・エラーとも0件で通っていた。"""
 
