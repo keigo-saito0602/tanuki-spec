@@ -24,7 +24,7 @@
 
 | 確認項目 | 結果 |
 | --- | --- |
-| 初期表示で SC-001 が見える | 確認できた。`.screen:target{display:block}`に加え、`body:not(:has(.screen:target)) .screen:first-of-type{display:block}`があり、URLフラグメントが無い初期状態ではSC-001（最初の`.screen`）が表示される実装になっている。ただし`:has()`セレクタに依存するため、対応していない古いブラウザでは初期表示が崩れる可能性がある |
+| 初期表示で SC-001 が見える | 確認できた。`.screen:target{display:block}`に加え、`body:not(:has(.screen:target)) .screen:first-of-type{display:block}`があり、URLフラグメントが無い初期状態ではSC-001（最初の`.screen`）が表示される実装になっている。`:has()`セレクタに依存するため対応ブラウザに下限があるが、これは`references/mock-html-contract.md`の「動作の前提」（Chrome 105以降・Safari 15.4以降・Firefox 121以降）に既に明記済みであることを確認した |
 | 遷移ボタンで SC-002 へ移動する | コード上は妥当。SC-001内の`<a class="btn" href="#SC-002">`をクリックするとURLフラグメントが`#SC-002`になり、`.screen:target`でSC-002側が`display:block`に、SC-001側は`:target`が外れ`:first-of-type`条件も`:has(.screen:target)`が真になるため非表示になる。実ブラウザでのクリック操作そのものは未実施 |
 | ワイヤー／デザインの切替が効く | コード上は妥当。`#fid-wire`と`#fid-design`のradioは`.app`と兄弟要素で、`#fid-wire:checked ~ .app`でCSS変数（`--color-primary`等）をワイヤー用配色に上書きする仕組みになっている。実クリックでの見た目切り替えは未確認 |
 | PC／スマホの切替が効く | コード上は妥当。`#dev-sp:checked ~ .app .canvas{max-width:390px}`でスマホ選択時にキャンバス幅が縮む。実クリックでの見た目切り替えは未確認 |
@@ -34,6 +34,7 @@
 ## 気づいた不足
 
 - テンプレートをそのまま流した場合、`render_screen_docs.py`の出力は`<画面名>`や`<操作名>`のプレースホルダのままになる。これはテンプレート自体の仕様であり実案件では記入済みの`screens.yaml`を使うため、スクリプト側の不足ではない。
-- 初期表示の仕組みが`:has()`セレクタに依存している。`references/mock-html-contract.md`や`SKILL.md`には対応ブラウザの前提が明記されていないため、古いブラウザ（Chrome 104以前・Firefox 120以前など）では初期表示が出ない可能性がある点は、参照資料に一言添えてもよいかもしれない。ただし今回のスコープ外のため、部品カタログ自体の過不足は感じなかった。
+- 初期表示の仕組みが`:has()`セレクタに依存している点は、`references/mock-html-contract.md`の「動作の前提」に対応ブラウザ（Chrome 105以降・Safari 15.4以降・Firefox 121以降）としてすでに明記されていることを確認した。参照資料・SKILL.mdとも追記の必要はない。
 - 320px幅・実クリック操作・印刷プレビューの3項目は、GUI環境がないため実際のレンダリングでの確認はできなかった。実機（人手）での目視レビューが別途必要。
 - `python3 -m unittest discover -s scripts -v`を併せて実行したところ、既存88件のテストはすべて成功した（AGENTS.mdに記載のテストコマンドが実際に機能することを確認）。
+- 部品カタログ自体の過不足は感じなかった。
