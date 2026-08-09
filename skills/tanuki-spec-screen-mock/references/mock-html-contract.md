@@ -66,8 +66,9 @@ default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; ba
 | `alert` | 左端の境界線（`state`ごとに太さ・線種を変える。`error`は太い二重線、`forbidden`は破線）＋ `aria-hidden="true"` の記号アイコン ＋ 種別文言（`error`→「エラー」、`forbidden`→「権限がありません」） |
 | `loading` | 視覚的には隠すがスクリーンリーダーには読ませる `aria-live="polite"` 領域に「読み込み中」の文言を置く。スピナー等のアニメーション表現だけに頼らない |
 
-これらの非色覚手掛かりはHTML構造とインラインスタイルだけで表現し、`assets/screen-mock.html`
-側の共有CSSを変更しない。
+現時点ではこれらの非色覚手掛かりをHTML構造とインラインスタイルで表現している
+（共有CSS `assets/screen-mock.html` は今回変更していない）。これはT-20時点の実装範囲による
+現状であり、共有CSS側へ寄せる変更を妨げるものではない。
 
 ## 動作の前提
 
