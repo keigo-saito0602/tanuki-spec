@@ -19,13 +19,27 @@ STATE_LABELS = {
 }
 KIND_CLASS = {"forward": "btn", "back": "btn btn-sub", "cancel": "btn btn-sub"}
 
+# alert の種別文言・アイコン・境界線。色以外でエラーと権限なしを見分けるための手掛かり。
+# 境界線はborder-styleも変えており、色覚だけに頼らない形で区別できる。
+ALERT_KIND_LABEL = {"error": "エラー", "forbidden": "権限がありません"}
+ALERT_ICON = {"error": "⚠", "forbidden": "🔒"}
+ALERT_BORDER = {"error": "6px double #b3261e", "forbidden": "4px dashed #5f6368"}
+
+# 視覚的には隠すがスクリーンリーダーには読ませる（sr-onlyパターン）ためのインライン指定。
+# 共有CSS（assets/screen-mock.html）には手を入れず、部品側で完結させる。
+VISUALLY_HIDDEN_STYLE = (
+    "position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;"
+    "clip:rect(0,0,0,0);white-space:nowrap;border:0"
+)
+
 
 def esc(value: Any) -> str:
     return html.escape(str(value), quote=True)
 
 
-def _labelled(kind: str, body: str) -> str:
-    return f'<div class="blk"><div class="blk-label">{esc(kind)}</div>{body}</div>'
+def _labelled(kind: str, body: str, state: Any = None) -> str:
+    state_attr = f' data-state="{esc(state)}"' if isinstance(state, str) and state else ""
+    return f'<div class="blk"{state_attr}><div class="blk-label">{esc(kind)}</div>{body}</div>'
 
 
 def render_block(block: Any) -> str:
@@ -73,6 +87,43 @@ def render_block(block: Any) -> str:
     if kind == "list":
         items = "".join(f'<li class="box">{esc(item)}</li>' for item in block.get("items", ["項目"]))
         return _labelled(kind, f'<ul style="list-style:none;padding:0;margin:0">{items}</ul>')
+
+    if kind == "empty-state":
+        state = block.get("state")
+        message = block.get("message") or block.get("text") or ""
+        body = (
+            '<div class="box state-empty">'
+            '<span class="state-icon" aria-hidden="true">🗂</span>'
+            '<strong class="state-heading">データがありません</strong>'
+            f'<p class="state-message">{esc(message)}</p>'
+            "</div>"
+        )
+        return _labelled(kind, body, state)
+
+    if kind == "loading":
+        state = block.get("state")
+        message = block.get("message") or "しばらくお待ちください"
+        body = (
+            f'<div class="box state-loading" aria-hidden="true"><span class="state-spinner"></span>{esc(message)}</div>'
+            f'<p aria-live="polite" style="{VISUALLY_HIDDEN_STYLE}">読み込み中</p>'
+        )
+        return _labelled(kind, body, state)
+
+    if kind == "alert":
+        state = block.get("state")
+        kind_label = ALERT_KIND_LABEL.get(state, "通知")
+        icon = ALERT_ICON.get(state, "ℹ")
+        border = ALERT_BORDER.get(state, "4px solid #5f6368")
+        message = block.get("message") or block.get("text") or ""
+        state_class = f" alert-{esc(state)}" if isinstance(state, str) and state else ""
+        body = (
+            f'<div class="box alert{state_class}" style="border-left:{border};padding-left:.8rem">'
+            f'<span class="state-icon" aria-hidden="true">{icon}</span> '
+            f'<strong class="state-kind">{esc(kind_label)}</strong>'
+            f'<p class="state-message">{esc(message)}</p>'
+            "</div>"
+        )
+        return _labelled(kind, body, state)
 
     text = block.get("text") or block.get("label") or kind
     return _labelled(kind, f'<div class="box">{esc(text)}</div>')

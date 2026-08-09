@@ -52,6 +52,63 @@ class LoadCatalogTest(unittest.TestCase):
         with self.assertRaises(CATALOG.CatalogError):
             self._load("blocks:\n  - header\n")
 
+    def test_default_catalog_has_state_fields(self) -> None:
+        catalog = CATALOG.load_catalog()
+        self.assertIn("empty-state", catalog.state_required)
+        self.assertIn("loading", catalog.blocks)
+        self.assertEqual(frozenset({"error", "forbidden"}), catalog.state_components["alert"])
+
+    _BASE = (
+        "blocks:\n  - header\n  - empty-state\n  - alert\n  - loading\n"
+        "layouts:\n  detail:\n    required: [header]\n    forbidden: []\n"
+    )
+
+    def test_empty_state_required_is_rejected(self) -> None:
+        source = self._BASE + "state_required: []\nstate_components: {}\n"
+        with self.assertRaises(CATALOG.CatalogError) as caught:
+            self._load(source)
+        self.assertIn("state_required", str(caught.exception))
+
+    def test_state_required_with_unknown_block_is_rejected(self) -> None:
+        source = (
+            self._BASE
+            + "state_required: [empty-state, unknown-block]\n"
+            + "state_components:\n  empty-state: [empty]\n  unknown-block: [empty]\n"
+        )
+        with self.assertRaises(CATALOG.CatalogError) as caught:
+            self._load(source)
+        self.assertIn("unknown-block", str(caught.exception))
+
+    def test_state_required_with_duplicate_is_rejected(self) -> None:
+        source = (
+            self._BASE
+            + "state_required: [empty-state, empty-state]\n"
+            + "state_components:\n  empty-state: [empty]\n"
+        )
+        with self.assertRaises(CATALOG.CatalogError) as caught:
+            self._load(source)
+        self.assertIn("重複", str(caught.exception))
+
+    def test_state_components_key_mismatch_is_rejected(self) -> None:
+        source = (
+            self._BASE
+            + "state_required: [empty-state, alert, loading]\n"
+            + "state_components:\n  empty-state: [empty]\n  alert: [error, forbidden]\n"
+        )
+        with self.assertRaises(CATALOG.CatalogError) as caught:
+            self._load(source)
+        self.assertIn("state_components", str(caught.exception))
+
+    def test_state_components_unknown_value_is_rejected(self) -> None:
+        source = (
+            self._BASE
+            + "state_required: [empty-state]\n"
+            + "state_components:\n  empty-state: [unknown-state]\n"
+        )
+        with self.assertRaises(CATALOG.CatalogError) as caught:
+            self._load(source)
+        self.assertIn("unknown-state", str(caught.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

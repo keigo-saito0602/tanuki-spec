@@ -80,23 +80,26 @@ def validate_schema(data: Any, catalog: Catalog) -> Result:
         if isinstance(trace, list) and not trace:
             result.warnings.append(f"{label}のtraceが空です。対応する要件IDを書いてください")
 
-        block_types = _validate_blocks(screen.get("blocks"), label, catalog, result)
+        block_types, block_states = _validate_blocks(screen.get("blocks"), label, catalog, result)
         if rule is not None:
             for missing in sorted(rule.required - block_types):
                 result.errors.append(f"{label}のlayout「{layout}」には部品{missing}が必須です")
             for banned in sorted(rule.forbidden & block_types):
                 result.errors.append(f"{label}のlayout「{layout}」に部品{banned}は置けません")
 
+        _validate_state_coverage(screen.get("states"), block_states, label, result)
+
     _validate_entry_screens(meta.get("entry_screens"), seen, result)
     return result
 
 
-def _validate_blocks(blocks: Any, label: str, catalog: Catalog, result: Result) -> set[str]:
+def _validate_blocks(blocks: Any, label: str, catalog: Catalog, result: Result) -> tuple[set[str], set[str]]:
     if not isinstance(blocks, list) or not blocks:
         result.errors.append(f"{label}のblocksを1件以上の配列で定義してください")
-        return set()
+        return set(), set()
 
     types: set[str] = set()
+    block_states: set[str] = set()
     for index, block in enumerate(blocks):
         if not isinstance(block, dict):
             result.errors.append(f"{label}のblocks[{index}]はマッピングで指定してください")
@@ -106,7 +109,55 @@ def _validate_blocks(blocks: Any, label: str, catalog: Catalog, result: Result) 
             result.errors.append(f"{label}のblocks[{index}]のtype「{block_type}」はカタログにありません")
             continue
         types.add(block_type)
-    return types
+        _validate_block_state(block, block_type, index, label, catalog, result, block_states)
+    return types, block_states
+
+
+def _validate_block_state(
+    block: dict,
+    block_type: str,
+    index: int,
+    label: str,
+    catalog: Catalog,
+    result: Result,
+    block_states: set[str],
+) -> None:
+    where = f"{label}のblocks[{index}]（{block_type}）"
+    state = block.get("state")
+
+    if block_type not in catalog.state_required:
+        if state is not None:
+            result.errors.append(f"{where}は状態表現部品ではないためstateを書けません")
+        return
+
+    if not isinstance(state, str) or not state:
+        result.errors.append(f"{where}は状態表現部品なのでstateが必須です")
+        return
+    if state not in STATE_KEYS:
+        result.errors.append(f"{where}のstate「{state}」は{'/'.join(STATE_KEYS)}のいずれかにしてください")
+        return
+    allowed = catalog.state_components.get(block_type, frozenset())
+    if state not in allowed:
+        result.errors.append(
+            f"{where}のstate「{state}」はこの部品では表せません（表せる値: {'/'.join(sorted(allowed))}）"
+        )
+        return
+    block_states.add(state)
+
+
+def _validate_state_coverage(states: Any, block_states: set[str], label: str, result: Result) -> None:
+    if not isinstance(states, dict):
+        return
+    for key in STATE_KEYS:
+        if key == "normal":
+            continue
+        value = states.get(key)
+        if not isinstance(value, str) or not value.strip():
+            continue
+        if value.strip().startswith(NOT_APPLICABLE):
+            continue
+        if key not in block_states:
+            result.errors.append(f"{label}のstates.{key}は扱う想定ですが、state: {key}を持つ部品がありません")
 
 
 def _validate_entry_screens(entry: Any, known: set[str], result: Result) -> None:

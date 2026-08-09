@@ -45,6 +45,30 @@ default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; ba
 - 状態は色だけでなく文字・境界線・形を併用する
 - 印刷やグレースケールでも意味が残る
 
+## 状態表現部品のマーク契約（data-state）
+
+`component-catalog.yaml` の `state_required`（`empty-state` / `alert` / `loading`）に
+挙がる部品は、`screens.yaml` の `blocks[].state` の値を `data-state` 属性として
+そのままHTMLへ出力する。それ以外の部品には `data-state` を付けない。
+
+| 項目 | 内容 |
+| --- | --- |
+| 属性名 | `data-state` |
+| 許可値 | `normal` / `empty` / `loading` / `error` / `forbidden`（実際に出るのは部品ごとに`state_components`で決まる値のみ） |
+| 付与対象 | `blocks[].state` を持つ要素（`empty-state` / `loading` / `alert` の外枠 `.blk`） |
+
+`data-state` を付けるだけでは色覚以外の手掛かりとして不十分なため、部品ごとに次の
+非色覚の手掛かりを併せて出力する。
+
+| 部品 | 非色覚の手掛かり |
+| --- | --- |
+| `empty-state` | 見出し文言（「データがありません」固定）＋ `message` の説明文 ＋ `aria-hidden="true"` を付けた記号アイコン |
+| `alert` | 左端の境界線（`state`ごとに太さ・線種を変える。`error`は太い二重線、`forbidden`は破線）＋ `aria-hidden="true"` の記号アイコン ＋ 種別文言（`error`→「エラー」、`forbidden`→「権限がありません」） |
+| `loading` | 視覚的には隠すがスクリーンリーダーには読ませる `aria-live="polite"` 領域に「読み込み中」の文言を置く。スピナー等のアニメーション表現だけに頼らない |
+
+これらの非色覚手掛かりはHTML構造とインラインスタイルだけで表現し、`assets/screen-mock.html`
+側の共有CSSを変更しない。
+
 ## 動作の前提
 
 画面切替とモード切替はCSSだけで行う。`:target` と `:has()` を使うため、

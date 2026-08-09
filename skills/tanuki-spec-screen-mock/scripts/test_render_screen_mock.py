@@ -74,6 +74,49 @@ class RenderBlockTest(unittest.TestCase):
         self.assertIn("&lt;script&gt;", html)
 
 
+class RenderStateBlockTest(unittest.TestCase):
+    ALLOWED_STATES = {"normal", "empty", "loading", "error", "forbidden"}
+
+    def test_block_with_state_outputs_data_state_attribute(self) -> None:
+        html = RENDER.render_block({"type": "empty-state", "state": "empty", "message": "0件です"})
+        self.assertIn('data-state="empty"', html)
+
+    def test_data_state_value_is_within_allowed_vocabulary(self) -> None:
+        for block, expected in (
+            ({"type": "empty-state", "state": "empty"}, "empty"),
+            ({"type": "loading", "state": "loading"}, "loading"),
+            ({"type": "alert", "state": "error"}, "error"),
+            ({"type": "alert", "state": "forbidden"}, "forbidden"),
+        ):
+            html = RENDER.render_block(block)
+            self.assertIn(f'data-state="{expected}"', html)
+            self.assertIn(expected, self.ALLOWED_STATES)
+
+    def test_block_without_state_has_no_data_state_attribute(self) -> None:
+        html = RENDER.render_block({"type": "header", "nav": ["予約"]})
+        self.assertNotIn("data-state", html)
+
+    def test_alert_shows_icon_border_class_and_kind_label(self) -> None:
+        html = RENDER.render_block({"type": "alert", "state": "error", "message": "失敗しました"})
+        self.assertIn("aria-hidden=\"true\"", html)
+        self.assertIn("border-left", html)
+        self.assertIn("エラー", html)
+
+        html_forbidden = RENDER.render_block({"type": "alert", "state": "forbidden", "message": "権限確認"})
+        self.assertIn("権限がありません", html_forbidden)
+        self.assertIn("border-left", html_forbidden)
+
+    def test_loading_has_accessible_name(self) -> None:
+        html = RENDER.render_block({"type": "loading", "state": "loading"})
+        self.assertIn('aria-live="polite"', html)
+        self.assertIn("読み込み中", html)
+
+    def test_empty_state_shows_heading_and_icon(self) -> None:
+        html = RENDER.render_block({"type": "empty-state", "state": "empty", "message": "0件です"})
+        self.assertIn("データがありません", html)
+        self.assertIn("aria-hidden=\"true\"", html)
+
+
 class RenderScreenTest(unittest.TestCase):
     def test_section_has_screen_id(self) -> None:
         html = RENDER.render_screen(SCREEN)

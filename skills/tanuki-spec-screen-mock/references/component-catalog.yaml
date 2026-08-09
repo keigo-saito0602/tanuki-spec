@@ -23,6 +23,7 @@ blocks:
   - alert             # 注意・エラー・成功の通知
   - pagination        # ページ送り
   - footer            # 画面下部の補足情報
+  - loading           # 読み込み中の表示
 
 # レイアウト: 外枠の骨組み（カラム数・サイドバーの有無・本文の最大幅）を決める。
 # required はその画面に必ず置く部品、forbidden はそのレイアウトでは置けない部品。
@@ -51,3 +52,12 @@ layouts:
   landing:
     required: [header, footer]
     forbidden: [stepper, filter-bar, pagination, table]
+
+# 状態表現部品。これらは blocks[].state が必須。それ以外の部品では state は禁止。
+state_required: [empty-state, alert, loading]
+
+# 部品ごとに表せる状態。汎用の alert だけ複数状態を許す。
+state_components:
+  empty-state: [empty]
+  loading:     [loading]
+  alert:       [error, forbidden]

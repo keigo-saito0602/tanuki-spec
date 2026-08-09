@@ -27,10 +27,18 @@ def _load(name: str):
 CATALOG = _load("catalog")
 GATE = _load("screens_gate")
 
-STATES = {
+STATES_SC1 = {
     "normal": "予約可能な枠がある",
     "empty": "0件。条件を広げる案内を出す",
     "loading": "スケルトン表示",
+    "error": "取得失敗。再試行ボタンを出す",
+    "forbidden": "該当なし: 全員が閲覧できる画面のため",
+}
+
+STATES_SC2 = {
+    "normal": "入力内容が確認できる",
+    "empty": "該当なし: 一覧を経由するため0件表示はない",
+    "loading": "送信中はボタンを無効化",
     "error": "取得失敗。再試行ボタンを出す",
     "forbidden": "未ログインはログイン画面へ誘導",
 }
@@ -58,8 +66,11 @@ VALID = {
                         {"label": "日付", "control": "date", "required": False},
                     ],
                 },
+                {"type": "empty-state", "state": "empty", "message": "0件。条件を広げる案内を出す"},
+                {"type": "loading", "state": "loading"},
+                {"type": "alert", "state": "error", "message": "取得失敗。再試行ボタンを出す"},
             ],
-            "states": dict(STATES),
+            "states": dict(STATES_SC1),
             "transitions": [{"action": "枠を選ぶ", "to": "SC-002", "kind": "forward"}],
         },
         {
@@ -84,8 +95,11 @@ VALID = {
                     ],
                 },
                 {"type": "button-row", "buttons": ["確定する"]},
+                {"type": "loading", "state": "loading"},
+                {"type": "alert", "state": "error", "message": "取得失敗。再試行ボタンを出す"},
+                {"type": "alert", "state": "forbidden", "message": "未ログインはログイン画面へ誘導"},
             ],
-            "states": dict(STATES),
+            "states": dict(STATES_SC2),
             "terminal": True,
             "transitions": [{"action": "一覧へ戻る", "to": "SC-001", "kind": "back"}],
         },
@@ -135,6 +149,33 @@ class SchemaTest(unittest.TestCase):
     def test_forbidden_block_is_error(self) -> None:
         result = self._validate(lambda d: d["screens"][1]["blocks"].append({"type": "pagination"}))
         self.assertTrue(any("pagination" in error for error in result.errors))
+
+    def test_disallowed_state_value_is_error(self) -> None:
+        result = self._validate(
+            lambda d: d["screens"][0]["blocks"][2].__setitem__("state", "invalid-state")
+        )
+        self.assertTrue(any("invalid-state" in error for error in result.errors))
+
+    def test_empty_state_without_state_is_error(self) -> None:
+        result = self._validate(lambda d: d["screens"][0]["blocks"][2].pop("state"))
+        self.assertTrue(any("empty-state" in error and "state" in error for error in result.errors))
+
+    def test_header_with_state_is_error(self) -> None:
+        result = self._validate(lambda d: d["screens"][0]["blocks"][0].__setitem__("state", "empty"))
+        self.assertTrue(any("header" in error and "状態表現部品ではない" in error for error in result.errors))
+
+    def test_empty_state_with_error_state_is_combination_error(self) -> None:
+        result = self._validate(lambda d: d["screens"][0]["blocks"][2].__setitem__("state", "error"))
+        self.assertTrue(any("empty-state" in error and "表せません" in error for error in result.errors))
+
+    def test_state_without_matching_block_is_error(self) -> None:
+        def mutate(d: dict) -> None:
+            d["screens"][0]["blocks"] = [
+                b for b in d["screens"][0]["blocks"] if b.get("type") != "empty-state"
+            ]
+
+        result = self._validate(mutate)
+        self.assertTrue(any("states.empty" in error for error in result.errors))
 
     def test_empty_trace_is_warning_not_error(self) -> None:
         result = self._validate(lambda d: d["screens"][0].__setitem__("trace", []))

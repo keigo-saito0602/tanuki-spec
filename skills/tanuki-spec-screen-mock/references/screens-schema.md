@@ -33,6 +33,25 @@
 `normal` / `empty` / `loading` / `error` / `forbidden` の5キーをすべて書く。
 該当しない状態は空にせず `該当なし: 理由` の形で理由まで書く。理由がないとエラーになる。
 
+`states` で該当ありとした状態（`normal` を除く）ごとに、その状態を表す部品を
+`blocks` に置く。部品がないとエラーになる（下記 `blocks[].state` 参照）。
+
+## blocks[].state
+
+`component-catalog.yaml` の `state_required`（`empty-state` / `alert` / `loading`）に
+挙がる部品では `state` が必須。それ以外の部品では `state` を書くとエラーになる。
+
+```yaml
+blocks:
+  - type: empty-state
+    state: empty                    # 状態表現部品では必須。許可値は5状態
+    message: 条件に合う枠がありません。日付を広げてください
+```
+
+許可値は `normal` / `empty` / `loading` / `error` / `forbidden` の5つだが、
+部品ごとに使える値は `state_components` で決まる（`empty-state` は `empty` のみ、
+`loading` は `loading` のみ、`alert` は `error` と `forbidden` の両方が使える）。
+
 ## blocks の入力項目
 
 `filter-bar` と `form-section` は `fields` を持つ。各項目に次を書く。

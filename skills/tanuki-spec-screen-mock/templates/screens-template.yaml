@@ -24,6 +24,14 @@ screens:
       - type: card-grid
         item_label: "<一覧の1件の呼び名>"
         item_fields: ["<表示項目1>", "<表示項目2>"]
+      - type: empty-state
+        state: empty
+        message: "<0件のときの案内と次の行動>"
+      - type: loading
+        state: loading
+      - type: alert
+        state: error
+        message: "<失敗理由と復旧手段>"
     states:
       normal: "<データがある平常時の表示>"
       empty: "<0件のときの案内と次の行動>"
@@ -54,6 +62,14 @@ screens:
             error: "<エラー文言>"
       - type: button-row
         buttons: ["<主操作>"]
+      - type: loading
+        state: loading
+      - type: alert
+        state: error
+        message: "<失敗理由と復旧手段>"
+      - type: alert
+        state: forbidden
+        message: "<見えない・押せない場合の扱い>"
     states:
       normal: "<データがある平常時の表示>"
       empty: "該当なし: <理由>"
