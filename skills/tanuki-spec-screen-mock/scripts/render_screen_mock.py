@@ -47,6 +47,21 @@ def _labelled(kind: str, body: str, state: Any = None) -> str:
     return f'<div class="blk"{state_attr}><div class="blk-label">{esc(kind)}</div>{body}</div>'
 
 
+def _render_field(field: dict) -> str:
+    label = esc(field.get("label", "項目"))
+    required = "<strong>（必須）</strong>" if field.get("required") else ""
+    constraint = field.get("constraint")
+    hint = f'<div class="hint">{esc(constraint)}</div>' if isinstance(constraint, str) and constraint else ""
+    error = field.get("error")
+    error_html = (
+        f'<div class="field-error" style="border-left:4px solid #b3261e;padding-left:.5rem">'
+        f'<span aria-hidden="true">⚠</span> {esc(error)}</div>'
+        if isinstance(error, str) and error
+        else ""
+    )
+    return f'<div class="box">{label}{required}{hint}{error_html}</div>'
+
+
 def render_block(block: Any) -> str:
     if not isinstance(block, dict):
         return ""
@@ -57,12 +72,7 @@ def render_block(block: Any) -> str:
         return _labelled(kind, f'<div class="bar">{items or "ナビゲーション"}</div>')
 
     if kind in ("filter-bar", "form-section"):
-        cells = "".join(
-            f'<div class="box">{esc(field.get("label", "項目"))}'
-            f'{"<strong>（必須）</strong>" if field.get("required") else ""}</div>'
-            for field in (block.get("fields") or [])
-            if isinstance(field, dict)
-        )
+        cells = "".join(_render_field(field) for field in (block.get("fields") or []) if isinstance(field, dict))
         return _labelled(kind, f'<div class="grid">{cells}</div>')
 
     if kind == "card-grid":

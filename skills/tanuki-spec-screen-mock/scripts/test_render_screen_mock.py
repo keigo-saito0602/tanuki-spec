@@ -59,6 +59,67 @@ class RenderBlockTest(unittest.TestCase):
         html = RENDER.render_block(SCREEN["blocks"][1])
         self.assertIn("日付", html)
 
+    def test_form_field_renders_constraint_and_error(self) -> None:
+        block = {
+            "type": "form-section",
+            "fields": [
+                {
+                    "label": "郵便番号",
+                    "control": "text",
+                    "required": True,
+                    "constraint": "半角数字7桁",
+                    "error": "郵便番号の形式が正しくありません",
+                }
+            ],
+        }
+        html = RENDER.render_block(block)
+        self.assertIn("郵便番号", html)
+        self.assertIn("半角数字7桁", html)
+        self.assertIn("郵便番号の形式が正しくありません", html)
+        self.assertIn("field-error", html)
+
+    def test_form_field_error_has_non_color_cue(self) -> None:
+        """エラーは色だけに頼らず、aria-hiddenなアイコンでも示す。"""
+
+        block = {
+            "type": "form-section",
+            "fields": [
+                {
+                    "label": "郵便番号",
+                    "control": "text",
+                    "required": True,
+                    "error": "郵便番号の形式が正しくありません",
+                }
+            ],
+        }
+        html = RENDER.render_block(block)
+        self.assertIn('aria-hidden="true"', html)
+
+    def test_form_field_without_constraint_or_error_renders_label_only(self) -> None:
+        block = {
+            "type": "form-section",
+            "fields": [{"label": "備考", "control": "text", "required": False}],
+        }
+        html = RENDER.render_block(block)
+        self.assertIn("備考", html)
+
+    def test_form_field_escapes_constraint_and_error(self) -> None:
+        block = {
+            "type": "form-section",
+            "fields": [
+                {
+                    "label": "項目",
+                    "control": "text",
+                    "required": True,
+                    "constraint": "<script>alert(1)</script>",
+                    "error": "<script>alert(2)</script>",
+                }
+            ],
+        }
+        html = RENDER.render_block(block)
+        self.assertNotIn("<script>", html)
+        self.assertIn("&lt;script&gt;", html)
+
     def test_card_grid_renders_item_fields(self) -> None:
         html = RENDER.render_block(SCREEN["blocks"][2])
         self.assertIn("日時", html)
