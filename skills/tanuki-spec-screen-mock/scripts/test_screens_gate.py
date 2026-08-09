@@ -192,6 +192,26 @@ class SchemaTest(unittest.TestCase):
         result = self._validate(lambda d: d["meta"].__setitem__("entry_screens", ["SC-999"]))
         self.assertTrue(any("SC-999" in error for error in result.errors))
 
+    def test_missing_meta_phase_is_error(self) -> None:
+        result = self._validate(lambda d: d["meta"].pop("phase"))
+        self.assertTrue(any("phase" in error for error in result.errors))
+
+    def test_missing_meta_source_spec_is_error(self) -> None:
+        result = self._validate(lambda d: d["meta"].pop("source_spec"))
+        self.assertTrue(any("source_spec" in error for error in result.errors))
+
+    def test_missing_meta_generated_at_is_error(self) -> None:
+        result = self._validate(lambda d: d["meta"].pop("generated_at"))
+        self.assertTrue(any("generated_at" in error for error in result.errors))
+
+    def test_meta_with_only_entry_screens_has_three_errors(self) -> None:
+        """レビュー指摘の再現: entry_screensしかないmetaが警告・エラーとも0件で通っていた。"""
+
+        result = self._validate(lambda d: d.__setitem__("meta", {"entry_screens": ["SC-001"]}))
+        self.assertTrue(any("phase" in error for error in result.errors))
+        self.assertTrue(any("source_spec" in error for error in result.errors))
+        self.assertTrue(any("generated_at" in error for error in result.errors))
+
 
 class TransitionTest(unittest.TestCase):
     def _validate(self, mutate=None) -> "GATE.Result":

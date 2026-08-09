@@ -11,6 +11,7 @@ from catalog import Catalog
 
 SCREEN_ID_PATTERN = re.compile(r"^SC-[EL]?\d+$")
 REQUIRED_SCREEN_FIELDS = ("id", "name", "purpose", "actor", "layout", "trace", "blocks", "states")
+REQUIRED_META_FIELDS = ("phase", "source_spec", "generated_at")
 STATE_KEYS = ("normal", "empty", "loading", "error", "forbidden")
 
 
@@ -43,6 +44,10 @@ def validate_schema(data: Any, catalog: Catalog) -> Result:
     if not isinstance(meta, dict):
         result.errors.append("metaをマッピングで定義してください")
         meta = {}
+    else:
+        for name in REQUIRED_META_FIELDS:
+            if not isinstance(meta.get(name), str) or not meta[name]:
+                result.errors.append(f"metaに必須フィールド{name}がありません")
 
     screens = data.get("screens")
     if not isinstance(screens, list) or not screens:
