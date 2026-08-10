@@ -1,4 +1,4 @@
-# AGENTS.md — tanuki-screen-mock
+# AGENTS.md — tanuki-spec-screen-mock
 
 要件定義書から画面モックを生成するスキルです。手順は [`SKILL.md`](./SKILL.md) を読んでください。
 
@@ -12,7 +12,7 @@ PyYAML のみ。それ以外は標準ライブラリで動きます。
 
 ## コマンド
 
-`tanuki-screen-mock/` を起点に実行します。
+`tanuki-spec-screen-mock/` を起点に実行します。
 
 ```bash
 python3 scripts/screens_gate.py <phase>/screens.yaml

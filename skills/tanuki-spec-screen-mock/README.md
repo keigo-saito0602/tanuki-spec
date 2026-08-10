@@ -1,4 +1,4 @@
-# tanuki-screen-mock
+# tanuki-spec-screen-mock
 
 要件定義書とユーザーストーリーから画面定義を起こし、参考ソースのデザイントークンを当てて、ブラウザで開くだけの単一HTML画面モックを生成するスキルです。手順の正本は[SKILL.md](./SKILL.md)です。
 
@@ -35,7 +35,7 @@ python3 -m unittest discover -s scripts -v
 
 ## コマンド一覧
 
-`tanuki-screen-mock/`を起点に実行します。
+`tanuki-spec-screen-mock/`を起点に実行します。
 
 ```bash
 python3 scripts/screens_gate.py <phase>/screens.yaml

@@ -1,5 +1,5 @@
 ---
-name: tanuki-screen-mock
+name: tanuki-spec-screen-mock
 description: Use when 要件定義書から画面モックを作りたい、画面構成・画面遷移・配色を実装前にレビューしたい、参考サイトのデザインを反映した画面イメージが欲しいとき。
 ---
 
@@ -11,7 +11,7 @@ description: Use when 要件定義書から画面モックを作りたい、画�
 ## 起動テンプレート
 
 ```text
-tanuki-screen-mock
+tanuki-spec-screen-mock
 要件定義書(必須): docs/spec/phase-1_公開サイト・予約/01_要件定義書.md
 フェーズ(必須): docs/spec/phase-1_公開サイト・予約
 参考ソース(任意): tailwind.config.ts / ./ref/top.png / https://example.com
