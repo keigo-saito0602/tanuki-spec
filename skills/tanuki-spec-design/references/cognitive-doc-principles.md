@@ -1,1 +1,1 @@
-../../tanuki-spec-all/references/cognitive-doc-principles.md
+../../../tanuki-spec-all/references/cognitive-doc-principles.md
