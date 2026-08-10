@@ -1,0 +1,20 @@
+{
+  "name": "tanuki-spec-dev",
+  "description": "Development marketplace for tanuki-spec",
+  "owner": {
+    "name": "keigo-saito0602",
+    "email": "keigo.saito@vitalize.co.jp"
+  },
+  "plugins": [
+    {
+      "name": "tanuki-spec",
+      "description": "要件定義・設計・レビュー・タスク分解を決定論的なゲートで進めるSPEC駆動開発スキル集",
+      "version": "0.1.0",
+      "source": "./",
+      "author": {
+        "name": "keigo-saito0602",
+        "email": "keigo.saito@vitalize.co.jp"
+      }
+    }
+  ]
+}
