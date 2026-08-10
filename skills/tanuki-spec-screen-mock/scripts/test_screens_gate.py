@@ -352,12 +352,29 @@ class ValidateAllTest(unittest.TestCase):
         self.assertTrue(result.ok())
 
     def test_template_file_passes_every_check(self) -> None:
+        """テンプレートの構造（レイアウト・状態・遷移の組み合わせ）が最新のスキーマで通ること。
+
+        `generated_at`だけは未置換を検知するための意図的なプレースホルダなので、
+        この検証では実在する日付へ置き換えてから確認する
+        （test_unfilled_template_generated_at_fails_gateが未置換側を保証する）。
+        """
+        import yaml
+
+        template = SCRIPT_DIR.parent / "templates" / "screens-template.yaml"
+        data = yaml.safe_load(template.read_text(encoding="utf-8"))
+        data["meta"]["generated_at"] = "2026-07-30"
+        result = GATE.validate_all(data, CATALOG.load_catalog())
+        self.assertEqual([], result.errors)
+
+    def test_unfilled_template_generated_at_fails_gate(self) -> None:
+        """テンプレートをそのままコピーして置換を忘れても、ゲートが必ず弾くことを保証する。"""
+
         import yaml
 
         template = SCRIPT_DIR.parent / "templates" / "screens-template.yaml"
         data = yaml.safe_load(template.read_text(encoding="utf-8"))
         result = GATE.validate_all(data, CATALOG.load_catalog())
-        self.assertEqual([], result.errors)
+        self.assertTrue(any("generated_at" in error for error in result.errors))
 
     def test_template_covers_the_error_layout_with_a_stateful_alert(self) -> None:
         """error レイアウトは alert 必須、alert は state 必須。この組み合わせを見本で通す。"""

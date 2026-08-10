@@ -3,7 +3,7 @@
 meta:
   phase: "<phase-N_フェーズ名>"
   source_spec: "01_要件定義書.md"
-  generated_at: "2026-07-30"  # YYYY-MM-DD形式。実行日に置き換える
+  generated_at: "<YYYY-MM-DD>"
   entry_screens: ["SC-001"]
 
 screens:
