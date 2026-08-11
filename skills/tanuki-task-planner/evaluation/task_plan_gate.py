@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-SHARED = Path(__file__).resolve().parents[2] / "tanuki-spec-all" / "evaluation"
+SHARED = Path(__file__).resolve().parents[3] / "tanuki-spec-all" / "evaluation"
 sys.path.insert(0, str(SHARED))
 import traceability_gate
 

@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def main() -> None:
-    subprocess.run([sys.executable, "../tanuki-spec-all/evaluation/run_harness.py"], cwd=ROOT, check=True)
+    subprocess.run([sys.executable, "../../tanuki-spec-all/evaluation/run_harness.py"], cwd=ROOT, check=True)
     sample_dir = ROOT / "examples" / "sample-user-story"
     subprocess.run([sys.executable, "evaluation/traceability_gate.py", str(sample_dir / "traceability.yaml")], cwd=ROOT, check=True)
     subprocess.run([

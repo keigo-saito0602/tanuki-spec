@@ -33,7 +33,7 @@ tanuki-spec-screen-mock
 2. `references/screens-schema.md` と `references/component-catalog.yaml`
 3. 参考ソースがある場合は `references/design-token-extraction.md`
 4. HTML生成の前に `references/mock-html-contract.md`
-5. 画面名・目的・状態の説明を書く前に `references/cognitive-doc-principles.md`。共有コア`../tanuki-spec-all/`へのsymlinkであり、認知設計の正本とする
+5. 画面名・目的・状態の説明を書く前に `references/cognitive-doc-principles.md`。共有コア`../../tanuki-spec-all/`へのsymlinkであり、認知設計の正本とする
 
 ## 実行条件
 

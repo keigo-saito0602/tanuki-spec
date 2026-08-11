@@ -9,7 +9,7 @@ Claude CodeとCodexで共通利用する、根拠付き仕様書ドラフト作�
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-../tanuki-spec-all/.venv/bin/python evaluation/run_harness.py
+../../tanuki-spec-all/.venv/bin/python evaluation/run_harness.py
 ```
 
 Claude Codeではスキルの配置先からこのディレクトリを読み込ませ、Codexではリポジトリの`AGENTS.md`から`SKILL.md`を参照させます。両環境で次を1回ずつ実行し、`evals/cases.yaml`の発火ケースも各3回評価してください。

@@ -13,7 +13,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT.parent / "tanuki-spec-all"
+CORE = ROOT.parent.parent / "tanuki-spec-all"
 SSOT = CORE / "spec-items.yaml"
 VALID_STATUSES = {"pass", "needs_improvement", "not_evaluable", "not_applicable"}
 WEIGHTS = {"required": 3, "important": 2, "normal": 1}
