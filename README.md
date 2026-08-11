@@ -22,7 +22,7 @@ tanuki-spec/
 ├── FLOW.md                       # 工程の流れと役割分担
 ├── GLOSSARY.md                   # SPEC関連の用語集
 │
-├── tanuki-spec-all/               # SSOT・評価器・共有HTMLレンダラ（共有コア）
+├── tanuki-spec-all                # SSOT・評価器・共有HTMLレンダラ（共有コア。SKILL.mdを持たないためスキル一覧の対象外）
 ├── skills/
 │   ├── tanuki-spec-generator/     # ①②③: 仕様書の生成と出力ゲート
 │   ├── tanuki-spec-design/        # 要件定義書起点の設計生成・追従更新
