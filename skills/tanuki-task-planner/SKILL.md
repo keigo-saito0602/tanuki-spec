@@ -34,7 +34,7 @@ python3 evaluation/render_task_plan.py <task-plan.yaml> --output <implementation
 ## 出力
 
 - `task-plan.yaml`（タスク分解の正本）
-- `implementation-task-plan.md`（人が読む実装タスク計画）
+- `implementation-task-plan.md`（人が読む実装タスク計画。着手可能なタスク一覧、WBS・依存関係・ガントのMermaid図、詳細テーブルを含む）
 
 ## 分解基準
 

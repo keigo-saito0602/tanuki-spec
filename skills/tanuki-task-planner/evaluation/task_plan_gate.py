@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from datetime import date
 from pathlib import Path
 
 import yaml
@@ -16,6 +17,9 @@ UNFILLED = re.compile(r"<[^>]+>|\[要確認|\b(?:TODO|TBD)\b", re.I)
 TASK_ID = re.compile(r"^TASK-\d{3,}$")
 STATUSES = {"in_scope", "deferred", "out_of_scope"}
 TYPES = {"design", "data", "backend", "frontend", "integration", "test", "verification", "documentation"}
+PROGRESS = {"todo", "doing", "done"}
+DURATION_PATTERN = re.compile(r"^\d+(\.\d+)?[hdw]$")
+START_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def text(value: object) -> bool:
@@ -59,9 +63,29 @@ def validate(plan: dict, trace: dict) -> list[str]:
         if status != "in_scope":
             if not text(task.get("reason")):
                 failures.append(f"{task_id}: {status} にはreasonが必要です")
+            if "progress" in task:
+                failures.append(f"{task_id}: {status} のタスクに progress は付けられません")
             continue
         if not text(task.get("title")) or task.get("type") not in TYPES:
             failures.append(f"{task_id}: title と有効なtypeが必要です")
+        progress = task.get("progress")
+        if progress is not None and progress not in PROGRESS:
+            failures.append(f"{task_id}: progress は todo/doing/done のいずれかにしてください")
+        duration = task.get("duration")
+        if duration is not None and not (isinstance(duration, str) and DURATION_PATTERN.fullmatch(duration)):
+            failures.append(f"{task_id}: duration は数字+h/d/w の形式にしてください（例: 3d）")
+        start_date = task.get("start_date")
+        if start_date is not None:
+            if not isinstance(start_date, str):
+                failures.append(f'{task_id}: start_date は文字列としてクォート付きで指定してください（例: "2026-08-01"）')
+            elif not START_DATE_PATTERN.fullmatch(start_date):
+                failures.append(f"{task_id}: start_date「{start_date}」はYYYY-MM-DD形式の実在する日付にしてください")
+            else:
+                year, month, day = (int(part) for part in start_date.split("-"))
+                try:
+                    date(year, month, day)
+                except ValueError:
+                    failures.append(f"{task_id}: start_date「{start_date}」はYYYY-MM-DD形式の実在する日付にしてください")
         for field, source_key in (("requirement_ids", "requirements"), ("acceptance_test_ids", "acceptance_tests"), ("system_test_ids", "system_tests")):
             for ref in values(task, field, task_id, failures):
                 if ref not in source[source_key]:
@@ -80,6 +104,8 @@ def validate(plan: dict, trace: dict) -> list[str]:
         for dep in deps:
             if dep not in indexed or indexed[dep].get("status") != "in_scope":
                 failures.append(f"{task_id}: 依存タスクが存在しないか対象外です: {dep}")
+            elif task.get("progress") == "done" and indexed[dep].get("progress") != "done":
+                failures.append(f"{task_id}: 依存タスク {dep} が done でないのに done にはできません")
             if dep == task_id:
                 failures.append(f"{task_id}: 自分自身には依存できません")
     visiting, visited = set(), set()
