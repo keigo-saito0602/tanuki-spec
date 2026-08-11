@@ -90,6 +90,18 @@ class GanttTest(unittest.TestCase):
         self.assertIn("TASK-002", text)
         self.assertNotIn("gantt", text)
 
+    def test_task_without_start_date_or_duration_is_not_silently_dropped(self):
+        """start_date/durationどちらも無いタスクが、警告なく除外されて部分的なガントが出ることを防ぐ。"""
+        tasks = [
+            task(id="TASK-001", start_date="2026-08-01", duration="2d"),
+            task(id="TASK-002"),
+        ]
+        lines = render_task_plan.render_gantt_or_reason(tasks)
+        text = "\n".join(lines)
+        self.assertIn("duration が未設定のタスクがあるためガントを生成しません", text)
+        self.assertIn("TASK-002", text)
+        self.assertNotIn("gantt", text)
+
     def test_complete_dates_and_durations_render_gantt(self):
         tasks = [task(id="TASK-001", start_date="2026-08-01", duration="2d")]
         lines = render_task_plan.render_gantt_or_reason(tasks)

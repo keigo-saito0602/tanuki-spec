@@ -86,7 +86,7 @@ def render_gantt_or_reason(tasks: list[dict]) -> list[str]:
     if not dated:
         lines += ["start_date が未設定のためガントを生成しません", ""]
         return lines
-    missing_duration = sorted(task["id"] for task in dated if not task.get("duration"))
+    missing_duration = sorted(task["id"] for task in scoped if not task.get("duration"))
     if missing_duration:
         lines += [f"duration が未設定のタスクがあるためガントを生成しません: {', '.join(missing_duration)}", ""]
         return lines
