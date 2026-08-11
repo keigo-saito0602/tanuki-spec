@@ -7,7 +7,7 @@ description: 未完成でもよい要件定義書を入力に、既存コード�
 
 > 🚀 **30秒でわかる**: 要件定義書を渡すと、それをどう作るかを描いた設計書に起こし、後から要件が変わっても追いかけて直してくれる。
 
-> 📖 わからない用語は [用語集（GLOSSARY.md）](../GLOSSARY.md) を参照。
+> 📖 わからない用語は [用語集（GLOSSARY.md）](../../GLOSSARY.md) を参照。
 
 要件定義書を入力に、基本設計書・詳細設計書と設計トレーサビリティを作る設計特化フロー。既存`tanuki-spec-generator`の設計工程は置き換えず、併用する。
 
@@ -48,7 +48,7 @@ HTMLレンダラはフェーズ内に存在する文書だけを生成対象と�
 
 ## 出力
 
-> 置き場所・命名は [`../docs/spec-directory-standard.md`](../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
+> 置き場所・命名は [`../../docs/spec-directory-standard.md`](../../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
 
 - `<phase>/02_基本設計書.md`、`<phase>/03_詳細設計書.md`
 - `<phase>/design-traceability.yaml`（要件とBD/DDの正本）

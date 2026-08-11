@@ -61,7 +61,7 @@
 
 ## 説明HTMLの配色（取得日: 2026-07-29）
 
-`tanuki-doc-html-generator/references/color-design.md`の根拠。
+`tanuki-spec-all/references/color-design.md`の根拠。
 
 21. **Zenn型の読み物配色**: [Zennの記事表示例](https://zenn.dev/nogu66/articles/claude-code-think-abount-skills-and-subagent): 淡い青灰色のページ背景、白い本文面、濃い灰色の本文、青いアクセント、濃紺のコード面を、長文説明HTMLの基本配色として採用する根拠。実表示のcomputed styleも確認した。
 22. **3色と使用比率**: [プレゼン資料における配色の基本 (Cone)](https://cone-c-slide.com/see-sla/blog/document-color-usage/): 色をメイン・サブ・アクセントへ絞り、約75:20:5で使い、濃淡で展開する根拠。

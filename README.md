@@ -73,4 +73,4 @@ Codexはルートの[AGENTS.md](./AGENTS.md)から該当スキルを選びます
 
 ## 由来
 
-[`tanuki-agent-skills`](https://github.com/keigo-saito0602/tanuki-agent-skills)からSPEC開発系スキルを`git filter-repo`で履歴ごと抽出した独立リポジトリです。
+別のスキル集リポジトリからSPEC開発系スキルを`git filter-repo`で履歴ごと抽出した独立リポジトリです。

@@ -7,7 +7,7 @@ description: Use when generating or updating unit/integration test case document
 
 > 🚀 **30秒でわかる**: 要件と設計から、テストすべき項目の一覧と「どこまで確かめられているか」を洗い出す。
 
-> 📖 わからない用語は [用語集（GLOSSARY.md）](../GLOSSARY.md) を参照。
+> 📖 わからない用語は [用語集（GLOSSARY.md）](../../GLOSSARY.md) を参照。
 
 要件定義書・設計書・既存トレーサビリティ正本を入力に、UT/ITとV字カバレッジを統合した `04_テスト項目書.md`、`test-traceability.yaml` を作るためのスキル。既存の AC/ST を重複生成せず、V字モデルの下半分だけを新規に扱う。
 
@@ -49,7 +49,7 @@ HTMLレンダラはフェーズ内に存在する文書だけを生成対象と�
 
 ## 出力
 
-> 置き場所・命名は [`../docs/spec-directory-standard.md`](../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
+> 置き場所・命名は [`../../docs/spec-directory-standard.md`](../../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
 
 - `<phase>/test-traceability.yaml`（UT/IT と設計・要件の正本）
 - `<phase>/tests/04_テスト項目書.md`（単体・結合・V字カバレッジを1本に統合。見出しは `## 単体テスト（UT）`、`## 結合テスト（IT）`、`## V字モデルカバレッジ`）

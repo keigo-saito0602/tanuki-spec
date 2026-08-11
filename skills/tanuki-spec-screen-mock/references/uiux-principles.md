@@ -37,7 +37,7 @@
 
 ## 配色
 
-[`../../tanuki-doc-html-generator/references/color-design.md`](../../tanuki-doc-html-generator/references/color-design.md)
+[`../../../tanuki-spec-all/references/color-design.md`](../../../tanuki-spec-all/references/color-design.md)
 の役割トークンとコントラスト基準に従う。本ファイルに配色規範を重複して書かない。
 
 参考ソースが無い場合の既定トークンは

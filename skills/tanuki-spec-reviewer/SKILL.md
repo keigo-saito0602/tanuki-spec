@@ -7,7 +7,7 @@ description: Use when independently reviewing a generated requirements or design
 
 > 🚀 **30秒でわかる**: できあがった仕様書を別の視点で点検し、抜けや矛盾を洗い出して「これで進めてよいか」を判定する。作り始める前の最終チェック役。
 
-> 📖 わからない用語は [用語集（GLOSSARY.md）](../GLOSSARY.md) を参照。
+> 📖 わからない用語は [用語集（GLOSSARY.md）](../../GLOSSARY.md) を参照。
 
 ## 起動テンプレート
 
@@ -42,6 +42,6 @@ reviewer:        # 例: codex / claude-new-session。生成担当と別である
 
 ## 出力
 
-> 置き場所・命名は [`../docs/spec-directory-standard.md`](../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
+> 置き場所・命名は [`../../docs/spec-directory-standard.md`](../../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
 
 - `<phase>/reports/01_差分・未決事項.md`（検証済みの`ai_quality_review` YAML、レビュー要約、人間可読な採点サマリ）

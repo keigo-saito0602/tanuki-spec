@@ -7,7 +7,7 @@ description: Use when decomposing approved requirements or a feature request int
 
 > 🚀 **30秒でわかる**: 固まった要件を、作る順番と「どこまでやれば完了か」つきの作業リストに分解する。
 
-> 📖 わからない用語は [用語集（GLOSSARY.md）](../GLOSSARY.md) を参照。
+> 📖 わからない用語は [用語集（GLOSSARY.md）](../../GLOSSARY.md) を参照。
 
 ## 起動テンプレート
 

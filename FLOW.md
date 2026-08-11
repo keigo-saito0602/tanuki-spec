@@ -132,7 +132,7 @@ DoD通過後、実装タスクへ分解する:
 python3 evaluation/task_plan_gate.py <task-plan.yaml> --traceability <traceability.yaml>
 python3 evaluation/render_task_plan.py <task-plan.yaml> --output <implementation-task-plan.md>
 ```
-Codexは`implementation-task-plan.md`と仕様書を入力に実装する。指示書の形に落とす場合は`tanuki-agent-skills`側の`tanuki-codex-brief-handoff`を使う。
+Codexは`implementation-task-plan.md`と仕様書を入力に実装する。指示書の形に落とす工程は、このリポジトリの範囲外（別のリポジトリ側のスキル）で扱う。
 
 ---
 
