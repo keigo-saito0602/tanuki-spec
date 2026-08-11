@@ -96,5 +96,117 @@ class ValidateTest(unittest.TestCase):
         self.assertTrue(any("primary" in error for error in errors))
 
 
+MINIMAL_DOC = """<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+<title>t</title>
+</head>
+<body>
+<h1>タイトル</h1>
+<section class="screen" id="SC-001">
+{blocks}
+</section>
+</body>
+</html>"""
+
+
+class ElementStateMarkerTest(unittest.TestCase):
+    def _validate(self, html: str) -> list[str]:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "mock.html"
+            path.write_text(html, encoding="utf-8")
+            return VALIDATOR.validate(path)
+
+    def _doc(self, blocks: str) -> str:
+        return MINIMAL_DOC.format(blocks=blocks)
+
+    def test_generated_mock_has_no_state_marker_errors(self) -> None:
+        html = RENDER.render(SCREENS, TOKENS_DATA)
+        errors = self._validate(html)
+        self.assertFalse(any("data-state" in error for error in errors))
+
+    def test_element_with_text_only_passes(self) -> None:
+        html = self._doc('<div data-state="error">エラーが発生しました</div>')
+        errors = self._validate(html)
+        self.assertFalse(any("data-state" in error for error in errors))
+
+    def test_element_with_border_only_passes(self) -> None:
+        html = self._doc('<div data-state="error" style="border-left:4px solid #b3261e"></div>')
+        errors = self._validate(html)
+        self.assertFalse(any("data-state" in error for error in errors))
+
+    def test_element_with_icon_only_passes(self) -> None:
+        html = self._doc('<div data-state="error"><span aria-hidden="true">⚠</span></div>')
+        errors = self._validate(html)
+        self.assertFalse(any("data-state" in error for error in errors))
+
+    def test_zero_border_style_does_not_count_as_border_cue(self) -> None:
+        """sr-onlyパターンのborder:0はダミーであり、境界線の手掛かりとして数えない。"""
+        html = self._doc('<div data-state="error" style="border:0"></div>')
+        errors = self._validate(html)
+        self.assertTrue(any("data-state" in error for error in errors))
+
+    def test_element_with_none_of_the_three_cues_is_error(self) -> None:
+        html = self._doc('<div data-state="error"></div>')
+        errors = self._validate(html)
+        self.assertTrue(any("data-state" in error and "error" in error for error in errors))
+
+
+class ScreenStateCrossCheckTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.html = RENDER.render(SCREENS, TOKENS_DATA)
+
+    def _validate(self, html: str, screens_data: dict) -> list[str]:
+        with tempfile.TemporaryDirectory() as directory:
+            html_path = Path(directory) / "mock.html"
+            html_path.write_text(html, encoding="utf-8")
+            screens_path = Path(directory) / "screens.yaml"
+            screens_path.write_text(yaml.safe_dump(screens_data, allow_unicode=True), encoding="utf-8")
+            return VALIDATOR.validate(html_path, screens_path)
+
+    def test_matching_states_produce_no_cross_check_errors(self) -> None:
+        errors = self._validate(self.html, SCREENS)
+        self.assertEqual([], errors)
+
+    def test_stripping_all_data_state_from_a_screen_is_reported_as_missing(self) -> None:
+        mutated = self.html.replace('data-state="empty"', "").replace('data-state="loading"', "").replace(
+            'data-state="error"', "", 1
+        )
+        errors = self._validate(mutated, SCREENS)
+        self.assertTrue(any("SC-001" in error and "empty" in error for error in errors))
+
+    def test_moving_expected_state_to_another_screen_flags_both_screens(self) -> None:
+        """SC-001のdata-state="empty"をSC-002側へ付け替えると、両画面で不一致が出る。"""
+        mutated = self.html.replace('data-state="empty"', 'data-state="empty-moved"', 1)
+        mutated = mutated.replace(
+            '<section class="screen" id="SC-002">',
+            '<section class="screen" id="SC-002"><div data-state="empty" style="border:2px solid #000">moved</div>',
+            1,
+        )
+        errors = self._validate(mutated, SCREENS)
+        self.assertTrue(any("SC-001" in error and "empty" in error for error in errors))
+        self.assertTrue(any("SC-002" in error and "empty" in error for error in errors))
+
+    def test_screen_id_in_yaml_but_missing_from_html_is_error(self) -> None:
+        screens_data = {"screens": SCREENS["screens"] + [{"id": "SC-999", "blocks": [{"type": "alert", "state": "error"}]}]}
+        errors = self._validate(self.html, screens_data)
+        self.assertTrue(any("SC-999" in error for error in errors))
+
+    def test_screen_id_in_html_but_missing_from_yaml_is_error(self) -> None:
+        screens_data = {"screens": [s for s in SCREENS["screens"] if s["id"] != "SC-E01"]}
+        errors = self._validate(self.html, screens_data)
+        self.assertTrue(any("SC-E01" in error for error in errors))
+
+    def test_screens_argument_omitted_skips_cross_check(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "mock.html"
+            path.write_text(self.html, encoding="utf-8")
+            errors = VALIDATOR.validate(path)
+        self.assertEqual([], errors)
+
+
 if __name__ == "__main__":
     unittest.main()

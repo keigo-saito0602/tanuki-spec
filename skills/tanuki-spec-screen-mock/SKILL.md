@@ -78,10 +78,16 @@ python3 scripts/screens_gate.py <phase>/screens.yaml
 
 ```bash
 python3 scripts/render_screen_mock.py <phase>/screens.yaml <phase>/design-tokens.json --output <phase>/views/画面モック.html
-python3 scripts/validate_screen_mock.py <phase>/views/画面モック.html
+python3 scripts/validate_screen_mock.py <phase>/views/画面モック.html --screens <phase>/screens.yaml
 ```
 
 モデルはHTMLとCSSを書かない。検証に失敗したら`screens.yaml`か`design-tokens.json`を直して再生成する。
+
+`validate_screen_mock.py`は次の2段で検証する。
+- 要素単位: `data-state`属性を持つ要素に、文字・境界線・アイコンのいずれかが併存しているか（色だけに頼った状態表現を防ぐ）
+- 画面単位（`--screens`指定時）: `screens.yaml`の`blocks[].state`の集合と、HTMLの`section#<画面ID>`内の`data-state`の集合が一致しているか
+
+`--screens`を省略すると画面単位の突き合わせは行われず、その旨が標準出力に表示される。
 
 ### 6. レビューを依頼する
 
