@@ -6,14 +6,12 @@
 | --- | --- | --- | --- |
 | `tanuki-spec-generator` | 仕様書ドラフト生成と③の出力ゲート | [`SKILL.md`](./skills/tanuki-spec-generator/SKILL.md) | 実装済み |
 | `tanuki-spec-design` | 要件定義書から設計書を生成・追従更新し、要件↔設計を追跡する | [`SKILL.md`](./skills/tanuki-spec-design/SKILL.md) | 実装済み |
-| `tanuki-spec-test-item` | 要件・設計からUT/ITのテスト項目書とV字カバレッジを生成・追従更新する | [`SKILL.md`](./skills/tanuki-spec-test-item/SKILL.md) | 設計のみ |
+| `tanuki-spec-test-item` | 要件・設計からUT/ITのテスト項目書とV字カバレッジを生成・追従更新する | [`SKILL.md`](./skills/tanuki-spec-test-item/SKILL.md) | 実装済み |
 | `tanuki-spec-reviewer` | ⑤⑥の独立レビュー、評価レポート、DoD判定 | [`SKILL.md`](./skills/tanuki-spec-reviewer/SKILL.md) | 実装済み |
 | `tanuki-task-planner` | 仕様・要件を実装タスク、依存関係、完了条件へ分解する | [`SKILL.md`](./skills/tanuki-task-planner/SKILL.md) | 実装済み |
 | `tanuki-spec-screen-mock` | 要件定義書から画面モックHTMLを生成し、画面構成・遷移・配色をレビュー可能にする | [`SKILL.md`](./skills/tanuki-spec-screen-mock/SKILL.md) | 実装済み |
 
-`tanuki-spec-all`はSSOT・評価器・閲覧用HTMLレンダラの共有コアであり、直接呼び出さない。generator / design は正本Markdown/YAMLの生成後に共有レンダラで`views/`を更新する。
-
-`tanuki-spec-test-item`は手順だけが確定した`設計のみ`の状態です。`SKILL.md`が指示するスクリプトとテンプレートは存在しないため、実行を試みず、UT/ITの設計方針として読んでください。
+`tanuki-spec-all`はSSOT・評価器・閲覧用HTMLレンダラの共有コアであり、直接呼び出さない。generator / design / test-item は正本Markdown/YAMLの生成後に共有レンダラで`views/`を更新する。
 
 ## 規約
 

@@ -1,0 +1,22 @@
+version: "1.0"
+design_traceability: design-traceability.yaml
+
+# UT は DD（詳細設計要素）に、IT は BD（基本設計要素）に紐づける。
+# 既存の AC（受入試験）・ST（システムテスト）は traceability.yaml が正本であり、ここでは新規生成しない。
+test_items:
+  - id: UT-001
+    status: in_scope # in_scope / deferred / out_of_scope / draft（in_scope以外はreason必須）
+    test_type: unit # unit / integration
+    design_element_ids: [DD-001]
+    requirement_ids: [FR-001] # 紐づく設計要素のrequirement_idsの部分集合にする
+    preconditions: ["<テストデータ・環境の条件>"]
+    steps: ["<実行する操作>"]
+    expected_results: ["<期待する結果>"]
+  - id: IT-001
+    status: in_scope
+    test_type: integration
+    design_element_ids: [BD-001]
+    requirement_ids: [FR-001]
+    preconditions: ["<テストデータ・環境の条件>"]
+    steps: ["<実行する操作>"]
+    expected_results: ["<期待する結果>"]

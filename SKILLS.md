@@ -10,20 +10,16 @@
 | --- | --- | --- | --- | --- |
 | [`tanuki-spec-generator`](./skills/tanuki-spec-generator/) | 仕様書ドラフトを生成し、③の出力ゲートまで実行 | 要件定義・基本設計・詳細設計 | [SKILL.md](./skills/tanuki-spec-generator/SKILL.md) | 実装済み |
 | [`tanuki-spec-design`](./skills/tanuki-spec-design/) | 要件定義書から設計書を生成し、設計変更を追従更新 | 基本設計・詳細設計・設計トレーサビリティ | [SKILL.md](./skills/tanuki-spec-design/SKILL.md) | 実装済み |
-| [`tanuki-spec-test-item`](./skills/tanuki-spec-test-item/) | 要件・設計からUT/ITのテスト項目書とV字カバレッジを生成・追従更新 | テスト設計・テストトレーサビリティ | [SKILL.md](./skills/tanuki-spec-test-item/SKILL.md) | 設計のみ |
+| [`tanuki-spec-test-item`](./skills/tanuki-spec-test-item/) | 要件・設計からUT/ITのテスト項目書とV字カバレッジを生成・追従更新 | テスト設計・テストトレーサビリティ | [SKILL.md](./skills/tanuki-spec-test-item/SKILL.md) | 実装済み |
 | [`tanuki-spec-reviewer`](./skills/tanuki-spec-reviewer/) | 生成済み仕様書を独立レビューし、⑤⑥のDoDを判定 | 品質レビュー | [SKILL.md](./skills/tanuki-spec-reviewer/SKILL.md) | 実装済み |
 | [`tanuki-task-planner`](./skills/tanuki-task-planner/) | トレーサビリティ正本から実装タスク、依存関係、完了条件を作成・検証 | 実装計画・タスク分解 | [SKILL.md](./skills/tanuki-task-planner/SKILL.md) | 実装済み |
 | [`tanuki-spec-screen-mock`](./skills/tanuki-spec-screen-mock/) | 要件定義書から画面定義とデザイントークンを起こし、単一HTMLの画面モックを生成 | 画面構成・画面遷移・配色の実装前レビュー | [SKILL.md](./skills/tanuki-spec-screen-mock/SKILL.md) | 実装済み |
 
 すべてのスキルはClaude CodeとCodexの双方から利用できる。Claude CodeではPlugin経由でのインストールを推奨する（[README.md](./README.md)参照）。Codexはリポジトリ直下の[AGENTS.md](./AGENTS.md)から該当スキルを選ぶ。
 
-## tanuki-spec-test-item の未実装部分
-
-`SKILL.md`が実行を指示している`evaluation/test_traceability_gate.py`、`evaluation/render_test_item_docs.py`、`templates/test-traceability-template.yaml`はまだ存在しない。手順とドライラン観察ログは確定しているため、実行資産を実装すればそのまま`実装済み`へ移せる。それまでは、UT/ITの設計方針を読む資料として扱う。
-
 ## 共有コア
 
-[`tanuki-spec-all`](./tanuki-spec-all/)は、SSOT（`spec-items.yaml`）、テンプレート、決定論的評価器、閲覧用HTMLの共有レンダラを持つ共有コアであり、直接呼び出さない。各スキルはsymlinkで参照する。HTMLはMarkdown/YAMLから再生成できる派生物であり、`tanuki-spec-test-item`へのHTML工程追加によって同スキル本体の状態が`設計のみ`から変わることはない。
+[`tanuki-spec-all`](./tanuki-spec-all/)は、SSOT（`spec-items.yaml`）、テンプレート、決定論的評価器、閲覧用HTMLの共有レンダラを持つ共有コアであり、直接呼び出さない。各スキルはsymlinkで参照する。HTMLはMarkdown/YAMLから再生成できる派生物である。
 
 ## 文章の読みやすさ（全スキル共通）
 

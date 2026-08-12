@@ -1,0 +1,133 @@
+from __future__ import annotations
+
+import copy
+import sys
+from pathlib import Path
+import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "evaluation"))
+import test_traceability_gate
+import render_test_item_docs
+del sys.modules["test_traceability_gate"]
+
+
+def design_elements() -> dict[str, dict]:
+    return {
+        "BD-001": {"id": "BD-001", "type": "basic_design", "name": "予約APIの外部仕様", "requirement_ids": ["FR-001", "NFR-001"]},
+        "DD-001": {"id": "DD-001", "type": "detailed_design", "name": "予約確定処理の内部ロジック", "requirement_ids": ["FR-001"]},
+    }
+
+
+def complete_test_traceability() -> dict:
+    return {
+        "version": "1.0",
+        "test_items": [
+            {
+                "id": "UT-001",
+                "status": "in_scope",
+                "test_type": "unit",
+                "design_element_ids": ["DD-001"],
+                "requirement_ids": ["FR-001"],
+                "preconditions": ["予約データが存在する"],
+                "steps": ["予約確定処理を呼び出す"],
+                "expected_results": ["予約が確定する"],
+            },
+            {
+                "id": "IT-001",
+                "status": "in_scope",
+                "test_type": "integration",
+                "design_element_ids": ["BD-001"],
+                "requirement_ids": ["FR-001", "NFR-001"],
+                "preconditions": ["APIサーバが起動している"],
+                "steps": ["予約APIを呼び出す"],
+                "expected_results": ["200が返る"],
+            },
+        ],
+    }
+
+
+class TestTraceabilityGateTest(unittest.TestCase):
+    def test_complete_coverage_passes(self):
+        self.assertEqual(test_traceability_gate.validate(complete_test_traceability(), design_elements()), [])
+
+    def test_unknown_design_element_reference_is_rejected(self):
+        data = complete_test_traceability()
+        data["test_items"][0]["design_element_ids"] = ["DD-999"]
+        failures = test_traceability_gate.validate(data, design_elements())
+        self.assertTrue(any("参照先の設計要素が存在しません: DD-999" in failure for failure in failures))
+
+    def test_unit_test_linked_to_basic_design_is_rejected(self):
+        """UTはDDに紐づける。BDへ紐づけるのは種別違反。"""
+        data = complete_test_traceability()
+        data["test_items"][0]["design_element_ids"] = ["BD-001"]
+        failures = test_traceability_gate.validate(data, design_elements())
+        self.assertTrue(any("unit は detailed_design の設計要素に紐づけてください" in failure for failure in failures))
+
+    def test_integration_test_linked_to_detailed_design_is_rejected(self):
+        """ITはBDに紐づける。DDへ紐づけるのは種別違反。"""
+        data = complete_test_traceability()
+        data["test_items"][1]["design_element_ids"] = ["DD-001"]
+        failures = test_traceability_gate.validate(data, design_elements())
+        self.assertTrue(any("integration は basic_design の設計要素に紐づけてください" in failure for failure in failures))
+
+    def test_requirement_id_outside_design_element_scope_is_rejected(self):
+        """requirement_idsは紐づく設計要素のrequirement_idsの部分集合でなければならない。"""
+        data = complete_test_traceability()
+        data["test_items"][0]["requirement_ids"] = ["FR-001", "NFR-001"]  # DD-001はFR-001のみ持つ
+        failures = test_traceability_gate.validate(data, design_elements())
+        self.assertTrue(any("紐づく設計要素の対象外の要件が含まれています: NFR-001" in failure for failure in failures))
+
+    def test_id_must_match_its_test_type(self):
+        data = copy.deepcopy(complete_test_traceability())
+        data["test_items"][0]["id"] = "IT-001"
+        failures = test_traceability_gate.validate(data, design_elements())
+        self.assertTrue(any("unit のID形式が不正です" in failure for failure in failures))
+
+    def test_duplicate_id_is_rejected(self):
+        data = complete_test_traceability()
+        data["test_items"][1]["id"] = "UT-001"
+        data["test_items"][1]["test_type"] = "unit"
+        data["test_items"][1]["design_element_ids"] = ["DD-001"]
+        failures = test_traceability_gate.validate(data, design_elements())
+        self.assertTrue(any("IDが重複しています" in failure for failure in failures))
+
+    def test_uncovered_detailed_design_element_is_rejected(self):
+        data = complete_test_traceability()
+        data["test_items"] = [data["test_items"][1]]  # UTを消してDD-001を未被覆にする
+        failures = test_traceability_gate.validate(data, design_elements())
+        self.assertTrue(any("設計要素がテストで被覆されていません: DD-001" in failure for failure in failures))
+
+    def test_uncovered_basic_design_element_is_rejected(self):
+        data = complete_test_traceability()
+        data["test_items"] = [data["test_items"][0]]  # ITを消してBD-001を未被覆にする
+        failures = test_traceability_gate.validate(data, design_elements())
+        self.assertTrue(any("設計要素がテストで被覆されていません: BD-001" in failure for failure in failures))
+
+    def test_deferred_item_requires_reason(self):
+        data = complete_test_traceability()
+        data["test_items"][0]["status"] = "deferred"
+        failures = test_traceability_gate.validate(data, design_elements())
+        self.assertTrue(any("deferred には reason が必要です" in failure for failure in failures))
+
+    def test_renderer_includes_unit_and_integration_sections(self):
+        rendered = render_test_item_docs.render(complete_test_traceability(), design_elements(), {})
+        self.assertIn("## 単体テスト（UT）", rendered)
+        self.assertIn("## 結合テスト（IT）", rendered)
+        self.assertIn("## V字モデルカバレッジ", rendered)
+        self.assertIn("UT-001", rendered)
+        self.assertIn("IT-001", rendered)
+        self.assertIn("DD-001", rendered)
+        self.assertIn("BD-001", rendered)
+
+    def test_renderer_shows_related_acceptance_and_system_tests(self):
+        ac_st_by_requirement = {
+            "FR-001": {"acceptance_test_ids": ["AC-001"], "system_test_ids": ["ST-001"]},
+        }
+        rendered = render_test_item_docs.render(complete_test_traceability(), design_elements(), ac_st_by_requirement)
+        self.assertIn("AC-001", rendered)
+        self.assertIn("ST-001", rendered)
+
+
+if __name__ == "__main__":
+    unittest.main()

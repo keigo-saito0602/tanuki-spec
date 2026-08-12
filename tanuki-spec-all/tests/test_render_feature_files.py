@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "evaluation"))
 sys.path.insert(0, str(ROOT / "tests"))
 import render_feature_files
-from test_traceability_gate import complete_traceability
+from test_requirements_traceability_gate import complete_traceability
 
 
 class RenderFeatureFilesTest(unittest.TestCase):

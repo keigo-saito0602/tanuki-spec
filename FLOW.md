@@ -7,7 +7,7 @@
 
 DoDを通過した仕様書を実装タスクへ分解する案件では、`tanuki-task-planner`を⑦の前段に置く。`traceability.yaml`を入力に`task-plan.yaml`と実装タスク計画を作る。
 
-UT/IT のテスト項目書と V 字カバレッジについては`tanuki-spec-test-item`が手順を定めているが、実行資産が未実装のため現時点ではこのフローに組み込めない（[SKILLS.md](./SKILLS.md)の状態欄を参照）。
+UT/IT のテスト項目書と V 字カバレッジについては、設計工程の後に`tanuki-spec-test-item`を使う。既存の AC（受入試験）・ST（システムテスト）は`traceability.yaml`が正本のまま再定義しない。
 
 ---
 
@@ -27,6 +27,7 @@ UT/IT のテスト項目書と V 字カバレッジについては`tanuki-spec-t
 | ③ | カバレッジ評価 | 結果を見る | `coverage.py --strict` → `spec_gate.py`。**必須欠落/要確認があれば②へ戻る** | — |
 | ③.5 | 画面モック | **モックを確認し修正を依頼**（画面のある案件のみ） | `tanuki-spec-screen-mock`で`screens.yaml`・`design-tokens.json`・モックHTMLを生成 | — |
 | ④ | 設計派生 | 設計に必要な未確定事項へ回答する | 必要に応じて`tanuki-spec-design`で設計書と`design-traceability.yaml`を生成する | — |
+| ④.5 | テスト項目書 | テスト観点で必要な前提を回答する | `tanuki-spec-test-item`でUT/IT・`test-traceability.yaml`・V字カバレッジを生成する（設計工程を経た案件のみ） | — |
 | ⑤ | AI品質採点 | — | （自己採点しない＝バイアス回避） | **別担当として6軸採点**＋`validate_review.py`で記録検証（または新しいClaudeセッションが採点） |
 | ⑥ | 出力ゲート(DoD) | **最終判定**（下記条件） | 差し戻しがあれば該当ステージへ | — |
 | ⑦ | 実装引き渡し | 進捗を見る | `tanuki-task-planner`でタスク分解 | **DoD通過の仕様書を入力に実装（TDD）** |
@@ -88,6 +89,16 @@ python3 evaluation/render_html_views.py <phase>
 python3 evaluation/render_html_views.py <phase> --check
 ```
 
+### ④.5 テスト項目書（tanuki-spec-test-item）
+設計工程（④）を経た案件で、UT/ITとV字カバレッジが必要な場合に実行する。コマンドは`skills/tanuki-spec-test-item/`を起点に実行する:
+```bash
+python3 evaluation/test_traceability_gate.py <test-traceability.yaml>
+python3 evaluation/render_test_item_docs.py <test-traceability.yaml> --output-dir <phase>/tests
+python3 evaluation/render_html_views.py <phase>
+python3 evaluation/render_html_views.py <phase> --check
+```
+既存のAC（受入試験・UAT）・ST（システムテスト）は`traceability.yaml`が正本であり、`04_テスト項目書.md`のV字モデルカバレッジ節は参照表示するだけで再定義しない。
+
 ### 閲覧用HTMLビュー（各生成工程の完了時）
 
 `render_html_views.py`は共有コアに1つだけ置き、generator / design / test-item がsymlink経由で呼び出す。通常実行はフェーズ内に存在する文書だけを`views/`へ生成し、`--check`は書き換えずに欠落・正本との差分を検出する。
@@ -121,6 +132,7 @@ python3 evaluation/evaluate_review_items.py --write-report-hash <review.yaml> --
 - [ ] `spec_gate.py` 通過
 - [ ] `traceability_gate.py` 通過（US・業務フロー手順・要件・受入試験・システムテストに孤立がない）
 - [ ] 設計工程では `design_traceability_gate.py` 通過（対象要件がBD/DDで被覆されている）
+- [ ] テスト項目書を作る案件では `test_traceability_gate.py` 通過（BD/DDがUT/ITで被覆されている）
 - [ ] `validate_review.py` 通過（レビュー記録が整合）
 - [ ] 6軸に「要改善」なし
 - [ ] 受入基準がテスト可能
