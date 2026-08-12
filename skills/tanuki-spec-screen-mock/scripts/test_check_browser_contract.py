@@ -102,6 +102,21 @@ class BrowserContractTest(unittest.TestCase):
         errors = self._check(mutated)
         self.assertTrue(any("axe" in error.lower() or "ランドマーク" in error for error in errors))
 
+    def test_mode_switch_label_shows_focus_when_hidden_radio_is_focused(self) -> None:
+        """モード切替のラジオはopacity:0で隠しているため、対応するlabelに見えるフォーカス表現が要る。"""
+        errors = self._check(self.html)
+        self.assertFalse(any("ヘッダー操作" in error and "フォーカス" in error for error in errors))
+
+    def test_axe_violation_only_on_second_screen_is_detected(self) -> None:
+        """最初に表示されるのはdisplay:noneではないSC-001だけなので、SC-002だけの違反も検出できる必要がある。"""
+        mutated = self.html.replace(
+            '<section class="screen" id="SC-002">',
+            '<section class="screen" id="SC-002"><h3></h3>',
+            1,
+        )
+        errors = self._check(mutated)
+        self.assertTrue(any("SC-002" in error and "axe" in error.lower() for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

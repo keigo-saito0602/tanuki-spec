@@ -22,8 +22,13 @@ img, svg { max-width: 100%; }
 .controls { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: .75rem 1rem; background: #fff; border-bottom: 2px solid #d0d0d0; position: sticky; top: 0; z-index: 2; }
 .controls h1 { font-size: 1rem; margin: 0 1rem 0 0; }
 .switch { display: flex; gap: .25rem; align-items: center; font-size: .85rem; }
-.switch label { padding: .3rem .7rem; border: 1px solid #b0b0b0; border-radius: 999px; cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; }
+.switch label { padding: .3rem .7rem; border: 1px solid #b0b0b0; border-radius: 999px; cursor: pointer; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
 .mode-input { position: absolute; opacity: 0; pointer-events: none; }
+/* ラジオ自体はopacity:0で見えないため、フォーカス時はlabel側へ明示的にアウトラインを出す。 */
+.controls:has(#fid-wire:focus-visible) label[for="fid-wire"],
+.controls:has(#fid-design:focus-visible) label[for="fid-design"],
+.controls:has(#dev-pc:focus-visible) label[for="dev-pc"],
+.controls:has(#dev-sp:focus-visible) label[for="dev-sp"] { outline: 3px solid var(--color-accent, #a33b00); outline-offset: 2px; }
 .controls:has(#fid-wire:checked) label[for="fid-wire"],
 .controls:has(#fid-design:checked) label[for="fid-design"],
 .controls:has(#dev-pc:checked) label[for="dev-pc"],

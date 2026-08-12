@@ -58,15 +58,22 @@ def check_with_browser(path: Path, browser) -> list[str]:
             page.evaluate('document.getElementById("fid-design").checked = true')
         page.set_viewport_size({"width": VIEWPORT_WIDTH, "height": 900})
 
-        errors.extend(_check_axe(page))
-
         screen_ids = page.eval_on_selector_all("section.screen[id]", "els => els.map(el => el.id)")
         if not screen_ids:
             errors.append("section.screenが1件も見つかりません。ブラウザ検査を実行できません")
             return errors
 
+        errors.extend(_check_header_controls(page))
+
+        # 非表示の画面（display:none）はaxe-coreの走査から漏れるため、
+        # 画面を切り替えるたびにaxeも実行する。同一違反の重複報告は最初の画面へ集約する。
+        seen_axe: set[str] = set()
         for screen_id in screen_ids:
             page.evaluate("(id) => { location.hash = id; }", screen_id)
+            for axe_error in _check_axe(page):
+                if axe_error not in seen_axe:
+                    seen_axe.add(axe_error)
+                    errors.append(f"{screen_id}: {axe_error}")
             errors.extend(_check_horizontal_scroll(page, screen_id))
             errors.extend(_check_tap_targets(page, screen_id))
             errors.extend(_check_focus_indicators(page, screen_id))
@@ -115,45 +122,72 @@ def _check_tap_targets(page, screen_id: str) -> list[str]:
     return errors
 
 
+_MEASURE_OUTLINE_JS = """(el) => {
+    const s = getComputedStyle(el);
+    let node = el.parentElement;
+    let background = 'rgb(255, 255, 255)';
+    while (node) {
+        const bg = getComputedStyle(node).backgroundColor;
+        if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') { background = bg; break; }
+        node = node.parentElement;
+    }
+    return {
+        outlineStyle: s.outlineStyle,
+        outlineWidth: parseFloat(s.outlineWidth) || 0,
+        outlineColor: s.outlineColor,
+        background: background,
+    };
+}"""
+
+
+def _report_focus_style(errors: list[str], context: str, text: str, style: dict) -> None:
+    if style["outlineStyle"] == "none" or style["outlineWidth"] <= 0:
+        errors.append(f"{context}: 「{text}」にフォーカス時のアウトラインがありません")
+        return
+    if style["outlineWidth"] < MIN_OUTLINE_WIDTH:
+        errors.append(
+            f'{context}: 「{text}」のフォーカスアウトラインが{style["outlineWidth"]}pxで細すぎます'
+            f'（{MIN_OUTLINE_WIDTH}px以上にしてください）'
+        )
+    ratio = contrast_ratio(_rgb_to_hex(style["outlineColor"]), _rgb_to_hex(style["background"]))
+    if ratio < FOCUS_MIN_CONTRAST:
+        errors.append(
+            f'{context}: 「{text}」のフォーカスアウトラインと背景のコントラストが'
+            f"{ratio:.2f}:1で{FOCUS_MIN_CONTRAST}:1を下回ります"
+        )
+
+
 def _check_focus_indicators(page, screen_id: str) -> list[str]:
     errors: list[str] = []
     handles = page.query_selector_all(_scoped_selector(screen_id))
     for handle in handles:
         text = (handle.text_content() or "").strip()[:20]
         handle.focus()
-        style = page.evaluate(
-            """(el) => {
-                const s = getComputedStyle(el);
-                let node = el.parentElement;
-                let background = 'rgb(255, 255, 255)';
-                while (node) {
-                    const bg = getComputedStyle(node).backgroundColor;
-                    if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') { background = bg; break; }
-                    node = node.parentElement;
-                }
-                return {
-                    outlineStyle: s.outlineStyle,
-                    outlineWidth: parseFloat(s.outlineWidth) || 0,
-                    outlineColor: s.outlineColor,
-                    background: background,
-                };
-            }""",
-            handle,
-        )
-        if style["outlineStyle"] == "none" or style["outlineWidth"] <= 0:
-            errors.append(f"{screen_id}: 「{text}」にフォーカス時のアウトラインがありません")
+        style = page.evaluate(_MEASURE_OUTLINE_JS, handle)
+        _report_focus_style(errors, screen_id, text, style)
+    return errors
+
+
+def _check_header_controls(page) -> list[str]:
+    """モード切替のラジオはopacity:0で隠しているため、対応するlabel側でフォーカス表現を測る。
+
+    画面sectionの外にあり、どの画面が表示中でも変わらないため、画面ループの外で一度だけ検査する。
+    """
+    errors: list[str] = []
+    input_ids = page.eval_on_selector_all(".controls .mode-input", "els => els.map(el => el.id)")
+    for input_id in input_ids:
+        label = page.query_selector(f'label[for="{input_id}"]')
+        if label is None:
             continue
-        if style["outlineWidth"] < MIN_OUTLINE_WIDTH:
+        rect = label.bounding_box() or {"width": 0, "height": 0}
+        text = (label.text_content() or "").strip()[:20]
+        if rect["width"] < MIN_TAP_TARGET or rect["height"] < MIN_TAP_TARGET:
             errors.append(
-                f'{screen_id}: 「{text}」のフォーカスアウトラインが{style["outlineWidth"]}pxで細すぎます'
-                f'（{MIN_OUTLINE_WIDTH}px以上にしてください）'
+                f'ヘッダー操作: タップ対象「{text}」が{rect["width"]:.0f}x{rect["height"]:.0f}pxで{MIN_TAP_TARGET}px未満です'
             )
-        ratio = contrast_ratio(_rgb_to_hex(style["outlineColor"]), _rgb_to_hex(style["background"]))
-        if ratio < FOCUS_MIN_CONTRAST:
-            errors.append(
-                f'{screen_id}: 「{text}」のフォーカスアウトラインと背景のコントラストが'
-                f"{ratio:.2f}:1で{FOCUS_MIN_CONTRAST}:1を下回ります"
-            )
+        page.eval_on_selector(f"#{input_id}", "el => el.focus()")
+        style = page.evaluate(_MEASURE_OUTLINE_JS, label)
+        _report_focus_style(errors, "ヘッダー操作", text, style)
     return errors
 
 

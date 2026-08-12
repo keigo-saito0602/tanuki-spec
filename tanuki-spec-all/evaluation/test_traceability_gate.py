@@ -78,6 +78,37 @@ def design_element_index(design_traceability_path: Path) -> tuple[dict[str, dict
     return result, failures
 
 
+def full_design_element_index(test_traceability_path: Path, data: dict) -> tuple[dict[str, dict], list[str]]:
+    """design-traceability.yaml を、その正本である要件（traceability.yaml）まで遡って検証する。
+
+    design_element_index() は design-traceability.yaml 自身の構造しか見ないため、
+    存在しない・対象外の要件IDを参照していても検出できない。ここでは
+    design_traceability_gate の要件索引・validate() を再利用し、設計→要件の鎖まで通す。
+    """
+    import design_traceability_gate
+
+    try:
+        path = design_traceability_path(data, test_traceability_path)
+    except ValueError as error:
+        return {}, [str(error)]
+    try:
+        design_data = design_traceability_gate.load(path)
+    except (OSError, ValueError, yaml.YAMLError) as error:
+        return {}, [f"設計トレーサビリティ正本を読み込めません: {error}"]
+
+    requirements, requirement_failures = design_traceability_gate.requirement_index(
+        design_traceability_gate.requirements_path(design_data, path)
+    )
+    if requirement_failures:
+        return {}, requirement_failures
+
+    design_failures = design_traceability_gate.validate(design_data, requirements)
+    if design_failures:
+        return {}, [f"設計トレーサビリティ: {failure}" for failure in design_failures]
+
+    return design_element_index(path)
+
+
 def validate_status(record: dict, label: str, failures: list[str]) -> bool:
     identifier = record.get("id", "<IDなし>")
     status = record.get("status")
@@ -180,7 +211,7 @@ def main() -> None:
     args = parser.parse_args()
     try:
         data = load(args.test_traceability)
-        design_elements, failures = design_element_index(design_traceability_path(data, args.test_traceability))
+        design_elements, failures = full_design_element_index(args.test_traceability, data)
         if not failures:
             failures = validate(data, design_elements)
     except (OSError, ValueError, yaml.YAMLError) as error:

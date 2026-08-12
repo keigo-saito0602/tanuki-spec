@@ -114,16 +114,16 @@ def main() -> None:
     args = parser.parse_args()
 
     data = test_traceability_gate.load(args.test_traceability)
-    design_traceability_path = test_traceability_gate.design_traceability_path(data, args.test_traceability)
-    design_elements, failures = test_traceability_gate.design_element_index(design_traceability_path)
+    design_elements, failures = test_traceability_gate.full_design_element_index(args.test_traceability, data)
     if not failures:
         failures = test_traceability_gate.validate(data, design_elements)
     if failures:
         raise SystemExit("テストトレーサビリティゲート不通過のためテスト項目書を生成できません: " + " / ".join(failures))
 
-    design_data = test_traceability_gate.load(design_traceability_path)
     import design_traceability_gate
 
+    design_traceability_path = test_traceability_gate.design_traceability_path(data, args.test_traceability)
+    design_data = test_traceability_gate.load(design_traceability_path)
     requirements_path = design_traceability_gate.requirements_path(design_data, design_traceability_path)
     ac_st_by_requirement = acceptance_and_system_index(requirements_path)
 
