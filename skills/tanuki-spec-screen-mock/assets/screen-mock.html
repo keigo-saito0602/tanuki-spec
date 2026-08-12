@@ -13,6 +13,10 @@
   --wire-text: #3c4043;
 }
 * { box-sizing: border-box; }
+/* 色だけに頼らないフォーカス表現。outline-offsetで背景側に隙間を作り、
+   要素自体の塗りではなく--color-surface（既存ゲートで--color-accentとの
+   コントラストを4.5:1以上に保っている）を背景にコントラストを確保する。 */
+:focus-visible { outline: 3px solid var(--color-accent, #a33b00); outline-offset: 2px; }
 body { margin: 0; font-family: var(--typography-font_family, system-ui, sans-serif); color: var(--color-text, #1c1c1c); background: #f6f7f9; }
 img, svg { max-width: 100%; }
 .controls { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: .75rem 1rem; background: #fff; border-bottom: 2px solid #d0d0d0; position: sticky; top: 0; z-index: 2; }
@@ -20,12 +24,12 @@ img, svg { max-width: 100%; }
 .switch { display: flex; gap: .25rem; align-items: center; font-size: .85rem; }
 .switch label { padding: .3rem .7rem; border: 1px solid #b0b0b0; border-radius: 999px; cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; }
 .mode-input { position: absolute; opacity: 0; pointer-events: none; }
-#fid-wire:checked ~ .controls label[for="fid-wire"],
-#fid-design:checked ~ .controls label[for="fid-design"],
-#dev-pc:checked ~ .controls label[for="dev-pc"],
-#dev-sp:checked ~ .controls label[for="dev-sp"] { background: #1c1c1c; color: #fff; border-color: #1c1c1c; font-weight: 700; }
+.controls:has(#fid-wire:checked) label[for="fid-wire"],
+.controls:has(#fid-design:checked) label[for="fid-design"],
+.controls:has(#dev-pc:checked) label[for="dev-pc"],
+.controls:has(#dev-sp:checked) label[for="dev-sp"] { background: #1c1c1c; color: #fff; border-color: #1c1c1c; font-weight: 700; }
 .app { display: grid; grid-template-columns: 15rem 1fr; gap: 1rem; padding: 1rem; align-items: start; }
-.sidebar { background: #fff; border: 1px solid #d0d0d0; border-radius: 6px; padding: .75rem; position: sticky; top: 4.5rem; }
+.sidebar { min-width: 0; background: #fff; border: 1px solid #d0d0d0; border-radius: 6px; padding: .75rem; position: sticky; top: 4.5rem; }
 .sidebar h2 { font-size: .8rem; margin: .5rem 0 .25rem; color: #5f6368; }
 .sidebar a { display: flex; align-items: center; min-height: 44px; padding: .55rem .5rem; color: #1a1a1a; text-decoration: underline; border-radius: 4px; font-size: .9rem; overflow-wrap: anywhere; }
 .stage { min-width: 0; }
@@ -35,7 +39,7 @@ body:not(:has(.screen:target)) .screen:first-of-type { display: block; }
 .screen-head { border-bottom: 1px solid #e0e0e0; padding-bottom: .5rem; margin-bottom: 1rem; }
 .screen-head p { margin: .25rem 0 0; color: #5f6368; font-size: .9rem; }
 .canvas { border: 1px dashed #c0c0c0; padding: 1rem; border-radius: 6px; background: var(--color-surface, #fff); }
-#dev-sp:checked ~ .app .canvas { max-width: 390px; }
+body:has(#dev-sp:checked) .app .canvas { max-width: 390px; }
 .meta { margin-top: 1rem; font-size: .9rem; }
 .meta dt { font-weight: 700; margin-top: .5rem; }
 .meta dd { margin: .25rem 0 0; }
@@ -44,16 +48,18 @@ body:not(:has(.screen:target)) .screen:first-of-type { display: block; }
 .blk { margin-bottom: .75rem; }
 .blk-label { font-size: .7rem; letter-spacing: .05em; color: #5f6368; text-transform: uppercase; }
 .bar { background: var(--color-primary, #1a5fb4); color: #fff; padding: .6rem .8rem; border-radius: var(--radius-md, 6px); display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
-.bar a { color: #fff; text-decoration: underline; }
+.bar a { color: #fff; text-decoration: underline; display: inline-flex; align-items: center; min-height: 44px; }
+/* primary色の背景（.bar）上ではaccentとの差が付かないため、フォーカス時は白の外枠にする。 */
+.bar a:focus-visible { outline-color: #ffffff; }
 .box { border: 1px solid var(--color-line, #d0d0d0); border-radius: var(--radius-md, 6px); padding: .6rem; background: var(--color-surface, #fff); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .6rem; }
-.btn { display: inline-block; padding: .55rem 1rem; border-radius: var(--radius-md, 6px); border: 1px solid var(--color-primary, #1a5fb4); background: var(--color-primary, #1a5fb4); color: #fff; text-decoration: none; min-height: 44px; line-height: 1.8; }
+.btn { display: inline-block; font: inherit; text-align: inherit; cursor: pointer; padding: .55rem 1rem; border-radius: var(--radius-md, 6px); border: 1px solid var(--color-primary, #1a5fb4); background: var(--color-primary, #1a5fb4); color: #fff; text-decoration: none; min-height: 44px; line-height: 1.8; }
 .btn-sub { background: #fff; color: var(--color-primary, #1a5fb4); }
 .tbl-wrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: .9rem; }
 th, td { border: 1px solid var(--color-line, #d0d0d0); padding: .4rem .5rem; text-align: left; }
 th { background: #f1f3f4; }
-#fid-wire:checked ~ .app {
+body:has(#fid-wire:checked) .app {
   --color-primary: var(--wire-line);
   --color-accent: var(--wire-line);
   --color-surface: #ffffff;
@@ -62,10 +68,10 @@ th { background: #f1f3f4; }
   --radius-md: 2px;
   --typography-font_family: system-ui, sans-serif;
 }
-#fid-wire:checked ~ .app .bar,
-#fid-wire:checked ~ .app .btn { background: var(--wire-fill); color: var(--wire-text); border-color: var(--wire-line); }
-#fid-wire:checked ~ .app .bar a { color: var(--wire-text); }
-.appendix { grid-column: 1 / -1; background: #fff; border: 1px solid #d0d0d0; border-radius: 8px; padding: 1rem; }
+body:has(#fid-wire:checked) .app .bar,
+body:has(#fid-wire:checked) .app .btn { background: var(--wire-fill); color: var(--wire-text); border-color: var(--wire-line); }
+body:has(#fid-wire:checked) .app .bar a { color: var(--wire-text); }
+.appendix { min-width: 0; grid-column: 1 / -1; background: #fff; border: 1px solid #d0d0d0; border-radius: 8px; padding: 1rem; }
 @media (max-width: 48rem) {
   .app { grid-template-columns: 1fr; }
   .sidebar { position: static; }
@@ -77,11 +83,11 @@ th { background: #f1f3f4; }
 </style>
 </head>
 <body>
-<input class="mode-input" type="radio" name="fidelity" id="fid-wire" checked>
-<input class="mode-input" type="radio" name="fidelity" id="fid-design">
-<input class="mode-input" type="radio" name="device" id="dev-pc" checked>
-<input class="mode-input" type="radio" name="device" id="dev-sp">
 <header class="controls">
+  <input class="mode-input" type="radio" name="fidelity" id="fid-wire" checked>
+  <input class="mode-input" type="radio" name="fidelity" id="fid-design">
+  <input class="mode-input" type="radio" name="device" id="dev-pc" checked>
+  <input class="mode-input" type="radio" name="device" id="dev-sp">
   <h1><!--TITLE--> 画面モック</h1>
   <div class="switch"><label for="fid-wire">ワイヤー</label><label for="fid-design">デザイン</label></div>
   <div class="switch"><label for="dev-pc">PC</label><label for="dev-sp">スマホ</label></div>

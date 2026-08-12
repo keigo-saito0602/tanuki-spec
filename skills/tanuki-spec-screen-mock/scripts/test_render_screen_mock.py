@@ -135,6 +135,24 @@ class RenderBlockTest(unittest.TestCase):
         self.assertIn("&lt;script&gt;", html)
 
 
+class ButtonRowBlockTest(unittest.TestCase):
+    def test_buttons_render_as_focusable_button_elements(self) -> None:
+        """spanはキーボードでフォーカスできない。実際に操作できる要素にする。"""
+        html = RENDER.render_block({"type": "button-row", "buttons": ["保存する"]})
+        self.assertIn("<button", html)
+        self.assertNotIn('<span class="btn', html)
+
+    def test_button_has_explicit_type_button(self) -> None:
+        """type省略時のformでの暗黙submitを防ぐ。"""
+        html = RENDER.render_block({"type": "button-row", "buttons": ["保存する"]})
+        self.assertIn('type="button"', html)
+
+    def test_first_button_is_primary_and_rest_are_secondary(self) -> None:
+        html = RENDER.render_block({"type": "button-row", "buttons": ["主操作", "副操作"]})
+        self.assertIn('class="btn"', html)
+        self.assertIn('class="btn btn-sub"', html)
+
+
 class RenderStateBlockTest(unittest.TestCase):
     ALLOWED_STATES = {"normal", "empty", "loading", "error", "forbidden"}
 

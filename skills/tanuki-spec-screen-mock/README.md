@@ -30,6 +30,7 @@
 
 ```bash
 python3 -m pip install -r requirements.txt
+python3 -m playwright install chromium  # scripts/check_browser_contract.py に必要
 python3 -m unittest discover -s scripts -v
 ```
 
@@ -40,9 +41,15 @@ python3 -m unittest discover -s scripts -v
 ```bash
 python3 scripts/screens_gate.py <phase>/screens.yaml
 python3 scripts/render_screen_mock.py <phase>/screens.yaml <phase>/design-tokens.json --output <phase>/views/画面モック.html
-python3 scripts/validate_screen_mock.py <phase>/views/画面モック.html
+python3 scripts/validate_screen_mock.py <phase>/views/画面モック.html --screens <phase>/screens.yaml
+python3 scripts/check_browser_contract.py <phase>/views/画面モック.html
 python3 scripts/render_screen_docs.py <phase>/screens.yaml
 ```
+
+`check_browser_contract.py`は実ブラウザ（Chromium）でHTMLを開き、320px幅での横スクロール、
+タップ対象の実寸（44px以上）、フォーカス表現（アウトラインの太さとコントラスト）を実測します。
+`validate_screen_mock.py`（静的解析）では測れない項目です。CIでの実行例は
+[`.github/workflows/screen-mock-checks.yml`](../../.github/workflows/screen-mock-checks.yml)を参照してください。
 
 ## 推奨モデル
 

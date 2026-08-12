@@ -1,1 +1,5 @@
 PyYAML>=6.0,<7.0
+# 実ブラウザでの契約検査（scripts/check_browser_contract.py）に使う。
+# インストール後に `playwright install chromium` でブラウザ本体の取得が別途必要。
+playwright>=1.40,<2.0
+axe-playwright-python>=0.1.4,<1.0

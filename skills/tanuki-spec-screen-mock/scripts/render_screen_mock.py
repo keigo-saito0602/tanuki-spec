@@ -86,7 +86,7 @@ def render_block(block: Any) -> str:
         head = "".join(f'<th scope="col">{esc(name)}</th>' for name in columns)
         body = "".join("<td>—</td>" for _ in columns)
         table = (
-            f'<div class="tbl-wrap"><table><caption>{esc(block.get("caption", "一覧"))}</caption>'
+            f'<div class="tbl-wrap" tabindex="0"><table><caption>{esc(block.get("caption", "一覧"))}</caption>'
             f"<thead><tr>{head}</tr></thead><tbody><tr>{body}</tr><tr>{body}</tr></tbody></table></div>"
         )
         return _labelled(kind, table)
@@ -94,7 +94,7 @@ def render_block(block: Any) -> str:
     if kind == "button-row":
         buttons = block.get("buttons") or ["操作"]
         rendered = "".join(
-            f'<span class="btn{"" if index == 0 else " btn-sub"}">{esc(name)}</span>'
+            f'<button type="button" class="btn{"" if index == 0 else " btn-sub"}">{esc(name)}</button>'
             for index, name in enumerate(buttons)
         )
         return _labelled(kind, f"<div>{rendered}</div>")
@@ -179,7 +179,7 @@ def render_screen(screen: Any) -> str:
       <dt>対応要件</dt><dd>{trace}</dd>
       <dt>遷移</dt><dd>{links or '終端画面'}</dd>
     </dl>
-    <div class="tbl-wrap"><table><caption>この画面の5状態</caption><tbody>{state_rows}</tbody></table></div>
+    <div class="tbl-wrap" tabindex="0"><table><caption>この画面の5状態</caption><tbody>{state_rows}</tbody></table></div>
     {notes}
   </div>
 </section>"""
@@ -218,7 +218,7 @@ def render_diagram(screens: Any) -> str:
             )
     body = "".join(rows) or '<tr><td colspan="3">遷移がありません</td></tr>'
     return (
-        '<div class="tbl-wrap"><table><caption>遷移元・操作・遷移先の一覧</caption>'
+        '<div class="tbl-wrap" tabindex="0"><table><caption>遷移元・操作・遷移先の一覧</caption>'
         '<thead><tr><th scope="col">遷移元</th><th scope="col">操作</th><th scope="col">遷移先</th></tr></thead>'
         f"<tbody>{body}</tbody></table></div>"
     )
@@ -250,11 +250,11 @@ def render_trace(screens: Any, token_data: Any) -> str:
     note_items = "".join(f"<li>{esc(note)}</li>" for note in notes) or "<li>ありません</li>"
 
     return f"""<h2>要件と画面の対応</h2>
-<div class="tbl-wrap"><table><caption>要件IDごとの担当画面</caption>
+<div class="tbl-wrap" tabindex="0"><table><caption>要件IDごとの担当画面</caption>
 <thead><tr><th scope="col">要件ID</th><th scope="col">画面</th></tr></thead>
 <tbody>{trace_rows}</tbody></table></div>
 <h2>確定していないデザイントークン</h2>
-<div class="tbl-wrap"><table><caption>抽出元と確度</caption>
+<div class="tbl-wrap" tabindex="0"><table><caption>抽出元と確度</caption>
 <thead><tr><th scope="col">トークン</th><th scope="col">抽出元</th><th scope="col">確度</th></tr></thead>
 <tbody>{token_rows}</tbody></table></div>
 <h2>要確認事項</h2>
