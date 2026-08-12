@@ -108,6 +108,9 @@ python3 scripts/check_browser_contract.py <phase>/views/画面モック.html
 - 色はデザインモードへ切り替えて別に見てほしいこと
 - 画面数、`[要確認]`の件数、確度が`confirmed`でないトークンの件数
 
+キーボード操作・支援技術・色以外の手掛かりが意味として機能するかは機械検査では判定できない。
+最終確定前に[`references/human-ux-review-guide.md`](./references/human-ux-review-guide.md)の手順で人手評価する。
+
 ### 7. 修正を反映する（updateモード）
 
 指摘のあった画面だけ`screens.yaml`を直し、手順5を再実行する。無関係な画面を書き換えない。
