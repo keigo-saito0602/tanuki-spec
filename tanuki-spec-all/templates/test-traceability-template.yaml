@@ -1,5 +1,6 @@
 version: "1.0"
 design_traceability: design-traceability.yaml
+system_traceability: ../system-traceability.yaml
 
 # UT は DD（詳細設計要素）に、IT は BD（基本設計要素）に紐づける。
 # 既存の AC（受入試験）・ST（システムテスト）は traceability.yaml が正本であり、ここでは新規生成しない。
