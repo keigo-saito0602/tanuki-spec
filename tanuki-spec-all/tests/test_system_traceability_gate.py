@@ -153,6 +153,39 @@ class SystemTraceabilityGateTest(unittest.TestCase):
         failures = system_traceability_gate.validate(data, user_stories(), requirements())
         self.assertTrue(any("US-001" in failure and "受入試験がありません" in failure for failure in failures))
 
+    def test_user_story_without_requirement_is_rejected(self):
+        """要件から参照されないin_scopeユーザーストーリーは孤立として拒否される（US→要件）。"""
+        data = complete_system_traceability()
+        us = {**user_stories(), "US-002": {"id": "US-002", "status": "in_scope", "statement": "利用者は履歴を確認したい。"}}
+        failures = system_traceability_gate.validate(data, us, requirements())
+        self.assertTrue(any("US-002" in failure and "を満たす要件がありません" in failure for failure in failures))
+
+    def test_business_flow_step_without_requirement_is_rejected(self):
+        """どの要件のflow_step_idsからも参照されない業務フロー手順は孤立として拒否される（業務フロー手順→要件）。"""
+        data = complete_system_traceability()
+        data["business_flows"][0]["steps"].append(
+            {"id": "BF-001-S02", "action": "空きを確認する", "user_story_ids": ["US-001"]}
+        )
+        failures = system_traceability_gate.validate(data, user_stories(), requirements())
+        self.assertTrue(any("BF-001-S02" in failure and "を満たす要件がありません" in failure for failure in failures))
+
+    def test_business_flow_step_without_acceptance_test_is_rejected(self):
+        """どの受入試験のflow_step_idsからも参照されない業務フロー手順は孤立として拒否される（業務フロー手順→受入試験）。"""
+        data = complete_system_traceability()
+        data["business_flows"][0]["steps"].append(
+            {"id": "BF-001-S02", "action": "空きを確認する", "user_story_ids": ["US-001"]}
+        )
+        failures = system_traceability_gate.validate(data, user_stories(), requirements())
+        self.assertTrue(any("BF-001-S02" in failure and "の受入試験がありません" in failure for failure in failures))
+
+    def test_business_flow_step_id_duplicate_is_rejected(self):
+        data = complete_system_traceability()
+        data["business_flows"][0]["steps"].append(
+            {"id": "BF-001-S01", "action": "重複した手順", "user_story_ids": ["US-001"]}
+        )
+        failures = system_traceability_gate.validate(data, user_stories(), requirements())
+        self.assertTrue(any("BF-001-S01" in failure and "IDが重複しています" in failure for failure in failures))
+
     def test_requirement_flow_step_id_not_defined_in_business_flows_is_rejected(self):
         """func側requirementのflow_step_idsが実際に存在するか、対象USが一致するかを検証する。"""
         requirements_with_bad_step = {
