@@ -34,7 +34,7 @@ def extract_template(text: str, skill: str) -> str | None:
 
 
 REFERENCED_FILE_PATTERN = re.compile(
-    r"(?:evaluation|scripts|templates|references|assets)/[A-Za-z0-9_.-]+\.(?:py|md|ya?ml|json|html)"
+    r"(?:\.\./[\w-]+/)?(?:evaluation|scripts|templates|references|assets)/[A-Za-z0-9_.-]+\.(?:py|md|ya?ml|json|html)"
 )
 
 
