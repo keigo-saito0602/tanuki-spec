@@ -140,26 +140,7 @@ requirements:
     type: functional
     statement: "利用者は予約を確定できる"
     user_story_ids: [US-001]
-acceptance_tests:
-  - id: AC-001
-    status: in_scope
-    feature: "予約"
-    user_story_ids: [US-001]
-    requirement_ids: [FR-001]
-    scenario:
-      name: "予約確定"
-      given: ["予約データがある"]
-      when: ["確定ボタンを押す"]
-      then: ["予約が確定する"]
-system_tests:
-  - id: ST-001
-    status: in_scope
-    test_type: functional
-    requirement_ids: [FR-001]
-    acceptance_test_ids: [AC-001]
-    preconditions: ["APIが起動している"]
-    steps: ["POST /reservations"]
-    expected_results: ["200が返る"]
+    flow_step_ids: [BF-001-S01]
 """
 
 DESIGN_TRACEABILITY_YAML_VALID = """
@@ -250,6 +231,129 @@ class FullChainValidationTest(unittest.TestCase):
             self.assertEqual(failures, [])
             self.assertIn("BD-001", elements)
             self.assertIn("DD-001", elements)
+
+
+SYSTEM_TRACEABILITY_YAML = """
+version: "1.0"
+func_traceability:
+  - func-予約/traceability.yaml
+business_flows:
+  - id: BF-001
+    status: in_scope
+    name: "予約フロー"
+    steps:
+      - id: BF-001-S01
+        action: "予約画面を開く"
+        user_story_ids: [US-001]
+acceptance_tests:
+  - id: AC-001
+    status: in_scope
+    feature: "予約"
+    user_story_ids: [US-001]
+    requirement_ids: [FR-001]
+    flow_step_ids: [BF-001-S01]
+    scenario:
+      name: "予約確定"
+      given: ["予約データがある"]
+      when: ["確定ボタンを押す"]
+      then: ["予約が確定する"]
+system_tests:
+  - id: ST-001
+    status: in_scope
+    test_type: functional
+    requirement_ids: [FR-001]
+    acceptance_test_ids: [AC-001]
+    preconditions: ["APIが起動している"]
+    steps: ["POST /reservations"]
+    expected_results: ["200が返る"]
+"""
+
+
+class SystemTraceabilityFieldTest(unittest.TestCase):
+    """test-traceability.yamlのsystem_traceabilityフィールドの検証。"""
+
+    def _write_valid_chain(self, directory: Path) -> Path:
+        func_dir = directory / "func-予約"
+        func_dir.mkdir(parents=True, exist_ok=True)
+        (directory / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
+        (func_dir / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
+        (directory / "design-traceability.yaml").write_text(DESIGN_TRACEABILITY_YAML_VALID, encoding="utf-8")
+        (directory / "system-traceability.yaml").write_text(SYSTEM_TRACEABILITY_YAML, encoding="utf-8")
+        test_traceability_path = func_dir / "test-traceability.yaml"
+        content = TEST_TRACEABILITY_YAML.replace(
+            'design_traceability: design-traceability.yaml',
+            'design_traceability: ../design-traceability.yaml\nsystem_traceability: ../system-traceability.yaml',
+        ).replace("[FR-999]", "[FR-001]")
+        test_traceability_path.write_text(content, encoding="utf-8")
+        return test_traceability_path
+
+    def test_missing_system_traceability_field_is_rejected(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory_str:
+            path = self._write_valid_chain(Path(directory_str))
+            data = test_traceability_gate.load(path)
+            del data["system_traceability"]
+            failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-001"})
+            self.assertTrue(any("system_traceability" in failure for failure in failures))
+
+    def test_system_traceability_pointing_to_missing_file_is_rejected(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory_str:
+            path = self._write_valid_chain(Path(directory_str))
+            data = test_traceability_gate.load(path)
+            data["system_traceability"] = "../does-not-exist.yaml"
+            failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-001"})
+            self.assertTrue(any("存在しません" in failure or "読み込めません" in failure for failure in failures))
+
+    def test_system_traceability_in_different_phase_is_rejected(self):
+        """解決先が対象test-traceability.yamlと同じphase直下でなければ拒否する。"""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory_str:
+            root = Path(directory_str)
+            path = self._write_valid_chain(root)
+            other_phase = root.parent / (root.name + "-other")
+            other_phase.mkdir(parents=True, exist_ok=True)
+            (other_phase / "system-traceability.yaml").write_text(SYSTEM_TRACEABILITY_YAML, encoding="utf-8")
+            data = test_traceability_gate.load(path)
+            data["system_traceability"] = "../../" + other_phase.name + "/system-traceability.yaml"
+            failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-001"})
+            self.assertTrue(any("同じphase" in failure for failure in failures))
+
+    def test_system_traceability_not_registering_this_func_is_rejected(self):
+        """system-traceability.yaml側のfunc_traceabilityに対象funcが登録されていなければ拒否する。"""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory_str:
+            path = self._write_valid_chain(Path(directory_str))
+            system_path = path.parent.parent / "system-traceability.yaml"
+            system_data = test_traceability_gate.load(system_path)
+            system_data["func_traceability"] = ["func-別の機能/traceability.yaml"]
+            system_path.write_text(__import__("yaml").safe_dump(system_data, allow_unicode=True), encoding="utf-8")
+            data = test_traceability_gate.load(path)
+            failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-001"})
+            self.assertTrue(any("登録されていません" in failure for failure in failures))
+
+    def test_unresolvable_requirement_id_is_rejected(self):
+        """対象funcの要件IDがsystem-traceability.yaml側の要件索引で解決できることを検証する。"""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory_str:
+            path = self._write_valid_chain(Path(directory_str))
+            data = test_traceability_gate.load(path)
+            failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-999-不在"})
+            self.assertTrue(any("FR-999-不在" in failure for failure in failures))
+
+    def test_valid_system_traceability_passes(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory_str:
+            path = self._write_valid_chain(Path(directory_str))
+            data = test_traceability_gate.load(path)
+            failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-001"})
+            self.assertEqual(failures, [])
 
 
 if __name__ == "__main__":
