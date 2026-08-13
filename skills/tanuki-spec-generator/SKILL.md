@@ -21,15 +21,17 @@ description: 案件着手時に、ユーザーストーリーから要件定義�
 ## 起動時テンプレート（呼ばれたら、まずこれを出す）
 
 このSKILLが呼び出されたら、**最初に次のテンプレートをそのまま提示し、ユーザーに埋めてもらう**。
-`工程` と `ストーリー` が未記入のうちは生成を始めない（`参照仕様`・`モード` は空でよい）。
 
 ```
 tanuki-spec-generator
 工程:            # requirements（要件定義）/ basic_design（基本設計）/ detailed_design（詳細設計）
+対象func:        # phase内の機能名（例: 予約）。出力先 <phase>/func-<名前>/ の <名前> になる
 ストーリー:      # 誰が/いつ/何を/なぜ、のユーザーストーリー群
 参照仕様:        # 過去仕様から今回使う内容の抜粋。無ければ空欄
 モード:          # full（既定・全項目＋評価）/ quick（必須のみ＋簡易）。空欄ならfull
 ```
+
+`工程`・`対象func`・`ストーリー` が未記入のうちは生成を始めない（`参照仕様`・`モード` は空でよい）。
 
 埋まったら、下の「手順」①〜③を順に実行する。
 
@@ -41,6 +43,7 @@ tanuki-spec-generator
 | --- | --- | --- |
 | ユーザーストーリー | ○ | 「誰が/いつ/何を/なぜ」レベルの要望。複数ある場合は分けて列挙する |
 | 対象工程 | ○ | `requirements`（要件定義）/ `basic_design`（基本設計）/ `detailed_design`（詳細設計） |
+| 対象func | ○ | phase内の機能名。出力先 `<phase>/func-<名前>/` の `<名前>` になる |
 | 参照仕様（過去案件） | 任意 | **都度指定**。今回採用したい仕様本文・画面説明・制約・判断理由の抜粋を渡す。原本のパス・ファイル名は渡さない |
 | モード | 任意 | `full`（全項目・カバレッジ＋AI品質評価）/ `quick`（必須項目のみ・簡易チェック）。既定 `full` |
 
@@ -49,6 +52,13 @@ tanuki-spec-generator
 ---
 
 ## 手順（この順で実行する）
+
+0. 入力として渡された`<phase>`から`docs/spec/system-baseline/`を解決する
+   （カレントディレクトリ基準ではなく、`<phase>`の親を辿って解決する）。存在する場合は
+   `システム構成・共通基盤.md`・`非機能ベースライン.md`を読み、記載と矛盾しない内容にする。
+   共通用語は`GLOSSARY.md`を正とする。存在しない場合はこのステップを省略する
+   （初回フェーズ等でまだ作られていないことがある）。
+   参照した場合は、`reports/01_差分・未決事項.md`に「参照したベースライン文書」を記録する。
 
 ### ①入力ゲート — ユーザーストーリーの INVEST チェック
 INVESTの6軸（Independent/Negotiable/Valuable/Estimable/Small/Testable）をYES/NOで確認。
@@ -79,11 +89,11 @@ NOの軸は質問リストにして仕様書へ残す。ドラフト生成は止
 python3 evaluation/coverage.py <記入済み仕様書.md> --strict
 ```
 → 必須充足率・全体充足率・欠落項目・`[要確認]`が出る。`--json` で機械可読サマリ。
-続けてトレーサビリティを検証し、受入試験項目書・システムテスト項目書を生成する。
+続けてトレーサビリティを検証し、受入試験項目書・システムテスト項目書を生成する。phase確定後は、業務フロー・AC・STを束ねる`system-traceability.yaml`（phase直下）側で一括生成する運用に変わる。
 ```bash
 python3 evaluation/traceability_gate.py <traceability.yaml>
-python3 evaluation/render_traceability_docs.py <traceability.yaml> --output-dir <phase>/tests
-python3 evaluation/render_feature_files.py <traceability.yaml> --output-dir <phase>/features
+python3 evaluation/render_traceability_docs.py <phase>/system-traceability.yaml --output-dir <phase>/tests
+python3 evaluation/render_feature_files.py <phase>/system-traceability.yaml --output-dir <phase>/features
 ```
 最後に根拠とトレーサビリティを含む出力ゲートを実行する。
 ```bash
@@ -135,13 +145,13 @@ python3 evaluation/render_html_views.py <phase> --check
 
 > 置き場所・命名は [`../../docs/spec-directory-standard.md`](../../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
 
-- `<phase>/00_サマリ.md`（サマリ層。人が普段読む100行程度。要件定義書のぶんだけ作る）
-- `<phase>/01_要件定義書.md`（記入済み要件定義書）
-- `<phase>/traceability.yaml`（US → BR/FR/NFR → AC → ST の正本）
+- `<phase>/func-<名前>/00_サマリ.md`（サマリ層。人が普段読む100行程度。要件定義書のぶんだけ作る）
+- `<phase>/func-<名前>/01_要件定義書.md`（記入済み要件定義書）
+- `<phase>/func-<名前>/traceability.yaml`（US → BR/FR/NFR → AC → ST の正本）
 - `<phase>/tests/requirements-traceability.md`、`<phase>/tests/system-test-cases.md`
 - `<phase>/features/*.feature`（受入試験はGherkinの `.feature` として標準で生成。将来E2E（Cucumber/playwright-bdd）へ直接投入できる）
 - `<phase>/views/`（`index.html`、`README.md`、存在する要件・サマリ・対応表の閲覧用HTML。正本ではなく再生成する派生物）
-- `<phase>/reports/01_差分・未決事項.md`（カバレッジ評価レポート：必須充足率／欠落リスト）
+- `<phase>/func-<名前>/reports/01_差分・未決事項.md`（カバレッジ評価レポート：必須充足率／欠落リスト）
 
 実例は `examples/sample-user-story/` を参照（サンプルストーリー1件のE2E成果物）。
 

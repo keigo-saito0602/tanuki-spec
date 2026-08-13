@@ -26,18 +26,25 @@ tanuki-spec-test-item
 
 ## 手順
 
+0. 入力として渡された`<phase>`から`docs/spec/system-baseline/`を解決する
+   （カレントディレクトリ基準ではなく、`<phase>`の親を辿って解決する）。存在する場合は
+   `システム構成・共通基盤.md`・`非機能ベースライン.md`を読み、記載と矛盾しない内容にする。
+   共通用語は`GLOSSARY.md`を正とする。存在しない場合はこのステップを省略する
+   （初回フェーズ等でまだ作られていないことがある）。
+   参照した場合は、`reports/01_差分・未決事項.md`に「参照したベースライン文書」を記録する。
+
 1. 入力の要件定義書、基本設計書、詳細設計書、`traceability.yaml`、`design-traceability.yaml` を読む。`design-traceability.yaml` の `requirements_traceability` が指す要件正本と、明示的に渡された `traceability.yaml` が同一か確認する。
 2. 既存 AC/ST は `traceability.yaml` と `render_traceability_docs.py` が正本であることを前提にし、UT/IT だけを新規対象にする。`ST` の `test_type: integration` と、V字モデルの `IT` を混同しない。
 3. テスト観点として、`spec-items.yaml` の `test_perspectives`、詳細設計にあるデシジョンテーブル・状態遷移、非機能要件、既存 AC/ST を確認する。要件外だが試験設計に必要な前提は質問し、回答がない場合は `[要確認: 質問]` を残す。
-4. `new` では `test-traceability-template.yaml` をもとに `test-traceability.yaml` を作る。`UT-xxx` は `DD-xxx`、`IT-xxx` は `BD-xxx` に紐づけ、各 `requirement_ids` は紐づく設計要素の `requirement_ids` の部分集合にする。横断テストが必要でも v1 では勝手に例外を作らない。
+4. `new` では `test-traceability-template.yaml` をもとに `test-traceability.yaml` を作る。作成時は `system_traceability: ../system-traceability.yaml` を明記し、AC/STの正本がphase直下の `system-traceability.yaml` であることを示す。`UT-xxx` は `DD-xxx`、`IT-xxx` は `BD-xxx` に紐づけ、各 `requirement_ids` は紐づく設計要素の `requirement_ids` の部分集合にする。横断テストが必要でも v1 では勝手に例外を作らない。
 5. `update` では前回成果物と今回の要件・設計正本を比較し、影響を受ける `UT/IT` だけを更新する。削除候補のテスト項目は即削除せず、`[要確認: 廃止してよいか]` を残す。
 6. `render_test_item_docs.py` で `04_テスト項目書.md` を生成する。`## 単体テスト（UT）`、`## 結合テスト（IT）`、`## V字モデルカバレッジ` の3節を1本にまとめ、V字モデルカバレッジには既存の `AC(UAT)` と `ST` を参照表示して再定義しない。
 7. 次を実行し、未被覆・不整合・列崩れがあれば修正する。
 
 ```bash
 python3 evaluation/test_traceability_gate.py <test-traceability.yaml>
-python3 evaluation/render_test_item_docs.py <test-traceability.yaml> --output-dir <phase>/tests
-python3 evaluation/render_test_item_docs.py <test-traceability.yaml> --output-dir <phase>/tests --check
+python3 evaluation/render_test_item_docs.py <test-traceability.yaml> --output-dir <phase>/func-<名前>/tests
+python3 evaluation/render_test_item_docs.py <test-traceability.yaml> --output-dir <phase>/func-<名前>/tests --check
 python3 evaluation/render_html_views.py <phase>
 python3 evaluation/render_html_views.py <phase> --check
 ```
@@ -51,10 +58,10 @@ HTMLレンダラはフェーズ内に存在する文書だけを生成対象と�
 
 > 置き場所・命名は [`../../docs/spec-directory-standard.md`](../../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
 
-- `<phase>/test-traceability.yaml`（UT/IT と設計・要件の正本）
-- `<phase>/tests/04_テスト項目書.md`（単体・結合・V字カバレッジを1本に統合。見出しは `## 単体テスト（UT）`、`## 結合テスト（IT）`、`## V字モデルカバレッジ`）
+- `<phase>/func-<名前>/test-traceability.yaml`（UT/IT と設計・要件の正本。`system_traceability: ../system-traceability.yaml`でAC/STの正本を参照する）
+- `<phase>/func-<名前>/tests/04_テスト項目書.md`（単体・結合・V字カバレッジを1本に統合。見出しは `## 単体テスト（UT）`、`## 結合テスト（IT）`、`## V字モデルカバレッジ`）
 - `<phase>/views/`（`index.html`、`README.md`、存在する文書の閲覧用HTML。正本ではなく再生成する派生物）
-- `<phase>/reports/01_差分・未決事項.md`（要確認事項、差分追従時の影響範囲、既存 AC/ST の再利用方針）
+- `<phase>/func-<名前>/reports/01_差分・未決事項.md`（要確認事項、差分追従時の影響範囲、既存 AC/ST の再利用方針）
 
 ## 禁止事項
 

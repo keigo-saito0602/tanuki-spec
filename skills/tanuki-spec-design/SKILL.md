@@ -16,6 +16,7 @@ description: 未完成でもよい要件定義書を入力に、既存コード�
 ```text
 tanuki-spec-design
 要件定義書:              # 必須。未完成でも可
+対象func:                # phase内の機能名（例: 予約）。出力先 <phase>/func-<名前>/ の <名前> になる
 既存コード:               # 任意。リポジトリまたは対象パス
 要件トレーサビリティ:      # traceability.yaml。なければ作成を提案
 モード:                   # new（既定）/ update
@@ -23,6 +24,13 @@ tanuki-spec-design
 ```
 
 ## 手順
+
+0. 入力として渡された`<phase>`から`docs/spec/system-baseline/`を解決する
+   （カレントディレクトリ基準ではなく、`<phase>`の親を辿って解決する）。存在する場合は
+   `システム構成・共通基盤.md`・`非機能ベースライン.md`を読み、記載と矛盾しない内容にする。
+   共通用語は`GLOSSARY.md`を正とする。存在しない場合はこのステップを省略する
+   （初回フェーズ等でまだ作られていないことがある）。
+   参照した場合は、`reports/01_差分・未決事項.md`に「参照したベースライン文書」を記録する。
 
 1. 入力の要件定義書、`spec-items.yaml`、`templates/basic-design-template.md`、`templates/detailed-design-template.md`を読む。各項目の記入ガイド・出典・品質観点は、本文ではなくテンプレート末尾の「付録: 項目の根拠一覧」に表として集約されている。記入前に必ず付録の該当ID行を読み、ガイドに沿って記入する。要件IDが無い場合は、`traceability-template.yaml`を使い`BR-`、`FR-`、`NFR-`を採番する。
 2. 既存コードがある場合、調査担当を分けてリポジトリ構成、実行経路、データ、外部連携、認証、テストを調べる。調査結果は事実と推測を分け、設計の根拠に使う。
@@ -36,7 +44,7 @@ tanuki-spec-design
 python3 evaluation/coverage.py <基本設計書.md> --phase basic_design --strict
 python3 evaluation/coverage.py <詳細設計書.md> --phase detailed_design --strict
 python3 evaluation/design_traceability_gate.py <design-traceability.yaml>
-python3 evaluation/render_design_traceability_docs.py <design-traceability.yaml> --output-dir <phase>/tests
+python3 evaluation/render_design_traceability_docs.py <design-traceability.yaml> --output-dir <phase>/func-<名前>/tests
 python3 evaluation/render_html_views.py <phase>
 python3 evaluation/render_html_views.py <phase> --check
 ```
@@ -50,11 +58,11 @@ HTMLレンダラはフェーズ内に存在する文書だけを生成対象と�
 
 > 置き場所・命名は [`../../docs/spec-directory-standard.md`](../../docs/spec-directory-standard.md) に従う（フェーズ別レイアウト）。
 
-- `<phase>/02_基本設計書.md`、`<phase>/03_詳細設計書.md`
-- `<phase>/design-traceability.yaml`（要件とBD/DDの正本）
-- `<phase>/tests/design-traceability.md`（正本から生成する対応表）
+- `<phase>/func-<名前>/02_基本設計書.md`、`<phase>/func-<名前>/03_詳細設計書.md`
+- `<phase>/func-<名前>/design-traceability.yaml`（要件とBD/DDの正本）
+- `<phase>/func-<名前>/tests/design-traceability.md`（正本から生成する対応表）
 - `<phase>/views/`（`index.html`、`README.md`、存在する要件・設計・対応表の閲覧用HTML。正本ではなく再生成する派生物）
-- `<phase>/reports/01_差分・未決事項.md`（要確認事項、既存コード調査結果、update時の影響範囲）
+- `<phase>/func-<名前>/reports/01_差分・未決事項.md`（要確認事項、既存コード調査結果、update時の影響範囲）
 
 ## 共有コア
 

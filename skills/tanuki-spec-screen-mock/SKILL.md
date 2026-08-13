@@ -12,7 +12,7 @@ description: Use when 要件定義書から画面モックを作りたい、画�
 
 ```text
 tanuki-spec-screen-mock
-要件定義書(必須): docs/spec/phase-1_公開サイト・予約/01_要件定義書.md
+要件定義書(必須): docs/spec/phase-1_公開サイト・予約/func-予約/01_要件定義書.md, docs/spec/phase-1_公開サイト・予約/func-認証/01_要件定義書.md  # 複数funcを横断して指定
 フェーズ(必須): docs/spec/phase-1_公開サイト・予約
 参考ソース(任意): tailwind.config.ts / ./ref/top.png / https://example.com
 対象アクター(任意): 生徒, 講師
@@ -42,9 +42,16 @@ tanuki-spec-screen-mock
 
 ## 手順
 
+0. 入力として渡された`<phase>`から`docs/spec/system-baseline/`を解決する
+   （カレントディレクトリ基準ではなく、`<phase>`の親を辿って解決する）。存在する場合は
+   `システム構成・共通基盤.md`・`非機能ベースライン.md`を読み、記載と矛盾しない内容にする。
+   共通用語は`GLOSSARY.md`を正とする。存在しない場合はこのステップを省略する
+   （初回フェーズ等でまだ作られていないことがある）。
+   参照した場合は、`reports/01_差分・未決事項.md`に「参照したベースライン文書」を記録する。
+
 ### 1. 入力を確定する
 
-- 要件定義書を読み、`req-io`と機能要件から画面が必要かを判断する。
+- フェーズ配下の各`func-<名前>/01_要件定義書.md`を横断して読み、`req-io`と機能要件から画面が必要かを判断する。画面はfunc単位ではなくphase全体で洗い出す。
 - フェーズディレクトリの存在と、`screens.yaml`の有無から`create`／`update`を決める。
 - 参考ソースの種類（コード／画像／URL）を確認する。
 
