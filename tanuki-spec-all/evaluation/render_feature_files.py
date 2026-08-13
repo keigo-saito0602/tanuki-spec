@@ -6,8 +6,6 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-import traceability_gate
-
 INVALID_FILENAME_CHARS = str.maketrans({c: "_" for c in '\\/:*?"<>| '})
 DEFAULT_FEATURE = "受入シナリオ"
 
@@ -73,17 +71,22 @@ def render_all(data: dict) -> dict[str, str]:
 
 
 def main() -> None:
+    import phase_traceability
+    import system_traceability_gate
+
     parser = argparse.ArgumentParser(description="受入試験のGherkinシナリオから .feature を生成")
-    parser.add_argument("traceability", type=Path, help="traceability.yaml のパス")
+    parser.add_argument("traceability", type=Path, help="system-traceability.yaml のパス（phase直下）")
     parser.add_argument("--output-dir", type=Path, required=True, help="生成先ディレクトリ")
     parser.add_argument("--check", action="store_true", help="生成物との差分だけを検証する")
     args = parser.parse_args()
-    data = traceability_gate.load(args.traceability)
-    failures = traceability_gate.validate(data)
+    data = system_traceability_gate.load(args.traceability)
+    user_stories, requirements, failures = phase_traceability.build_phase_index(args.traceability, data)
+    if not failures:
+        failures = system_traceability_gate.validate(data, user_stories, requirements)
     if failures:
         for failure in failures:
             print(f"- {failure}")
-        raise SystemExit("トレーサビリティゲート不通過のため .feature を生成できません")
+        raise SystemExit("システムトレーサビリティゲート不通過のため .feature を生成できません")
     outputs = render_all(data)
     if args.check:
         mismatches = [name for name, content in outputs.items() if not (args.output_dir / name).exists() or (args.output_dir / name).read_text(encoding="utf-8") != content]
