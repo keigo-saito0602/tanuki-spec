@@ -182,12 +182,14 @@ class HtmlViewTest(unittest.TestCase):
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
 
     def test_rendering_does_not_depend_on_filesystem_mtime(self):
+        # views/index.html（phase_index_html）はsource_updated()を呼ばない静的な内容のため、
+        # source_updated()の出力を実際に描画するfunc-予約/index.html（func_index）を対象にする。
         views.render_phase(self.phase)
-        first = (self.phase / "views" / "index.html").read_bytes()
+        first = (self.phase / "views" / "func-予約" / "index.html").read_bytes()
         for path in self.phase.rglob("*.md"):
             os.utime(path, (1_900_000_000, 1_900_000_000))
         views.render_phase(self.phase)
-        second = (self.phase / "views" / "index.html").read_bytes()
+        second = (self.phase / "views" / "func-予約" / "index.html").read_bytes()
         self.assertEqual(first, second)
 
     def test_source_without_frontmatter_has_fixed_update_label(self):
