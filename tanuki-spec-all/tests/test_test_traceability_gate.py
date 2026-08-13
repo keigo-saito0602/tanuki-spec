@@ -127,6 +127,71 @@ class TestTraceabilityGateTest(unittest.TestCase):
         self.assertIn("AC-001", rendered)
         self.assertIn("ST-001", rendered)
 
+    def test_render_end_to_end_reads_ac_st_via_system_traceability_field(self):
+        """main()相当の統合テスト。system_traceabilityフィールド経由でAC/STが埋まることを確認する。"""
+        import subprocess
+        import sys
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory_str:
+            root = Path(directory_str)
+            func_dir = root / "func-予約"
+            func_dir.mkdir(parents=True, exist_ok=True)
+            (root / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
+            (func_dir / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
+            (root / "design-traceability.yaml").write_text(DESIGN_TRACEABILITY_YAML_VALID, encoding="utf-8")
+            (root / "system-traceability.yaml").write_text(SYSTEM_TRACEABILITY_YAML, encoding="utf-8")
+            test_traceability_content = TEST_TRACEABILITY_YAML.replace(
+                "design_traceability: design-traceability.yaml",
+                "design_traceability: ../design-traceability.yaml\nsystem_traceability: ../system-traceability.yaml",
+            ).replace("[FR-999]", "[FR-001]")
+            test_path = func_dir / "test-traceability.yaml"
+            test_path.write_text(test_traceability_content, encoding="utf-8")
+            output_dir = func_dir / "tests"
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "evaluation" / "render_test_item_docs.py"), str(test_path), "--output-dir", str(output_dir)],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            content = (output_dir / "04_テスト項目書.md").read_text(encoding="utf-8")
+            self.assertIn("AC-001", content)
+            self.assertIn("ST-001", content)
+
+    def test_render_fails_when_func_not_registered_in_system_traceability(self):
+        """対象funcがsystem-traceability.yamlのfunc_traceabilityに未登録なら、
+        帳票を生成せずCLIが非0終了することを確認する。"""
+        import subprocess
+        import sys
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory_str:
+            root = Path(directory_str)
+            func_dir = root / "func-予約"
+            func_dir.mkdir(parents=True, exist_ok=True)
+            (root / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
+            (func_dir / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
+            (root / "design-traceability.yaml").write_text(DESIGN_TRACEABILITY_YAML_VALID, encoding="utf-8")
+            system_content = SYSTEM_TRACEABILITY_YAML.replace(
+                "func_traceability:\n  - func-予約/traceability.yaml",
+                "func_traceability:\n  - func-別の機能/traceability.yaml",
+            )
+            (root / "system-traceability.yaml").write_text(system_content, encoding="utf-8")
+            test_traceability_content = TEST_TRACEABILITY_YAML.replace(
+                "design_traceability: design-traceability.yaml",
+                "design_traceability: ../design-traceability.yaml\nsystem_traceability: ../system-traceability.yaml",
+            ).replace("[FR-999]", "[FR-001]")
+            test_path = func_dir / "test-traceability.yaml"
+            test_path.write_text(test_traceability_content, encoding="utf-8")
+            output_dir = func_dir / "tests"
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "evaluation" / "render_test_item_docs.py"), str(test_path), "--output-dir", str(output_dir)],
+                capture_output=True, text=True,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse((output_dir / "04_テスト項目書.md").exists())
+
 
 TRACEABILITY_YAML = """
 version: "1.0"

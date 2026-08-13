@@ -117,15 +117,16 @@ def main() -> None:
     design_elements, failures = test_traceability_gate.full_design_element_index(args.test_traceability, data)
     if not failures:
         failures = test_traceability_gate.validate(data, design_elements)
+    if not failures:
+        func_requirement_ids: set[str] = set()
+        for element in design_elements.values():
+            func_requirement_ids.update(element.get("requirement_ids") or [])
+        failures = test_traceability_gate.validate_system_traceability(args.test_traceability, data, func_requirement_ids)
     if failures:
         raise SystemExit("テストトレーサビリティゲート不通過のためテスト項目書を生成できません: " + " / ".join(failures))
 
-    import design_traceability_gate
-
-    design_traceability_path = test_traceability_gate.design_traceability_path(data, args.test_traceability)
-    design_data = test_traceability_gate.load(design_traceability_path)
-    requirements_path = design_traceability_gate.requirements_path(design_data, design_traceability_path)
-    ac_st_by_requirement = acceptance_and_system_index(requirements_path)
+    system_traceability_path = test_traceability_gate.system_traceability_path(data, args.test_traceability)
+    ac_st_by_requirement = acceptance_and_system_index(system_traceability_path)
 
     content = render(data, design_elements, ac_st_by_requirement)
     output = args.output_dir / "04_テスト項目書.md"
