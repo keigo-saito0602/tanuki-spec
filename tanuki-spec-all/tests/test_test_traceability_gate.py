@@ -336,6 +336,28 @@ class SystemTraceabilityFieldTest(unittest.TestCase):
             failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-001"})
             self.assertTrue(any("登録されていません" in failure for failure in failures))
 
+    def test_system_traceability_gate_failure_is_rejected(self):
+        """③ 参照先ファイルは存在し・同じphase・func登録済みだが、system-traceability.yaml
+        自体の中身がsystem_traceability_gate.validate()を通過しない場合は拒否する。
+
+        業務フロー手順BF-001-S01のuser_story_idsを存在しないUS-999に壊し、
+        他の条件（①②⑤⑥）は満たしたまま③だけを不通過にする。
+        """
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory_str:
+            path = self._write_valid_chain(Path(directory_str))
+            system_path = path.parent.parent / "system-traceability.yaml"
+            broken_system_yaml = SYSTEM_TRACEABILITY_YAML.replace(
+                "        user_story_ids: [US-001]",
+                "        user_story_ids: [US-999]",
+            )
+            self.assertNotEqual(broken_system_yaml, SYSTEM_TRACEABILITY_YAML)
+            system_path.write_text(broken_system_yaml, encoding="utf-8")
+            data = test_traceability_gate.load(path)
+            failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-001"})
+            self.assertTrue(any("通過していません" in failure for failure in failures))
+
     def test_unresolvable_requirement_id_is_rejected(self):
         """対象funcの要件IDがsystem-traceability.yaml側の要件索引で解決できることを検証する。"""
         import tempfile
