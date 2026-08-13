@@ -11,15 +11,6 @@ user_stories:
     # （埋め草になる）。状況の詳細は acceptance_tests の given/when が正本なので、ここでは重複させない。
     statement: "[<いつ>、]<誰>は<何>をしたい。なぜなら<理由>だから。"
 
-business_flows:
-  - id: BF-001
-    status: in_scope
-    name: "<業務フロー名>"
-    steps:
-      - id: BF-001-S01
-        action: "<利用者または担当者が行う業務>"
-        user_story_ids: [US-001]
-
 requirements:
   - id: BR-001
     status: in_scope # in_scope / deferred / out_of_scope / draft（in_scope以外は reason 必須）
