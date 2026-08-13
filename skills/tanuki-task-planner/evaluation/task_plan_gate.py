@@ -11,7 +11,8 @@ import yaml
 
 SHARED = Path(__file__).resolve().parents[3] / "tanuki-spec-all" / "evaluation"
 sys.path.insert(0, str(SHARED))
-import traceability_gate
+import phase_traceability
+import system_traceability_gate
 
 UNFILLED = re.compile(r"<[^>]+>|\[要確認|\b(?:TODO|TBD)\b", re.I)
 TASK_ID = re.compile(r"^TASK-\d{3,}$")
@@ -34,14 +35,23 @@ def values(record: dict, field: str, label: str, failures: list[str]) -> list[st
     return value
 
 
-def validate(plan: dict, trace: dict) -> list[str]:
-    failures = traceability_gate.validate(trace)
+def validate(
+    plan: dict,
+    requirements: dict[str, dict],
+    acceptance_tests: dict[str, dict],
+    system_tests: dict[str, dict],
+) -> list[str]:
+    failures: list[str] = []
     if plan.get("version") != "1.0" or not text(plan.get("release")):
         failures.append("version: 1.0 と release が必要です")
     tasks = plan.get("tasks")
     if not isinstance(tasks, list) or not tasks:
         return failures + ["tasks は1件以上の配列で指定してください"]
-    source = {key: {item["id"] for item in trace.get(key, []) if item.get("status") == "in_scope"} for key in ("requirements", "acceptance_tests", "system_tests")}
+    source = {
+        "requirements": {key for key, value in requirements.items() if value.get("status") == "in_scope"},
+        "acceptance_tests": {key for key, value in acceptance_tests.items() if value.get("status") == "in_scope"},
+        "system_tests": {key for key, value in system_tests.items() if value.get("status") == "in_scope"},
+    }
     indexed: dict[str, dict] = {}
     covered = {key: set() for key in source}
     for index, task in enumerate(tasks):
@@ -125,16 +135,42 @@ def validate(plan: dict, trace: dict) -> list[str]:
     return failures
 
 
+def load(path: Path) -> dict:
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("YAMLオブジェクトで指定してください")
+    return data
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="実装タスク計画を検証")
-    parser.add_argument("plan", type=Path); parser.add_argument("--traceability", type=Path, required=True)
+    parser.add_argument("plan", type=Path)
+    parser.add_argument("--system-traceability", type=Path, required=True, help="phase直下のsystem-traceability.yamlのパス")
     args = parser.parse_args()
     try:
-        failures = validate(yaml.safe_load(args.plan.read_text(encoding="utf-8")), traceability_gate.load(args.traceability))
+        plan = load(args.plan)
+        system_data = load(args.system_traceability)
+        user_stories, requirements, failures = phase_traceability.build_phase_index(args.system_traceability, system_data)
+        if not failures:
+            failures = system_traceability_gate.validate(system_data, user_stories, requirements)
+        if not failures:
+            acceptance_tests = {
+                item["id"]: item for item in (system_data.get("acceptance_tests") or [])
+                if isinstance(item, dict) and "id" in item
+            }
+            system_tests = {
+                item["id"]: item for item in (system_data.get("system_tests") or [])
+                if isinstance(item, dict) and "id" in item
+            }
+            failures = validate(plan, requirements, acceptance_tests, system_tests)
     except (OSError, ValueError, yaml.YAMLError) as error:
         failures = [f"タスク計画またはトレーサビリティ正本を読み込めません: {error}"]
     print("タスク計画ゲート: " + ("通過" if not failures else "不通過"))
-    for failure in failures: print(f"- {failure}")
-    if failures: raise SystemExit(1)
+    for failure in failures:
+        print(f"- {failure}")
+    if failures:
+        raise SystemExit(1)
 
-if __name__ == "__main__": main()
+
+if __name__ == "__main__":
+    main()
