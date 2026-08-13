@@ -120,7 +120,7 @@ python3 evaluation/spec_gate.py <記入済み仕様書.md> --traceability <trace
 書き終えたら整合を検証する。
 
 ```bash
-python3 evaluation/view_gate.py <phase>/00_サマリ.md --traceability <phase>/traceability.yaml
+python3 evaluation/view_gate.py <phase>/func-<名前>/00_サマリ.md --traceability <phase>/func-<名前>/traceability.yaml
 python3 evaluation/render_html_views.py <phase>
 python3 evaluation/render_html_views.py <phase> --check
 ```
