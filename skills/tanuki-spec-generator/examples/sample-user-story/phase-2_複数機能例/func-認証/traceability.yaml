@@ -1,0 +1,12 @@
+version: "1.0"
+user_stories:
+  - id: US-002
+    status: in_scope
+    statement: "生徒はログインしたい。なぜなら予約するには本人確認が要るから。"
+requirements:
+  - id: FR-002
+    status: in_scope
+    type: functional
+    statement: "生徒はメールアドレスとパスワードでログインできる"
+    user_story_ids: [US-002]
+    flow_step_ids: [BF-001-S01]
