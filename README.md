@@ -4,6 +4,12 @@
 
 [`gotalab/cc-sdd`](https://github.com/gotalab/cc-sdd)の仕様駆動開発の考え方を参考にしつつ、決定論的なゲート（機械検証）を軸にした独自の路線を取っています。
 
+cc-sddと併用する場合は次を前提にする。`docs/spec/`がtanukiの唯一の正本であり、
+`.kiro/specs/`はcc-sddの実装運用領域として扱う（tanukiは`.kiro/`配下を生成・編集しない）。
+cc-sdd側の`requirements.md`・`design.md`を使う場合は`docs/spec/`正本への参照カードまたは
+自動生成した要約にとどめ、手編集しない。仕様変更は`.kiro`側ではなく`docs/spec/`へ差し戻し、
+tanukiのゲート通過後に橋渡し情報を更新する。
+
 ## インストール（Claude Code Plugin）
 
 ```text
@@ -31,7 +37,7 @@ tanuki-spec/
 │   ├── tanuki-task-planner/       # ⑦: 実装タスク・依存関係・完了条件の作成
 │   └── tanuki-spec-screen-mock/   # ③.5: 要件定義書から画面モックHTMLを生成
 │
-├── docs/                         # 設計書・実装計画
+├── docs/                         # 設計書・実装計画（生成物はphase配下の`func-<名前>/`単位。詳細はdocs/spec-directory-standard.md参照）
 └── tests/                        # ドキュメント同期テスト
 ```
 

@@ -59,8 +59,8 @@ python3 evaluation/generate_templates.py
 # 穴埋め後：カバレッジ評価 → トレーサビリティ検証 → 出力ゲート
 python3 evaluation/coverage.py <記入済み.md> --strict
 python3 evaluation/traceability_gate.py <traceability.yaml>
-python3 evaluation/render_traceability_docs.py <traceability.yaml> --output-dir <phase>/tests
-python3 evaluation/render_feature_files.py <traceability.yaml> --output-dir <phase>/features
+python3 evaluation/render_traceability_docs.py <phase>/system-traceability.yaml --output-dir <phase>/tests
+python3 evaluation/render_feature_files.py <phase>/system-traceability.yaml --output-dir <phase>/features
 python3 evaluation/spec_gate.py <記入済み.md> --traceability <traceability.yaml>
 python3 evaluation/view_gate.py <phase>/00_サマリ.md --traceability <phase>/traceability.yaml
 python3 evaluation/render_html_views.py <phase>
@@ -125,6 +125,8 @@ python3 evaluation/evaluate_review_items.py --write-report-hash <review.yaml> --
 
 **人間レビューを併用する場合**は[`skills/tanuki-spec-reviewer/references/human-review-guide.md`](./skills/tanuki-spec-reviewer/references/human-review-guide.md)の「2パス読み＋PBR＋節別チェック」に従う。非技術者（要件）または第三者技術者（設計）が、Pythonを実行せずに網羅性を確認できる。
 
+phase直下の業務フロー・AC・ST・共有画面・タスク計画といった構造化YAML成果物は、func単位のレビューとは別に、6軸ルーブリックを使わない`phase_integration`モード（`tanuki-spec-reviewer`）で検証する。
+
 ### ⑥ 出力ゲート（DoD／ユーザ最終判定）
 次を**すべて満たせば実装へ引き渡してよい**:
 - [ ] 必須充足率100％（欠落ゼロ）
@@ -141,7 +143,7 @@ python3 evaluation/evaluate_review_items.py --write-report-hash <review.yaml> --
 ### ⑦ タスク分解と実装（tanuki-task-planner → Codex）
 DoD通過後、実装タスクへ分解する:
 ```bash
-python3 evaluation/task_plan_gate.py <task-plan.yaml> --traceability <traceability.yaml>
+python3 evaluation/task_plan_gate.py <task-plan.yaml> --system-traceability <phase>/system-traceability.yaml
 python3 evaluation/render_task_plan.py <task-plan.yaml> --output <implementation-task-plan.md>
 ```
 Codexは`implementation-task-plan.md`と仕様書を入力に実装する。指示書の形に落とす工程は、このリポジトリの範囲外（別のリポジトリ側のスキル）で扱う。
