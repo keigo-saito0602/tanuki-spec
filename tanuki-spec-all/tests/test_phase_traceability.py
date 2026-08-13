@@ -208,6 +208,26 @@ class PhaseTraceabilityTest(unittest.TestCase):
                 msg=f"未解決のuser_story_ids参照がfuncパス付きで報告されるべきです: {failures}",
             )
 
+    def test_symlinked_func_directory_escaping_phase_is_rejected(self):
+        """func-*/がphase直下に実在していても、symlinkでphase外を指していれば拒否する
+        （正規形チェックは通るが、resolve()後の境界チェックで弾かれるケース）。"""
+        with tempfile.TemporaryDirectory() as directory_str:
+            root = Path(directory_str)
+            phase_dir = root / "phase-1"
+            outside_dir = root / "outside"
+            phase_dir.mkdir(parents=True, exist_ok=True)
+            self._write(outside_dir, "func-outside", FUNC_A)
+            # phase_dir直下に「func-予約」という名前のsymlinkを作り、phase外の実ディレクトリを指す
+            (phase_dir / "func-予約").symlink_to(outside_dir / "func-outside")
+            system_path = phase_dir / "system-traceability.yaml"
+            _, _, failures = phase_traceability.build_phase_index(
+                system_path, {"func_traceability": ["func-予約/traceability.yaml"]}
+            )
+            self.assertTrue(
+                any("phase直下のfunc-*/を指してください" in failure for failure in failures),
+                msg=f"symlinkによるphase外参照が拒否されるべきです: {failures}",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
