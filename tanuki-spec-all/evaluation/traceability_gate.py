@@ -28,6 +28,12 @@ ID_PATTERNS = {
     "flow_steps": re.compile(r"^BF-\d{3,}-S\d{2,}$"),
 }
 FLOW_STEP_ID_PATTERN = re.compile(r"^BF-\d{3,}-S\d{2,}$")
+# func/phase再構成前の旧フラット形式が持っていたキー。今のtraceability.yamlは
+# user_stories/requirementsだけを持つ縮小形式で、これらはphase直下の
+# system-traceability.yamlへ移管された。validate()が縮小後の2セクションしか見ないと、
+# 旧形式のファイルをそのまま渡してもAC/STセクションが単に無視されるだけで
+# サイレントに「通過」してしまう（AC/STがもう何にも検証されていないのに緑に見える罠）。
+LEGACY_KEYS = ("business_flows", "acceptance_tests", "system_tests")
 REQUIREMENT_TYPES = {"business", "functional", "non_functional"}
 SYSTEM_TEST_TYPES = {"functional", "integration", "non_functional", "performance", "security", "recovery", "usability"}
 UNFILLED_RE = re.compile(r"<[^>]+>|\[要確認|\b(?:TODO|TBD)\b|[（(]未記入[）)]", re.IGNORECASE)
@@ -161,6 +167,14 @@ def validate(data: dict) -> list[str]:
     failures: list[str] = []
     if data.get("version") != "1.0":
         failures.append("version は 1.0 を指定してください")
+
+    legacy_keys_present = [key for key in LEGACY_KEYS if key in data]
+    if legacy_keys_present:
+        failures.append(
+            "旧形式のtraceability.yamlです（" + "・".join(legacy_keys_present) + "を含む）。"
+            "func/phase構成への移行が必要です。business_flows・acceptance_tests・system_testsは"
+            "phase直下のsystem-traceability.yamlへ移し、このファイルにはuser_stories・requirementsだけを残してください。"
+        )
 
     user_stories = records(data, "user_stories", failures)
     requirements = records(data, "requirements", failures)

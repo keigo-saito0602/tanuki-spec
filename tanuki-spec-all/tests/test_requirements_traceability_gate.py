@@ -50,6 +50,30 @@ class TraceabilityGateTest(unittest.TestCase):
         failures = traceability_gate.validate(data)
         self.assertTrue(any("deferred には reason が必要" in failure for failure in failures))
 
+    def test_legacy_business_flows_key_is_rejected(self):
+        """旧フラット形式（business_flows等を1ファイルに持つ）は縮小後のvalidate()が
+        黙って通過させてしまう危険な後方互換の罠になる。明示的に拒否する。"""
+        data = complete_traceability()
+        data["business_flows"] = [{"id": "BF-001", "status": "in_scope", "name": "予約フロー", "steps": []}]
+        failures = traceability_gate.validate(data)
+        self.assertTrue(any("旧形式のtraceability.yaml" in failure and "business_flows" in failure for failure in failures))
+
+    def test_legacy_acceptance_tests_key_is_rejected(self):
+        data = complete_traceability()
+        data["acceptance_tests"] = [{"id": "AC-001", "status": "in_scope"}]
+        failures = traceability_gate.validate(data)
+        self.assertTrue(any("旧形式のtraceability.yaml" in failure and "acceptance_tests" in failure for failure in failures))
+
+    def test_legacy_system_tests_key_is_rejected(self):
+        data = complete_traceability()
+        data["system_tests"] = [{"id": "ST-001", "status": "in_scope"}]
+        failures = traceability_gate.validate(data)
+        self.assertTrue(any("旧形式のtraceability.yaml" in failure and "system_tests" in failure for failure in failures))
+
+    def test_current_shrunk_format_without_legacy_keys_is_not_rejected(self):
+        failures = traceability_gate.validate(complete_traceability())
+        self.assertFalse(any("旧形式のtraceability.yaml" in failure for failure in failures))
+
 
 class OptionalImplementationFieldsTest(unittest.TestCase):
     """実装状態は任意フィールド。書かなければ何も要求しない。"""
