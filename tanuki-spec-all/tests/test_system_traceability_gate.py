@@ -247,6 +247,42 @@ class SystemTraceabilityGateTest(unittest.TestCase):
         failures = system_traceability_gate.validate(data, user_stories(), requirements())
         self.assertEqual(failures, [])
 
+    def test_deferred_requirement_referencing_undefined_flow_step_is_not_rejected(self):
+        """deferredの要件はflow_step_idsの実在確認の対象外（移植元のvalidate_statusガードと同じ）。
+
+        移植時にこのガードが抜けると、まだ存在しない業務フロー手順を参照しているだけで
+        deferred要件が不通過になってしまう（偽陽性）。
+        """
+        reqs = requirements()
+        reqs["FR-002"] = {
+            "id": "FR-002", "status": "deferred", "type": "functional",
+            "statement": "将来対応の要件", "reason": "今回は対象外",
+            "user_story_ids": ["US-001"], "flow_step_ids": ["BF-999-S99"],
+        }
+        failures = system_traceability_gate.validate(complete_system_traceability(), user_stories(), reqs)
+        self.assertFalse(any("BF-999-S99" in failure for failure in failures))
+
+    def test_flow_step_covered_only_by_deferred_requirement_is_still_orphan(self):
+        """業務フロー手順をdeferredの要件だけが参照している場合はカバーとしてカウントしない。
+
+        カウントしてしまうと、本来出るべき「業務フロー手順が孤立しています」が
+        抑制されてしまう（孤立検出の抜け穴）。
+        """
+        data = complete_system_traceability()
+        data["business_flows"][0]["steps"].append(
+            {"id": "BF-001-S02", "action": "空きを確認する", "user_story_ids": ["US-001"]}
+        )
+        reqs = requirements()
+        reqs["FR-002"] = {
+            "id": "FR-002", "status": "deferred", "type": "functional",
+            "statement": "将来対応の要件", "reason": "今回は対象外",
+            "user_story_ids": ["US-001"], "flow_step_ids": ["BF-001-S02"],
+        }
+        failures = system_traceability_gate.validate(data, user_stories(), reqs)
+        self.assertTrue(
+            any("BF-001-S02" in failure and "を満たす要件がありません" in failure for failure in failures)
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

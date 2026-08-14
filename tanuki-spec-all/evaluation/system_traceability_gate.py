@@ -200,9 +200,27 @@ def validate(system_data: dict, user_stories: dict[str, dict], requirements: dic
 
     # func側requirementsのflow_step_idsを実在確認し、対象USとの整合を見る
     # （Task 1でformatのみに縮小した分の実在確認をここで補う）
+    # in_scope以外（deferred/out_of_scope/draft）の要件は、移植元のtraceability_gate.py
+    # と同じくここで除外する。除外しないと (1) まだ存在しないflow_step_idsを参照しているだけで
+    # 偽陽性の不通過になる、(2) deferred要件だけが参照する業務フロー手順が「カバーされている」
+    # ことになり、本来出るべき「業務フロー手順が孤立しています」が抑制されてしまう。
     for requirement_id, requirement in reqs.items():
-        story_ids = set(requirement.get("user_story_ids") or [])
-        raw_step_ids = list(requirement.get("flow_step_ids") or [])
+        if not validate_status(requirement, "要件", failures):
+            continue
+        # in_scopeのユーザーストーリーだけを対象にする（移植元ではvalidate_referencesが
+        # 自動でやっていたフィルタ）。func単位のtraceability_gate.pyが既にuser_story_idsの
+        # 実在・in_scopeを検証済みなので、ここでは防御的なフィルタとして扱う。
+        story_ids = {
+            story_id
+            for story_id in (requirement.get("user_story_ids") or [])
+            if users.get(story_id, {}).get("status") == "in_scope"
+        }
+        raw_step_ids = requirement.get("flow_step_ids")
+        if not isinstance(raw_step_ids, list):
+            # flow_step_idsが文字列などリスト以外の場合、list(str)で1文字ずつに
+            # バラバラにならないようにする（in_scope要件はfunc側のtraceability_gate.pyが
+            # 既にlist形式を強制しているため、ここに来るのは主に不正なデータの防御用）。
+            raw_step_ids = []
         valid_step_ids = []
         for step_id in raw_step_ids:
             if step_id not in flow_steps:
