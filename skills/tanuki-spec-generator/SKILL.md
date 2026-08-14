@@ -120,10 +120,12 @@ python3 evaluation/spec_gate.py <記入済み仕様書.md> --traceability <trace
 書き終えたら整合を検証する。
 
 ```bash
-python3 evaluation/view_gate.py <phase>/func-<名前>/00_サマリ.md --traceability <phase>/func-<名前>/traceability.yaml
+python3 evaluation/view_gate.py <phase>/func-<名前>/00_サマリ.md --traceability <phase>/func-<名前>/traceability.yaml --system-traceability <phase>/system-traceability.yaml
 python3 evaluation/render_html_views.py <phase>
 python3 evaluation/render_html_views.py <phase> --check
 ```
+
+`--system-traceability` は任意。サマリが業務フロー・受入試験・システムテストのIDにも言及する場合は指定する（省略するとAC/BF/STのID検証はスキップされる）。
 
 **このゲートが見るのはIDの実在性・網羅性・状態一致の3つだけで、文章表現は一切検査しない。**書きぶり・言い回し・凝縮の仕方はAIの裁量に委ね、正本とのズレだけを機械が担保する設計（美しさはAI、網羅性は機械）。通過は文章品質の保証ではない。
 

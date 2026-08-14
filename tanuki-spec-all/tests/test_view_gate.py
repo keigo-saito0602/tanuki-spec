@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 from pathlib import Path
 import unittest
 
@@ -137,3 +138,66 @@ class StateConsistencyTest(unittest.TestCase):
         )
         failures = view_gate.validate(view, data)
         self.assertTrue(any("FR-101" in f and "gap_severity" in f for f in failures))
+
+
+class SystemTraceabilityOptionTest(unittest.TestCase):
+    """func単位の縮小traceability.yamlでは持てないAC/ST/BFのIDを、
+    --system-traceabilityで補ってサマリの検証を通せることを確認する。
+    """
+
+    def _write(self, path: Path, content: str) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+
+    def test_view_referencing_ac_st_bf_ids_passes_with_system_traceability(self):
+        with tempfile.TemporaryDirectory() as directory_str:
+            phase_dir = Path(directory_str)
+            func_traceability_path = phase_dir / "func-予約" / "traceability.yaml"
+            self._write(
+                func_traceability_path,
+                (
+                    'version: "1.0"\n'
+                    "user_stories:\n"
+                    "  - id: US-101\n"
+                    "    status: in_scope\n"
+                    "    statement: 予約したい\n"
+                    "requirements:\n"
+                    "  - id: FR-101\n"
+                    "    status: in_scope\n"
+                    "    type: functional\n"
+                    "    statement: 予約を作成する\n"
+                    "    user_story_ids: [US-101]\n"
+                    "    flow_step_ids: [BF-101-S01]\n"
+                ),
+            )
+            system_path = phase_dir / "system-traceability.yaml"
+            system_data = {
+                "version": "1.0",
+                "func_traceability": ["func-予約/traceability.yaml"],
+                "business_flows": [{"id": "BF-101", "status": "in_scope", "name": "予約フロー", "steps": []}],
+                "acceptance_tests": [{"id": "AC-101", "status": "in_scope"}],
+                "system_tests": [{"id": "ST-101", "status": "in_scope"}],
+            }
+            view = (
+                "# サマリ\n"
+                "## ユーザーストーリー\n"
+                "US-101\n"
+                "## 機能要件\n"
+                "| ID | 要件 | 実装 | 乖離 |\n"
+                "| --- | --- | --- | --- |\n"
+                "| FR-101 | 予約を作成する | | |\n"
+                "## phase横断の対応\n"
+                "業務フロー BF-101、受入試験 AC-101、システムテスト ST-101 で担保する。\n"
+            )
+            func_data = view_gate.load(func_traceability_path)
+
+            # --system-traceability を指定しない場合はAC-101/ST-101が「正本に存在しない」と
+            # 誤検出される（func単位のtraceability.yamlはAC/STを持たないため）。
+            failures_without_option = view_gate.validate(view, func_data)
+            self.assertTrue(any("AC-101" in f for f in failures_without_option))
+            self.assertTrue(any("ST-101" in f for f in failures_without_option))
+
+            extra_known, resolve_failures = view_gate.resolve_system_known_ids(system_path, system_data)
+            self.assertEqual(resolve_failures, [])
+            failures_with_option = view_gate.validate(view, func_data, extra_known)
+            self.assertEqual(failures_with_option, [])
