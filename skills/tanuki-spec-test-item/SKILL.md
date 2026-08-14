@@ -18,8 +18,9 @@ tanuki-spec-test-item
 要件定義書:                   # 必須
 基本設計書:                    # 必須
 詳細設計書:                    # 必須
-要件トレーサビリティ:           # traceability.yaml。必須
-設計トレーサビリティ:           # design-traceability.yaml。必須
+対象func:                     # phase内の機能名（例: 予約）。出力先 <phase>/func-<名前>/ の <名前> になる
+要件トレーサビリティ:           # func直下のtraceability.yaml。必須
+設計トレーサビリティ:           # func直下のdesign-traceability.yaml。必須
 モード:                        # new（既定）/ update
 前回のテスト成果物:             # update では必須
 ```
@@ -34,7 +35,7 @@ tanuki-spec-test-item
    参照した場合は、`reports/01_差分・未決事項.md`に「参照したベースライン文書」を記録する。
 
 1. 入力の要件定義書、基本設計書、詳細設計書、`traceability.yaml`、`design-traceability.yaml` を読む。`design-traceability.yaml` の `requirements_traceability` が指す要件正本と、明示的に渡された `traceability.yaml` が同一か確認する。
-2. 既存 AC/ST は `traceability.yaml` と `render_traceability_docs.py` が正本であることを前提にし、UT/IT だけを新規対象にする。`ST` の `test_type: integration` と、V字モデルの `IT` を混同しない。
+2. 既存 AC/ST は phase直下の `system-traceability.yaml` と `render_traceability_docs.py` が正本であることを前提にし、UT/IT だけを新規対象にする。`ST` の `test_type: integration` と、V字モデルの `IT` を混同しない。
 3. テスト観点として、`spec-items.yaml` の `test_perspectives`、詳細設計にあるデシジョンテーブル・状態遷移、非機能要件、既存 AC/ST を確認する。要件外だが試験設計に必要な前提は質問し、回答がない場合は `[要確認: 質問]` を残す。
 4. `new` では `test-traceability-template.yaml` をもとに `test-traceability.yaml` を作る。作成時は `system_traceability: ../system-traceability.yaml` を明記し、AC/STの正本がphase直下の `system-traceability.yaml` であることを示す。`UT-xxx` は `DD-xxx`、`IT-xxx` は `BD-xxx` に紐づけ、各 `requirement_ids` は紐づく設計要素の `requirement_ids` の部分集合にする。横断テストが必要でも v1 では勝手に例外を作らない。
 5. `update` では前回成果物と今回の要件・設計正本を比較し、影響を受ける `UT/IT` だけを更新する。削除候補のテスト項目は即削除せず、`[要確認: 廃止してよいか]` を残す。

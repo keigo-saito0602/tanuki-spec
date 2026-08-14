@@ -35,15 +35,16 @@ tanuki-spec-design
 
 ## tanuki-spec-test-item
 
-要件定義書と設計書からUT/ITのテスト項目書とV字カバレッジを作る。実装が未了のため、現時点では手順の設計として読む（[SKILLS.md](./SKILLS.md)の状態欄を参照）。
+要件定義書と設計書からUT/ITのテスト項目書とV字カバレッジを作る。
 
 ```text
 tanuki-spec-test-item
 要件定義書:                   # 必須
 基本設計書:                    # 必須
 詳細設計書:                    # 必須
-要件トレーサビリティ:           # traceability.yaml。必須
-設計トレーサビリティ:           # design-traceability.yaml。必須
+対象func:                     # phase内の機能名（例: 予約）。出力先 <phase>/func-<名前>/ の <名前> になる
+要件トレーサビリティ:           # func直下のtraceability.yaml。必須
+設計トレーサビリティ:           # func直下のdesign-traceability.yaml。必須
 モード:                        # new（既定）/ update
 前回のテスト成果物:             # update では必須
 ```

@@ -1,9 +1,9 @@
 # tanuki-task-planner
 
-`traceability.yaml` を入力に、実装タスク・依存関係・完了条件・検証方法を作成するスキルです。
+`system-traceability.yaml`（phase直下）を入力に、実装タスク・依存関係・完了条件・検証方法を作成するスキルです。
 
 ```bash
-../../tanuki-spec-all/.venv/bin/python evaluation/task_plan_gate.py path/to/task-plan.yaml --traceability path/to/traceability.yaml
+../../tanuki-spec-all/.venv/bin/python evaluation/task_plan_gate.py path/to/task-plan.yaml --system-traceability path/to/system-traceability.yaml
 ../../tanuki-spec-all/.venv/bin/python evaluation/render_task_plan.py path/to/task-plan.yaml --output path/to/implementation-task-plan.md
 ../../tanuki-spec-all/.venv/bin/python evaluation/run_harness.py
 ```
