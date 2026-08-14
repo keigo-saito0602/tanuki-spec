@@ -90,6 +90,7 @@ docs/spec/
 | 閲覧用HTML（phase横断文書。要件対応表・システムテスト） | `views/system/` |
 | 画面モックHTML（screen-mock） | `views/画面モック.html`（正本ではない。`render_screen_mock.py`が生成し、共有レンダラは触らない。phase直下） |
 | 要確認・未決事項・差分影響・レビュー要約（参照したsystem-baseline文書も含む） | `func-<名前>/reports/01_差分・未決事項.md` |
+| `phase_integration_review`（reviewer。業務フロー・AC・ST・共有画面・タスク計画のphase単位レビュー記録） | `<phase>/reports/`直下 |
 | （新規・各スキルが追記） | `func-<名前>/README.md`（機能の索引）／phase直下`README.md`（機能一覧・状態・導線） |
 
 ## 4. テスト項目書の統合（04_テスト項目書.md）
