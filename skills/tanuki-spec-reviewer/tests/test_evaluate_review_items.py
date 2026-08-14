@@ -77,3 +77,21 @@ class EvaluateReviewItemsTest(unittest.TestCase):
         self.assertNotEqual(fr_001["status"], "not_evaluable")
         self.assertTrue(fr_001["acceptance_criteria_ids"], "受入試験の証跡が空です")
         self.assertTrue(fr_001["test_evidence_ids"], "システムテストの証跡が空です")
+
+    def test_requirement_results_resolves_symlinked_traceability_path(self):
+        """互換用に残しているroot直下のtraceability.yaml（func-予約/traceability.yamlへの
+        symlink）を渡した場合も、symlinkの設置場所ではなく実体の場所を起点に
+        phase直下のsystem-traceability.yamlを解決できないといけない。
+        """
+        symlinked_traceability = (
+            ROOT.parent / "tanuki-spec-generator" / "examples" / "sample-user-story" / "traceability.yaml"
+        )
+        self.assertTrue(symlinked_traceability.is_symlink(), "このテストの前提（symlink）が崩れています")
+        results = evaluate_review_items.requirement_results(symlinked_traceability, None, [])
+        self.assertTrue(results, "要件が1件も見つかっていません")
+        by_id = {result["requirement_id"]: result for result in results}
+        self.assertIn("FR-001", by_id)
+        fr_001 = by_id["FR-001"]
+        self.assertNotEqual(fr_001["status"], "not_evaluable")
+        self.assertTrue(fr_001["acceptance_criteria_ids"], "受入試験の証跡が空です")
+        self.assertTrue(fr_001["test_evidence_ids"], "システムテストの証跡が空です")
