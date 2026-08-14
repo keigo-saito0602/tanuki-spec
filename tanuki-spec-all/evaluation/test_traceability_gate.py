@@ -46,7 +46,10 @@ def design_traceability_path(data: dict, test_traceability_path: Path) -> Path:
     path = Path(value)
     if path.is_absolute():
         raise ValueError("design_traceability は相対パスで指定してください")
-    return test_traceability_path.parent / path
+    func_dir = test_traceability_path.parent
+    if (func_dir / path).resolve().parent != func_dir.resolve():
+        raise ValueError("design_traceability は同じfunc直下のdesign-traceability.yamlを指してください")
+    return func_dir / path
 
 
 def system_traceability_path(data: dict, test_traceability_path: Path) -> Path:
@@ -80,10 +83,12 @@ def validate_system_traceability(
     if not path.is_file():
         return [f"system_traceability の参照先が存在しません: {path}"]
 
-    # ⑤ 同じphase直下であること（test-traceability.yamlの祖父ディレクトリ＝phaseと一致するか）
+    # ⑤ 同じphase直下であること（test-traceability.yamlの祖父ディレクトリ＝phaseと一致するか）。
+    # symlink自体の設置場所ではなく、解決先（ファイル本体）の親ディレクトリで判定する
+    # （system-traceability.yamlという名前のsymlinkが別phaseの実体を指すケースを防ぐため）。
     func_dir = test_traceability_path.parent
     phase_dir = func_dir.parent
-    if path.parent.resolve() != phase_dir.resolve():
+    if path.resolve().parent != phase_dir.resolve():
         failures.append(
             f"system_traceability は同じphase直下のsystem-traceability.yamlを指してください: {path}"
         )

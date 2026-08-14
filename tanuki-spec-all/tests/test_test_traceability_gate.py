@@ -139,11 +139,11 @@ class TestTraceabilityGateTest(unittest.TestCase):
             func_dir.mkdir(parents=True, exist_ok=True)
             (root / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
             (func_dir / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
-            (root / "design-traceability.yaml").write_text(DESIGN_TRACEABILITY_YAML_VALID, encoding="utf-8")
+            (func_dir / "design-traceability.yaml").write_text(DESIGN_TRACEABILITY_YAML_VALID, encoding="utf-8")
             (root / "system-traceability.yaml").write_text(SYSTEM_TRACEABILITY_YAML, encoding="utf-8")
             test_traceability_content = TEST_TRACEABILITY_YAML.replace(
                 "design_traceability: design-traceability.yaml",
-                "design_traceability: ../design-traceability.yaml\nsystem_traceability: ../system-traceability.yaml",
+                "design_traceability: design-traceability.yaml\nsystem_traceability: ../system-traceability.yaml",
             ).replace("[FR-999]", "[FR-001]")
             test_path = func_dir / "test-traceability.yaml"
             test_path.write_text(test_traceability_content, encoding="utf-8")
@@ -171,7 +171,7 @@ class TestTraceabilityGateTest(unittest.TestCase):
             func_dir.mkdir(parents=True, exist_ok=True)
             (root / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
             (func_dir / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
-            (root / "design-traceability.yaml").write_text(DESIGN_TRACEABILITY_YAML_VALID, encoding="utf-8")
+            (func_dir / "design-traceability.yaml").write_text(DESIGN_TRACEABILITY_YAML_VALID, encoding="utf-8")
             system_content = SYSTEM_TRACEABILITY_YAML.replace(
                 "func_traceability:\n  - func-予約/traceability.yaml",
                 "func_traceability:\n  - func-別の機能/traceability.yaml",
@@ -179,7 +179,7 @@ class TestTraceabilityGateTest(unittest.TestCase):
             (root / "system-traceability.yaml").write_text(system_content, encoding="utf-8")
             test_traceability_content = TEST_TRACEABILITY_YAML.replace(
                 "design_traceability: design-traceability.yaml",
-                "design_traceability: ../design-traceability.yaml\nsystem_traceability: ../system-traceability.yaml",
+                "design_traceability: design-traceability.yaml\nsystem_traceability: ../system-traceability.yaml",
             ).replace("[FR-999]", "[FR-001]")
             test_path = func_dir / "test-traceability.yaml"
             test_path.write_text(test_traceability_content, encoding="utf-8")
@@ -297,6 +297,37 @@ class FullChainValidationTest(unittest.TestCase):
             self.assertIn("BD-001", elements)
             self.assertIn("DD-001", elements)
 
+    def test_design_traceability_escaping_func_directory_is_rejected(self):
+        """design_traceabilityが`../`で別funcのdesign-traceability.yamlを指す場合は拒否する。
+
+        func単位で設計・UT/ITを閉じる方針のため、func-Aのtest-traceability.yamlは
+        自分自身のfuncディレクトリ直下のdesign-traceability.yamlしか参照できない。
+        """
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory_str:
+            root = Path(directory_str)
+            func_a = root / "func-A"
+            func_b = root / "func-B"
+            func_a.mkdir(parents=True, exist_ok=True)
+            func_b.mkdir(parents=True, exist_ok=True)
+            (func_a / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
+            (func_b / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
+            (func_b / "design-traceability.yaml").write_text(DESIGN_TRACEABILITY_YAML_VALID, encoding="utf-8")
+            test_traceability_path = func_a / "test-traceability.yaml"
+            content = TEST_TRACEABILITY_YAML.replace(
+                "design_traceability: design-traceability.yaml",
+                "design_traceability: ../func-B/design-traceability.yaml",
+            )
+            test_traceability_path.write_text(content, encoding="utf-8")
+            data = test_traceability_gate.load(test_traceability_path)
+            elements, failures = test_traceability_gate.full_design_element_index(test_traceability_path, data)
+            self.assertEqual(elements, {})
+            self.assertTrue(
+                any("同じfunc直下" in failure for failure in failures),
+                msg=f"別funcへのdesign_traceability参照は拒否されるべきです: {failures}",
+            )
+
 
 SYSTEM_TRACEABILITY_YAML = """
 version: "1.0"
@@ -342,12 +373,12 @@ class SystemTraceabilityFieldTest(unittest.TestCase):
         func_dir.mkdir(parents=True, exist_ok=True)
         (directory / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
         (func_dir / "traceability.yaml").write_text(TRACEABILITY_YAML, encoding="utf-8")
-        (directory / "design-traceability.yaml").write_text(DESIGN_TRACEABILITY_YAML_VALID, encoding="utf-8")
+        (func_dir / "design-traceability.yaml").write_text(DESIGN_TRACEABILITY_YAML_VALID, encoding="utf-8")
         (directory / "system-traceability.yaml").write_text(SYSTEM_TRACEABILITY_YAML, encoding="utf-8")
         test_traceability_path = func_dir / "test-traceability.yaml"
         content = TEST_TRACEABILITY_YAML.replace(
             'design_traceability: design-traceability.yaml',
-            'design_traceability: ../design-traceability.yaml\nsystem_traceability: ../system-traceability.yaml',
+            'design_traceability: design-traceability.yaml\nsystem_traceability: ../system-traceability.yaml',
         ).replace("[FR-999]", "[FR-001]")
         test_traceability_path.write_text(content, encoding="utf-8")
         return test_traceability_path
@@ -422,6 +453,32 @@ class SystemTraceabilityFieldTest(unittest.TestCase):
             data = test_traceability_gate.load(path)
             failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-001"})
             self.assertTrue(any("通過していません" in failure for failure in failures))
+
+    def test_system_traceability_symlink_escaping_phase_is_rejected(self):
+        """system-traceability.yamlという名前のファイルが、実体は別phaseへのsymlinkの場合も拒否する。
+
+        `path.parent.resolve()`だけを比較すると、symlink自体はphase直下に正しく置かれているため
+        素通りしてしまう。symlinkの解決先（ファイル本体）まで含めて同じphase直下か検証する。
+        """
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory_str:
+            root = Path(directory_str)
+            path = self._write_valid_chain(root)
+            other_phase = root.parent / (root.name + "-other-symlink-target")
+            other_phase.mkdir(parents=True, exist_ok=True)
+            (other_phase / "system-traceability.yaml").write_text(SYSTEM_TRACEABILITY_YAML, encoding="utf-8")
+
+            local_system_traceability = root / "system-traceability.yaml"
+            local_system_traceability.unlink()
+            local_system_traceability.symlink_to(other_phase / "system-traceability.yaml")
+
+            data = test_traceability_gate.load(path)
+            failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-001"})
+            self.assertTrue(
+                any("同じphase" in failure for failure in failures),
+                msg=f"別phaseへのsymlinkは拒否されるべきです: {failures}",
+            )
 
     def test_unresolvable_requirement_id_is_rejected(self):
         """対象funcの要件IDがsystem-traceability.yaml側の要件索引で解決できることを検証する。"""
