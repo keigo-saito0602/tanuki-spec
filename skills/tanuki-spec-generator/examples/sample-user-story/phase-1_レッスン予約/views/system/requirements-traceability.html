@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; font-src 'none'; script-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<title>システムテストケース — レッスン予約</title><style>
+<title>要件トレーサビリティ — レッスン予約</title><style>
 :root{color-scheme:light dark;--bg:#fff;--panel:#f5f7fa;--text:#17202a;--muted:#52606d;
 --line:#b8c2cc;--link:#075ea8;--focus:#d97706;--pending:#fff2cc;--excluded:#e8edf2;
 --missing:#ffe4e6;--warning:#fff0d5}*{box-sizing:border-box}html{scroll-behavior:smooth}
@@ -48,61 +48,111 @@ padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));
 body{font-size:11pt}}
 </style></head>
 <body><a class="skip-link" href="#main">本文へ移動</a>
-<header class="page-header"><nav aria-label="パンくず"><a href="index.html">フェーズ入口</a> / システムテストケース</nav>
-<h1>システムテストケース</h1>
-<p class="derived"><strong>閲覧用の派生成果物です。</strong> 正本は <a href="../tests/system-test-cases.md">tests/system-test-cases.md</a> です。</p>
-<p class="meta"><span>フェーズ: レッスン予約</span><span>文書種別: システムテストケース</span>
-<span>正本ファイル: tests/system-test-cases.md</span><span>更新日時: 正本に記載なし</span></p>
-<p>要件とシステムテストの対応を確認。内容を補完・再解釈せず、正本Markdownを表示しています。</p></header>
-<div class="layout"><nav class="toc" aria-label="目次"><h2>目次</h2><ol class="toc-list"><li class="toc-level-2"><a href="#システムテスト項目書">システムテスト項目書</a></li></ol></nav>
-<main id="main" class="content" tabindex="-1"><article class="prose"><h2 id="システムテスト項目書">システムテスト項目書</h2>
+<header class="page-header"><nav aria-label="パンくず"><a href="index.html">フェーズ入口</a> / 要件トレーサビリティ</nav>
+<h1>要件トレーサビリティ</h1>
+<p class="derived"><strong>閲覧用の派生成果物です。</strong> 正本は <a href="../../tests/requirements-traceability.md">tests/requirements-traceability.md</a> です。</p>
+<p class="meta"><span>フェーズ: レッスン予約</span><span>文書種別: 要件トレーサビリティ</span>
+<span>正本ファイル: tests/requirements-traceability.md</span><span>更新日時: 正本に記載なし</span></p>
+<p>要件間の対応を確認。内容を補完・再解釈せず、正本Markdownを表示しています。</p></header>
+<div class="layout"><nav class="toc" aria-label="目次"><h2>目次</h2><ol class="toc-list"><li class="toc-level-2"><a href="#要件トレーサビリティ一覧">要件トレーサビリティ一覧</a></li><li class="toc-level-3"><a href="#ユーザーストーリー">ユーザーストーリー</a></li><li class="toc-level-3"><a href="#業務フロー手順">業務フロー手順</a></li><li class="toc-level-3"><a href="#要件対応">要件対応</a></li></ol></nav>
+<main id="main" class="content" tabindex="-1"><article class="prose"><h2 id="要件トレーサビリティ一覧">要件トレーサビリティ一覧</h2>
+<h3 id="ユーザーストーリー">ユーザーストーリー</h3>
 <div class="table-scroll" tabindex="0" role="region" aria-label="表（横方向にスクロールできます）"><table><caption>文書内の表</caption><thead>
 <tr>
 <th scope="col">ID</th>
-<th scope="col">種別</th>
-<th scope="col">対象要件</th>
-<th scope="col">対象受入試験</th>
-<th scope="col">前提条件</th>
-<th scope="col">操作</th>
-<th scope="col">期待結果</th>
+<th scope="col">ユーザーストーリー</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>ST-001</td>
-<td>functional</td>
+<td>US-001</td>
+<td>生徒は空きレッスン枠を確認して予約したい。DMでのやり取りをなくすため。</td>
+</tr>
+<tr>
+<td>US-002</td>
+<td>生徒は予約をキャンセルしたい。都合が変わった枠を他の生徒に譲るため。</td>
+</tr>
+<tr>
+<td>US-003</td>
+<td>生徒は予約確定を通知で確認したい。予約が受け付けられたことを知るため。</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="業務フロー手順">業務フロー手順</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="表（横方向にスクロールできます）"><table><caption>文書内の表</caption><thead>
+<tr>
+<th scope="col">手順ID</th>
+<th scope="col">業務フロー</th>
+<th scope="col">手順</th>
+<th scope="col">対象US</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BF-001-S01</td>
+<td>レッスン枠の予約・キャンセル</td>
+<td>生徒が空き枠を確認する</td>
+<td>US-001</td>
+</tr>
+<tr>
+<td>BF-001-S02</td>
+<td>レッスン枠の予約・キャンセル</td>
+<td>生徒が空き枠を選択して予約を確定する</td>
+<td>US-001&lt;br&gt;US-003</td>
+</tr>
+<tr>
+<td>BF-001-S03</td>
+<td>レッスン枠の予約・キャンセル</td>
+<td>生徒が予約をキャンセルし、枠を空きへ戻す</td>
+<td>US-002</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="要件対応">要件対応</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="表（横方向にスクロールできます）"><table><caption>文書内の表</caption><thead>
+<tr>
+<th scope="col">要件ID</th>
+<th scope="col">種別</th>
+<th scope="col">要件</th>
+<th scope="col">達成するUS</th>
+<th scope="col">関連フロー手順</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BR-001</td>
+<td>business</td>
+<td>講師の手動台帳記入を廃止し、予約確定とキャンセルを業務記録として残す</td>
+<td>US-001&lt;br&gt;US-002</td>
+<td>BF-001-S02&lt;br&gt;BF-001-S03</td>
+</tr>
+<tr>
 <td>FR-001</td>
-<td>AC-001</td>
-<td>空き枠・満席枠・締切枠をテストデータとして登録済み</td>
-<td>生徒として空き枠一覧APIを実行する</td>
-<td>空き枠だけが日時・講師・残席付きで返る</td>
-</tr>
-<tr>
-<td>ST-002</td>
-<td>integration</td>
-<td>BR-001&lt;br&gt;FR-002</td>
-<td>AC-002</td>
-<td>空き枠があり、通知サービスが利用可能</td>
-<td>予約確定APIを実行する</td>
-<td>予約記録が作成され、残席が減り、通知送信が成功する</td>
-</tr>
-<tr>
-<td>ST-003</td>
 <td>functional</td>
-<td>BR-001&lt;br&gt;FR-003</td>
-<td>AC-003</td>
-<td>キャンセル可能期限内の予約がある</td>
-<td>予約キャンセルAPIを実行する</td>
-<td>予約状態がキャンセルになり、残席が1増える</td>
+<td>生徒は日時・講師・残席を含む空き枠一覧を閲覧できる</td>
+<td>US-001</td>
+<td>BF-001-S01</td>
 </tr>
 <tr>
-<td>ST-004</td>
-<td>non_functional</td>
+<td>FR-002</td>
+<td>functional</td>
+<td>生徒は空き枠を予約でき、確定時に通知を受け取る</td>
+<td>US-001&lt;br&gt;US-003</td>
+<td>BF-001-S02</td>
+</tr>
+<tr>
+<td>FR-003</td>
+<td>functional</td>
+<td>生徒はレッスン前日まで予約をキャンセルでき、枠を空きへ戻せる</td>
+<td>US-002</td>
+<td>BF-001-S03</td>
+</tr>
+<tr>
 <td>NFR-001</td>
-<td>AC-002</td>
-<td>残席1の同一枠があり、2つの並行リクエストを送信できる</td>
-<td>同一枠へ同時に2件の予約確定APIを実行する</td>
-<td>成功は1件だけで、予約記録と残席の整合性が保たれる</td>
+<td>non_functional</td>
+<td>同一の最終1枠に同時に予約要求が来ても、確定する予約は1件だけとする</td>
+<td>US-001</td>
+<td>BF-001-S02</td>
 </tr>
 </tbody>
 </table></div>
@@ -111,6 +161,6 @@ body{font-size:11pt}}
 <span class="status status-pending">[要確認] 未決定</span>
 <span class="status status-excluded">[対象外] 意図して対象外</span>
 <span class="status status-missing">[未記入] 情報不足</span></p>
-<nav class="nav-links" aria-label="文書間の移動"><a rel="prev" href="requirements-traceability.html">← 前へ: 要件トレーサビリティ</a>
-<a href="index.html">フェーズ入口へ</a><span></span></nav>
-<p><a href="../tests/system-test-cases.md">正本Markdownを開く</a></p></footer></body></html>
+<nav class="nav-links" aria-label="文書間の移動"><span></span>
+<a href="index.html">フェーズ入口へ</a><a rel="next" href="system-test-cases.html">次へ: システムテストケース →</a></nav>
+<p><a href="../../tests/requirements-traceability.md">正本Markdownを開く</a></p></footer></body></html>
