@@ -341,6 +341,56 @@ class RenderPhaseWithFuncsTest(unittest.TestCase):
                 resolved = (readme_path.parent / link).resolve()
                 self.assertTrue(resolved.is_file(), msg=f"リンク先が実在しません: {link} -> {resolved}")
 
+    def test_func_page_phase_entry_link_resolves_to_real_file(self):
+        """views/func-予約/01_要件定義書.htmlの「フェーズ入口」リンクが、実在する
+        views/index.html を指すことを確認する（namespace配下は実際にはviews/phase_dir
+        への相対深さ2なので、素の"index.html"のままだと存在しないviews/func-予約/index.html
+        を指してしまう回帰）。"""
+        with tempfile.TemporaryDirectory() as directory_str:
+            phase_dir = Path(directory_str) / "phase-1_予約"
+            self._make_phase(phase_dir)
+            views.render_phase(phase_dir)
+            html_path = phase_dir / "views" / "func-予約" / "01_要件定義書.html"
+            content = html_path.read_text(encoding="utf-8")
+            href_matches = re.findall(r'<a href="([^"]+)">フェーズ入口', content)
+            self.assertTrue(href_matches, msg="「フェーズ入口」リンクが見つかりません")
+            for href in href_matches:
+                resolved = (html_path.parent / unquote(href)).resolve()
+                self.assertEqual(resolved, (phase_dir / "views" / "index.html").resolve())
+                self.assertTrue(resolved.is_file())
+
+    def test_system_page_phase_entry_link_resolves_to_real_file(self):
+        """views/system/system-test-cases.htmlの「フェーズ入口」リンクも同様に、
+        実在するviews/index.html を指すことを確認する。"""
+        with tempfile.TemporaryDirectory() as directory_str:
+            phase_dir = Path(directory_str) / "phase-1_予約"
+            self._make_phase(phase_dir)
+            views.render_phase(phase_dir)
+            html_path = phase_dir / "views" / "system" / "system-test-cases.html"
+            content = html_path.read_text(encoding="utf-8")
+            href_matches = re.findall(r'<a href="([^"]+)">フェーズ入口', content)
+            self.assertTrue(href_matches, msg="「フェーズ入口」リンクが見つかりません")
+            for href in href_matches:
+                resolved = (html_path.parent / unquote(href)).resolve()
+                self.assertEqual(resolved, (phase_dir / "views" / "index.html").resolve())
+                self.assertTrue(resolved.is_file())
+
+    def test_func_index_readme_link_resolves_to_real_file(self):
+        """views/func-予約/index.htmlの「Obsidian・ブラウザでの閲覧方法」リンクが、
+        実在するviews/README.md を指すことを確認する（同様のnamespace配下の
+        リンク深さの回帰）。"""
+        with tempfile.TemporaryDirectory() as directory_str:
+            phase_dir = Path(directory_str) / "phase-1_予約"
+            self._make_phase(phase_dir)
+            views.render_phase(phase_dir)
+            html_path = phase_dir / "views" / "func-予約" / "index.html"
+            content = html_path.read_text(encoding="utf-8")
+            href_match = re.search(r'<a href="([^"]+)">Obsidian', content)
+            self.assertIsNotNone(href_match, msg="README.mdへのリンクが見つかりません")
+            resolved = (html_path.parent / unquote(href_match.group(1))).resolve()
+            self.assertEqual(resolved, (phase_dir / "views" / "README.md").resolve())
+            self.assertTrue(resolved.is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

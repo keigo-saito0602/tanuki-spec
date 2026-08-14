@@ -316,6 +316,13 @@ def page_html(
     body, headings = markdown_to_html(markdown)
     phase = phase_label(phase_dir)
     source = source_href(document, depth, namespace)
+    # トップレベルのviews/index.htmlは常に1箇所にしか存在しない。depthは
+    # 「phase_dirまでの階層数」（source_href用。namespace配下では2）であり、
+    # views/直下（namespace配下のさらに1階層上）まではdepth - 1階層で届く。
+    # namespace配下（func-<名前>/やsystem/）のページから素の"index.html"のままだと
+    # 実在しないviews/<namespace>/index.htmlを指してしまう（壊れたリンク）。
+    views_root_hops = max(depth - 1, 0)
+    phase_entry_href = "../" * views_root_hops + "index.html"
     previous_link = (
         f'<a rel="prev" href="{quote(previous.output)}">← 前へ: {html.escape(previous.label)}</a>'
         if previous else "<span></span>"
@@ -328,7 +335,7 @@ def page_html(
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{SECURITY_META}
 <title>{html.escape(document.label)} — {html.escape(phase)}</title><style>{CSS}</style></head>
 <body><a class="skip-link" href="#main">本文へ移動</a>
-<header class="page-header"><nav aria-label="パンくず"><a href="index.html">フェーズ入口</a> / {html.escape(document.label)}</nav>
+<header class="page-header"><nav aria-label="パンくず"><a href="{quote(phase_entry_href)}">フェーズ入口</a> / {html.escape(document.label)}</nav>
 <h1>{html.escape(document.label)}</h1>
 <p class="derived"><strong>閲覧用の派生成果物です。</strong> 正本は <a href="{quote(source)}">{html.escape(document.source)}</a> です。</p>
 <p class="meta"><span>フェーズ: {html.escape(phase)}</span><span>文書種別: {html.escape(document.label)}</span>
@@ -341,7 +348,7 @@ def page_html(
 <span class="status status-excluded">[対象外] 意図して対象外</span>
 <span class="status status-missing">[未記入] 情報不足</span></p>
 <nav class="nav-links" aria-label="文書間の移動">{previous_link}
-<a href="index.html">フェーズ入口へ</a>{next_link}</nav>
+<a href="{quote(phase_entry_href)}">フェーズ入口へ</a>{next_link}</nav>
 <p><a href="{quote(source)}">正本Markdownを開く</a></p></footer></body></html>
 """
 
@@ -368,6 +375,11 @@ def index_html(phase_dir: Path, available: list[Document], depth: int, namespace
         f'<p><a href="{quote(unresolved.output)}">未決事項・注意事項を確認する</a></p>'
         if unresolved else '<p class="muted">正本内に状態マーカーは見つかりませんでした。</p>'
     )
+    # views/README.md はトップレベルに1箇所だけ存在する。depthは「phase_dirまでの
+    # 階層数」（source_href用）であり、views/直下まではdepth - 1階層で届く
+    # （page_htmlのphase_entry_hrefと同じ理屈）。
+    views_root_hops = max(depth - 1, 0)
+    readme_href = "../" * views_root_hops + "README.md"
     return f"""<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{SECURITY_META}
 <title>{html.escape(phase)} — 仕様書ビュー</title><style>{CSS}</style></head>
@@ -379,7 +391,7 @@ def index_html(phase_dir: Path, available: list[Document], depth: int, namespace
 </header><main id="main" class="layout" tabindex="-1"><section class="content">
 <h2>読む順番</h2><p>まずサマリ、次に要件、設計、最後にテストと対応表を確認します。</p>
 <ol class="cards">{cards}</ol><h2>未決事項への導線</h2>{unresolved_link}
-<h2>閲覧方法</h2><p><a href="README.md">Obsidian・ブラウザでの閲覧方法と再生成方法</a></p>
+<h2>閲覧方法</h2><p><a href="{quote(readme_href)}">Obsidian・ブラウザでの閲覧方法と再生成方法</a></p>
 </section></main><footer class="page-footer"><p>このHTMLを変更せず、正本を変更して再生成してください。</p></footer>
 </body></html>
 """
