@@ -10,12 +10,27 @@ cc-sdd側の`requirements.md`・`design.md`を使う場合は`docs/spec/`正本�
 自動生成した要約にとどめ、手編集しない。仕様変更は`.kiro`側ではなく`docs/spec/`へ差し戻し、
 tanukiのゲート通過後に橋渡し情報を更新する。
 
-## インストール（Claude Code Plugin）
+## インストール
+
+### Claude Code Plugin
 
 ```text
 /plugin marketplace add keigo-saito0602/tanuki-spec
 /plugin install tanuki-spec
 ```
+
+### Codex
+
+Plugin機構はないため、このリポジトリを対象プロジェクトへクローンして使います。
+Codexはルートの[AGENTS.md](./AGENTS.md) → 各スキルの`SKILL.md`の順に自動で読み込み、
+該当スキルを選びます。
+
+```bash
+git clone https://github.com/keigo-saito0602/tanuki-spec.git
+cd tanuki-spec/skills/<使うスキル名> && python3 -m pip install -r requirements.txt
+```
+
+詳細は[FLOW.md](./FLOW.md)の「Codexで動かすとき」を参照してください。
 
 ## 構成
 
