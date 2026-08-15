@@ -42,6 +42,7 @@ tanuki-spec-test-item
 要件定義書:                   # 必須
 基本設計書:                    # 必須
 詳細設計書:                    # 必須
+対象phase:                    # phaseディレクトリのパス
 対象func:                     # phase内の機能名（例: 予約）。出力先 <phase>/func-<名前>/ の <名前> になる
 要件トレーサビリティ:           # func直下のtraceability.yaml。必須
 設計トレーサビリティ:           # func直下のdesign-traceability.yaml。必須
