@@ -11,49 +11,14 @@ user_stories:
     # （埋め草になる）。状況の詳細は acceptance_tests の given/when が正本なので、ここでは重複させない。
     statement: "[<いつ>、]<誰>は<何>をしたい。なぜなら<理由>だから。"
 
-business_flows:
-  - id: BF-001
-    status: in_scope
-    name: "<業務フロー名>"
-    steps:
-      - id: BF-001-S01
-        action: "<利用者または担当者が行う業務>"
-        user_story_ids: [US-001]
-
 requirements:
   - id: BR-001
     status: in_scope # in_scope / deferred / out_of_scope / draft（in_scope以外は reason 必須）
     type: business # business / functional / non_functional
     statement: "<満たすべき業務要件・機能要件・非機能要件>"
     user_story_ids: [US-001]
-    flow_step_ids: [BF-001-S01]
+    flow_step_ids: [BF-001-S01] # phase直下のsystem-traceability.yamlが持つ業務フロー手順を指す
     # 以下3つは任意。既存システムへ追従して仕様を書く場合だけ記入する。
     # implementation_status: implemented # implemented / partial / not_implemented
     # gap_severity: none # none / minor / critical
     # note: "<乖離の内容。gap_severity だけでは伝わらない詳細をここへ>"
-
-acceptance_tests:
-  - id: AC-001
-    status: in_scope
-    feature: "<.feature のグルーピング名。未指定なら『受入シナリオ』へ集約>"
-    user_story_ids: [US-001]
-    requirement_ids: [BR-001]
-    flow_step_ids: [BF-001-S01]
-    scenario:
-      name: "<シナリオ名（単一の振る舞い）>"
-      given: ["<前提状態（操作ではない）>"]
-      when: ["<利用者の操作・イベント（原則1つ）>"]
-      then: ["<観測可能な期待結果>"]
-      # examples は任意（同一振る舞いのデータ違いのときだけ）
-      # examples:
-      #   - {列名A: "値1", 列名B: "値2"}
-
-system_tests:
-  - id: ST-001
-    status: in_scope
-    test_type: functional # functional / integration / non_functional / performance / security / recovery / usability
-    requirement_ids: [BR-001]
-    acceptance_test_ids: [AC-001]
-    preconditions: ["<テストデータ・環境の条件>"]
-    steps: ["<システムへの入力・操作>"]
-    expected_results: ["<システムが返す結果・状態>"]

@@ -13,6 +13,8 @@ import re
 import sys
 from pathlib import Path
 
+import phase_traceability
+
 try:
     import yaml
 except ImportError:
@@ -35,6 +37,34 @@ def known_ids(data: dict) -> set[str]:
     return result
 
 
+def system_known_ids(system_data: dict) -> set[str]:
+    """system-traceability.yaml自体が持つbusiness_flows/acceptance_tests/system_testsのIDを集める。
+
+    func単位の縮小traceability.yamlはuser_stories/requirementsしか持たないため、
+    00_サマリ.mdがAC/BF/STのIDに言及すると`known_ids(data)`だけでは「正本に存在しない」と
+    誤検出してしまう。system-traceability.yaml側のIDも正当な集合へマージするために使う。
+    """
+    result: set[str] = set()
+    for key in ("business_flows", "acceptance_tests", "system_tests"):
+        for record in system_data.get(key) or []:
+            if isinstance(record, dict) and isinstance(record.get("id"), str):
+                result.add(record["id"])
+    return result
+
+
+def resolve_system_known_ids(system_path: Path, system_data: dict) -> tuple[set[str], list[str]]:
+    """system-traceability.yamlから、known_ids()へマージすべきID集合を組み立てる。
+
+    system_data自体のbusiness_flows/acceptance_tests/system_testsのIDに加えて、
+    phase_traceability.build_phase_index()が返すrequirements索引（phase内の全funcを
+    横断してマージしたもの）も含める。
+    """
+    _, requirements_index, failures = phase_traceability.build_phase_index(system_path, system_data)
+    if failures:
+        return set(), failures
+    return system_known_ids(system_data) | set(requirements_index), []
+
+
 def table_row(view_text: str, identifier: str) -> str | None:
     """IDを含む最初の表行を返す。散文中の言及は拾わない。"""
     pattern = re.compile(rf"\b{re.escape(identifier)}\b")
@@ -50,9 +80,11 @@ def table_cells(row: str) -> list[str]:
     return [cell.strip() for cell in row.strip().strip("|").split("|")]
 
 
-def validate(view_text: str, data: dict) -> list[str]:
+def validate(view_text: str, data: dict, extra_known: set[str] | None = None) -> list[str]:
     failures: list[str] = []
     known = known_ids(data)
+    if extra_known:
+        known |= extra_known
     used = set(ID_RE.findall(view_text))
 
     for identifier in sorted(used - known):
@@ -100,10 +132,25 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="サマリ層と正本の整合を検証")
     parser.add_argument("view", type=Path, help="00_サマリ.md のパス")
     parser.add_argument("--traceability", type=Path, required=True, help="traceability.yaml のパス")
+    parser.add_argument(
+        "--system-traceability",
+        type=Path,
+        help=(
+            "system-traceability.yaml のパス（省略可）。指定すると業務フロー・受入試験・"
+            "システムテストのIDもサマリの正当なID集合に含める。省略時はAC/BF/STのID検証をスキップする"
+        ),
+    )
     parser.add_argument("--json", action="store_true", help="JSONで出力")
     args = parser.parse_args()
     try:
-        failures = validate(args.view.read_text(encoding="utf-8"), load(args.traceability))
+        data = load(args.traceability)
+        failures: list[str] = []
+        extra_known: set[str] = set()
+        if args.system_traceability is not None:
+            system_data = load(args.system_traceability)
+            extra_known, failures = resolve_system_known_ids(args.system_traceability, system_data)
+        if not failures:
+            failures = validate(args.view.read_text(encoding="utf-8"), data, extra_known)
     except (OSError, ValueError, yaml.YAMLError) as error:
         failures = [f"読み込めません: {error}"]
     report = {"gate_passed": not failures, "failures": failures}

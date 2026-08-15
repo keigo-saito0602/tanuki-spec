@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; font-src 'none'; script-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>func-予約 — 仕様書ビュー</title><style>
+:root{color-scheme:light dark;--bg:#fff;--panel:#f5f7fa;--text:#17202a;--muted:#52606d;
+--line:#b8c2cc;--link:#075ea8;--focus:#d97706;--pending:#fff2cc;--excluded:#e8edf2;
+--missing:#ffe4e6;--warning:#fff0d5}*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--background-primary,var(--bg));color:var(--text-normal,var(--text));font-family:system-ui,-apple-system,
+"Hiragino Sans","Yu Gothic UI",sans-serif;font-size:1rem;line-height:1.65}
+a{color:var(--link-color,var(--link));text-underline-offset:.2em}a:focus-visible,summary:focus-visible,
+.table-scroll:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.skip-link{position:absolute;left:.5rem;top:-5rem;background:var(--text);color:var(--bg);
+padding:.6rem;z-index:10}.skip-link:focus{top:.5rem}.page-header,.page-footer{background:var(--background-secondary,var(--panel));
+border-block:1px solid var(--background-modifier-border,var(--line));padding:1rem clamp(1rem,4vw,3rem)}
+.derived{border-left:.35rem solid var(--focus);padding:.75rem 1rem;background:var(--panel)}
+.meta{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;color:var(--muted)}
+.layout{display:grid;grid-template-columns:minmax(12rem,19rem) minmax(0,1fr);
+gap:clamp(1rem,4vw,3rem);max-width:110rem;margin:auto;padding:2rem clamp(1rem,4vw,3rem)}
+.toc{align-self:start;position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow:auto}
+.toc-list{padding-left:1.3rem}.toc-level-3{margin-left:.75rem}.toc-level-4,
+.toc-level-5,.toc-level-6{margin-left:1.5rem}.content{min-width:0}.prose{max-width:75ch}
+.prose h2,.prose h3,.prose h4,.prose h5,.prose h6{scroll-margin-top:1rem;margin-top:2em;
+margin-bottom:.5em;line-height:1.3}.table-scroll{max-width:100%;overflow-x:auto;margin:1.5rem 0}
+.prose :is(h2,h3,h4,h5,h6):target{outline:3px solid var(--focus);outline-offset:.25rem}
+.supporting-detail{border-left:.2rem solid var(--line);padding-left:1rem;margin-block:1.5rem}
+.supporting-detail summary{cursor:pointer;font-weight:700}
+table{border-collapse:collapse;min-width:100%;background:var(--bg)}caption{text-align:left;
+font-weight:700;padding:.5rem 0}th,td{border:1px solid var(--line);padding:.55rem .7rem;
+text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:var(--panel)}
+code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}pre{overflow:auto;padding:1rem;
+border:1px solid var(--line);background:var(--panel)}blockquote{margin-left:0;border-left:.3rem solid
+var(--line);padding:.25rem 1rem;color:var(--muted)}.status{display:inline-block;border:1px solid
+currentColor;border-radius:.3rem;padding:0 .25rem;font-weight:650;color:#512b00}
+.status-pending{background:var(--pending)}.status-excluded{background:var(--excluded)}
+.status-missing{background:var(--missing)}.status-warning{background:var(--warning)}
+.image-alt{display:inline-block;border:1px dashed var(--line);padding:.25rem;color:var(--muted)}
+.nav-links{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}.cards{list-style:none;
+padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:1rem}
+.card{border:1px solid var(--line);border-radius:.5rem;padding:1rem;background:var(--panel)}
+.muted{color:var(--muted)}
+@media(prefers-color-scheme:dark){:root{--bg:#111820;--panel:#1c2630;--text:#f1f5f9;
+--muted:#bdc8d3;--line:#607080;--link:#86c8ff;--focus:#ffc857;--pending:#503c00;
+--excluded:#273747;--missing:#55252d;--warning:#543400}.status{color:var(--text)}}
+@media(max-width:48rem){.layout{grid-template-columns:1fr}.toc{position:static;max-height:none}}
+@media print{.skip-link,.toc,.nav-links{display:none}.layout{display:block;padding:0}.page-header,
+.page-footer{background:none}.prose{max-width:none}a{color:inherit;text-decoration:none}
+.table-scroll{overflow:visible}.supporting-detail{display:block}.supporting-detail>summary{list-style:none}
+body{font-size:11pt}}
+</style></head>
+<body><a class="skip-link" href="#main">本文へ移動</a><header class="page-header">
+<h1>func-予約 仕様書ビュー</h1>
+<p class="derived"><strong>読むための地図（派生成果物）です。</strong>
+正本はフェーズ配下のMarkdown/YAMLであり、HTMLは編集対象ではありません。</p>
+<p class="meta"><span>フェーズ: func-予約</span><span>正本の最終更新日時: 正本に記載なし</span></p>
+</header><main id="main" class="layout" tabindex="-1"><section class="content">
+<h2>読む順番</h2><p>まずサマリ、次に要件、設計、最後にテストと対応表を確認します。</p>
+<ol class="cards"></ol><h2>未決事項への導線</h2><p class="muted">正本内に状態マーカーは見つかりませんでした。</p>
+<h2>閲覧方法</h2><p><a href="../README.md">Obsidian・ブラウザでの閲覧方法と再生成方法</a></p>
+</section></main><footer class="page-footer"><p>このHTMLを変更せず、正本を変更して再生成してください。</p></footer>
+</body></html>

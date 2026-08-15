@@ -1,8 +1,9 @@
 # レッスン予約 HTMLビュー
 
-この `views/` は閲覧用の派生成果物です。正本は一つ上の階層にあるMarkdown/YAMLです。
-HTMLを直接編集せず、正本を直してから再生成してください。各HTMLは外部通信やJavaScriptを
-使わない単一ファイルで、ブラウザでも開けます。
+この `views/` は閲覧用の派生成果物です。正本は機能ごとに `func-<名前>/` 配下、
+またはphase直下（業務フロー・AC・ST等）にあるMarkdown/YAMLです。HTMLを直接編集せず、
+正本を直してから再生成してください。各HTMLは外部通信やJavaScriptを使わない単一ファイルで、
+ブラウザでも開けます。
 
 ## 閲覧
 
@@ -25,9 +26,9 @@ HTMLを直接編集せず、正本を直してから再生成してください�
 
 | HTMLビュー | 正本 | 役割 |
 | --- | --- | --- |
-| [01_要件定義書.html](./01_要件定義書.html) | [01_要件定義書.md](../01_要件定義書.md) | 実現する目的と要件を確認 |
-| [requirements-traceability.html](./requirements-traceability.html) | [tests/requirements-traceability.md](../tests/requirements-traceability.md) | 要件間の対応を確認 |
-| [system-test-cases.html](./system-test-cases.html) | [tests/system-test-cases.md](../tests/system-test-cases.md) | 要件とシステムテストの対応を確認 |
+| [01_要件定義書.html](./func-予約/01_要件定義書.html) | [01_要件定義書.md](../func-予約/01_要件定義書.md) | 実現する目的と要件を確認 |
+| [requirements-traceability.html](./system/requirements-traceability.html) | [tests/requirements-traceability.md](../tests/requirements-traceability.md) | 要件間の対応を確認 |
+| [system-test-cases.html](./system/system-test-cases.html) | [tests/system-test-cases.md](../tests/system-test-cases.md) | 要件とシステムテストの対応を確認 |
 
 ## 再生成と検証
 

@@ -1,6 +1,6 @@
 # 仕様書ディレクトリ標準（正本）
 
-tanuki スキル群が生成する仕様書・設計書・テスト・トレーサビリティを、**フェーズ単位**で一貫した場所・命名に置くための標準。
+tanuki スキル群が生成する仕様書・設計書・テスト・トレーサビリティを、**フェーズ単位・機能（func）単位**で一貫した場所・命名に置くための標準。
 各スキルの「出力」節と `FLOW.md` は、この標準に従う。
 
 作成: 2026-07-18 ／ 状態: ドラフト（KEIGO レビュー待ち）／ ブランチ: `feat/spec-dir-layout`
@@ -11,78 +11,91 @@ tanuki スキル群が生成する仕様書・設計書・テスト・トレー�
 
 ```text
 docs/spec/
-├── phase-<N>_<フェーズ名>/            # 例: phase-1_公開サイト・予約
-│   ├── README.md                     # フェーズの索引（目的・成果物リンク・状態）
-│   ├── 00_サマリ.md                   # サマリ層（generator・要件定義のみ）
-│   ├── 01_要件定義書.md               # generator（要件定義）
-│   ├── 02_基本設計書.md               # design（基本設計）
-│   ├── 03_詳細設計書.md               # design（詳細設計）
-│   ├── traceability.yaml              # 要件の正本（US→BR/FR/NFR→AC→ST）
-│   ├── screens.yaml                   # 画面定義の正本（screen-mock・画面のある案件のみ）
-│   ├── design-tokens.json             # デザイントークンの正本（screen-mock）
-│   ├── design-traceability.yaml       # 設計の正本（要件↔BD/DD）
-│   ├── test-traceability.yaml         # テストの正本（UT/IT↔設計・要件）
-│   ├── features/
-│   │   └── <feature名>.feature        # Gherkin（自動テスト用・標準で生成）
+├── phase-1_公開サイト・予約/
+│   ├── README.md                       # 機能一覧・状態・導線
+│   ├── system-traceability.yaml        # 業務フロー・AC(受入試験)・STの正本
+│   ├── screens.yaml / design-tokens.json   # 画面がある案件のみ。phase単位に集約
+│   ├── task-plan.yaml                  # phase単位のタスク分解の正本
+│   ├── implementation-task-plan.md     # 着手可能一覧・WBS・依存グラフ・ガント（Mermaid）
+│   ├── features/*.feature              # Gherkin。★phase単位に集約（func単位では作らない）
 │   ├── tests/
-│   │   ├── 04_テスト項目書.md          # UT/IT/V字カバレッジを1本に統合
-│   │   ├── system-test-cases.md       # ST（システムテスト項目）
-│   │   ├── requirements-traceability.md
-│   │   └── design-traceability.md
-│   ├── views/                         # 閲覧用HTML（派生物、浅い1階層）
-│   │   ├── index.html                 # 読む順番と正本への入口
-│   │   ├── README.md                  # 閲覧・再生成・安全上の注意
-│   │   ├── 00_サマリ.html             # 対応するMarkdownがある場合だけ生成
-│   │   ├── 01_要件定義書.html
-│   │   ├── 画面モック.html             # screen-mockが生成（対応するMarkdownを持たない）
-│   │   ├── 02_基本設計書.html
-│   │   ├── 03_詳細設計書.html
-│   │   ├── 04_テスト項目書.html
-│   │   ├── requirements-traceability.html
-│   │   ├── design-traceability.html
-│   │   └── system-test-cases.html
-│   └── reports/
-│       └── 01_差分・未決事項.md        # 未決事項・要確認・差分追従の影響範囲・レビュー要約
-└── system-baseline/                   # フェーズに依らない共通書類
+│   │   ├── system-test-cases.md        # ST（system-traceability.yamlから生成）
+│   │   └── requirements-traceability.md    # 全func横断の要件・業務フロー・AC対応表
+│   ├── views/                          # HTML。phase単位で1つ、func別に名前空間を分ける（§4参照）
+│   │   ├── index.html                  # phase共有の画面モックへもここから導線を張る
+│   │   ├── README.md
+│   │   ├── 画面モック.html              # screen-mockが生成（render_screen_mock.py管轄。views/直下のまま）
+│   │   ├── system/
+│   │   │   ├── requirements-traceability.html
+│   │   │   └── system-test-cases.html
+│   │   ├── func-予約/
+│   │   │   ├── index.html
+│   │   │   ├── 01_要件定義書.html
+│   │   │   └── ...
+│   │   └── func-認証/
+│   │       └── ...
+│   ├── func-予約/
+│   │   ├── README.md
+│   │   ├── 00_サマリ.md
+│   │   ├── 01_要件定義書.md
+│   │   ├── 02_基本設計書.md
+│   │   ├── 03_詳細設計書.md
+│   │   ├── traceability.yaml           # user_stories と requirements のみに縮小
+│   │   │                                # requirements の flow_step_ids は残す（§3）
+│   │   ├── design-traceability.yaml    # BD/DD（このfuncのrequirementsに紐づく）
+│   │   ├── test-traceability.yaml      # UT/IT。system_traceability フィールドを追加（§3）
+│   │   ├── tests/04_テスト項目書.md     # UT/IT・V字カバレッジ（AC/ST列はsystem-traceability参照）
+│   │   └── reports/01_差分・未決事項.md  # 参照したbaseline文書もここへ記録（§5）
+│   └── func-認証/
+│       └── （同じ骨格）
+└── system-baseline/                    # 変更なし（フェーズ非依存の共通書類）
     ├── README.md
     ├── システム構成・共通基盤.md
     ├── 非機能ベースライン.md
-    └── 共通用語.md                     # 共通用語は GLOSSARY.md を正とし、ここは導線
+    └── 共通用語.md
 ```
+
+実装上は、`func-<名前>/tests/` には `04_テスト項目書.md` に加えて `design-traceability.md`（`render_design_traceability_docs.py`が`design-traceability.yaml`から生成する対応表）も置かれる。上のツリーは代表的な構成のみを示す（詳細は§3の対応表を参照）。
 
 ## 2. 命名規則
 
-- サマリ層は `00_サマリ.md`。連番の先頭に置き、「まずこれを読む」を名前で示す。要件定義書のぶんだけ作る（設計書は読み手が第三者技術者のため、フル文書を読ませる）。
+- サマリ層は `00_サマリ.md`。連番の先頭に置き、「まずこれを読む」を名前で示す。要件定義書のぶんだけ作る（設計書は読み手が第三者技術者のため、フル文書を読ませる）。`func-<名前>/00_サマリ.md`としてfunc単位に置く。
 - フェーズフォルダ: `phase-<番号>_<日本語名>`（番号は着手順）。
-- 人が読む主要文書は連番付き: `01_要件定義書` → `02_基本設計書` → `03_詳細設計書` → `04_テスト項目書`。読む順＝番号順。
-- 正本 YAML は内容を表す固定名: `traceability.yaml` / `design-traceability.yaml` / `test-traceability.yaml`（フェーズ直下）。
-- レンダラが出す派生 Markdown（表・テスト項目）は固定名のまま `tests/` に置く。
-- 閲覧用HTMLは正本Markdownと派生Markdownに対応する名前で `views/` 直下に置く。HTML用のCSS・JavaScript・画像フォルダは作らない。
-- `features/` の `.feature` はレンダラが付ける名前のまま。
+- `func-<名前>/`: フェーズ配下の機能単位フォルダ。プレフィックス `func-` は固定表記（英数字とハイフンのみ）。`<名前>` 部分（機能名）は日本語可（例: `func-予約`、`func-認証`）。US・要件・基本/詳細設計（BD/DD）・UT/ITはこの単位に閉じるため func 配下に置く。業務フロー・AC（受入試験）・ST・画面定義・タスク計画は機能をまたぐことが多いため func 配下ではなく phase 直下に置く（理由は§3の対応表を参照）。
+- 人が読む主要文書は連番付き: `01_要件定義書` → `02_基本設計書` → `03_詳細設計書` → `04_テスト項目書`。読む順＝番号順。いずれも `func-<名前>/` 直下に置く（`04_テスト項目書` のみ `func-<名前>/tests/`）。
+- func単位の正本 YAML は内容を表す固定名で `func-<名前>/` 直下に置く: `traceability.yaml`（US・要件のみ。`business_flows`/`acceptance_tests`/`system_tests`は含まない）／`design-traceability.yaml`／`test-traceability.yaml`（`system_traceability`フィールドで `../system-traceability.yaml` を参照する）。
+- phase単位の正本 YAML はフェーズ直下に置く: `system-traceability.yaml`（業務フロー・AC・ST・`func_traceability`索引の正本）／`screens.yaml`／`design-tokens.json`／`task-plan.yaml`。
+- レンダラが出す派生 Markdown（表・テスト項目）は固定名のまま `tests/` に置く。func単位の派生物（`04_テスト項目書.md`・`design-traceability.md`）は `func-<名前>/tests/`、phase横断の派生物（`requirements-traceability.md`・`system-test-cases.md`）は phase直下 `tests/`。
+- 閲覧用HTMLは正本Markdownと派生Markdownに対応する名前で `views/` 直下に置く。func個別の文書は `views/func-<名前>/`、phase横断の文書は `views/system/` へ名前空間を分ける。HTML用のCSS・JavaScript・画像フォルダは作らない。
+- `features/` の `.feature` はレンダラが付ける名前のまま。phase単位に集約し、func単位では作らない。
 
 ## 3. どのスキルの生成物がどこへ行くか（対応表）
 
 | 生成物（スキル） | 置き場所・名前 |
 | --- | --- |
-| サマリ層（generator） | `00_サマリ.md` |
-| 記入済み要件定義書（generator） | `01_要件定義書.md` |
-| 基本設計書 / 詳細設計書（design） | `02_基本設計書.md` / `03_詳細設計書.md` |
-| `traceability.yaml`（generator） | フェーズ直下 |
-| `design-traceability.yaml`（design） | フェーズ直下 |
-| `test-traceability.yaml`（test-item） | フェーズ直下 |
-| `screens.yaml`・`design-tokens.json`（screen-mock） | フェーズ直下 |
-| `requirements-traceability.md`・`system-test-cases.md`（generator） | `tests/` |
-| `design-traceability.md`（design） | `tests/` |
-| UT/IT/V字カバレッジ（test-item） | **`tests/04_テスト項目書.md` に1本統合**（下記§4） |
-| `*.feature`（generator） | `features/`（標準で生成） |
-| 閲覧用HTML（generator / design / test-item） | `views/`（正本ではない。対応する文書があるものだけ生成） |
-| 画面モックHTML（screen-mock） | `views/画面モック.html`（正本ではない。`render_screen_mock.py`が生成し、共有レンダラは触らない） |
-| 要確認・未決事項・差分影響・レビュー要約 | `reports/01_差分・未決事項.md` |
-| （新規・各スキルが追記） | `README.md`（フェーズ索引） |
+| サマリ層（generator） | `func-<名前>/00_サマリ.md` |
+| 記入済み要件定義書（generator） | `func-<名前>/01_要件定義書.md` |
+| 基本設計書 / 詳細設計書（design） | `func-<名前>/02_基本設計書.md` / `func-<名前>/03_詳細設計書.md` |
+| `traceability.yaml`（generator。`user_stories`・`requirements`のみに縮小） | `func-<名前>/`直下 |
+| `design-traceability.yaml`（design） | `func-<名前>/`直下 |
+| `test-traceability.yaml`（test-item。`system_traceability: ../system-traceability.yaml`を明記） | `func-<名前>/`直下 |
+| `system-traceability.yaml`（generator。業務フロー・AC・ST・`func_traceability`索引の正本） | phase直下 |
+| `screens.yaml`・`design-tokens.json`（screen-mock。複数funcを横断して洗い出す） | phase直下 |
+| `task-plan.yaml`・`implementation-task-plan.md`（task-planner） | phase直下 |
+| `design-traceability.md`（design。`design-traceability.yaml`から生成） | `func-<名前>/tests/` |
+| UT/IT/V字カバレッジ（test-item） | **`func-<名前>/tests/04_テスト項目書.md` に1本統合**（下記§4） |
+| `requirements-traceability.md`・`system-test-cases.md`（generator。`system-traceability.yaml`をfunc横断で集約して生成） | phase直下 `tests/` |
+| `*.feature`（generator。`system-traceability.yaml`の`acceptance_tests`から生成） | phase直下 `features/`（★func単位では作らない） |
+| 閲覧用HTML（func個別文書。generator / design / test-item） | `views/func-<名前>/`（対応する文書があるものだけ生成） |
+| 閲覧用HTML（phase横断文書。要件対応表・システムテスト） | `views/system/` |
+| 画面モックHTML（screen-mock） | `views/画面モック.html`（正本ではない。`render_screen_mock.py`が生成し、共有レンダラは触らない。phase直下） |
+| 要確認・未決事項・差分影響・レビュー要約（参照したsystem-baseline文書も含む） | `func-<名前>/reports/01_差分・未決事項.md` |
+| `phase_integration_review`（reviewer。業務フロー・AC・ST・共有画面・タスク計画のphase単位レビュー記録） | `<phase>/reports/`直下 |
+| （新規・各スキルが追記） | `func-<名前>/README.md`（機能の索引）／phase直下`README.md`（機能一覧・状態・導線） |
 
 ## 4. テスト項目書の統合（04_テスト項目書.md）
 
-test-item の単体・結合・V字カバレッジは、**1本の `04_テスト項目書.md`** にまとめる。見出しで分ける:
+test-item の単体・結合・V字カバレッジは、**1本の `func-<名前>/tests/04_テスト項目書.md`** にまとめる。見出しで分ける:
 
 ```markdown
 # テスト項目書
@@ -91,22 +104,36 @@ test-item の単体・結合・V字カバレッジは、**1本の `04_テスト�
 ## V字モデルカバレッジ
 ```
 
-※ `system-test-cases.md`（ST）は性質が違う（システム全体の受入寄り）ため、統合せず `tests/` に別置き。
-※ test-item スキルは現在「設計のみ」。この統合形は**実装時の出力仕様**として定義しておく（今はレンダラ未実装）。
+※ `system-test-cases.md`（ST）は性質が違う（システム全体の受入寄り）うえ、機能をまたぐためfunc単位に閉じない。統合せず phase直下の `tests/` に別置きする（`04_テスト項目書.md`は`func-<名前>/tests/`に置く）。
 
 ## 5. レンダラ呼び出し規約
 
-入力の正本 YAML はフェーズ直下、出力先はサブフォルダを `--output-dir` で指定する。
+func単位の正本 YAML は `func-<名前>/` 直下、phase単位の正本 YAML は phase 直下に置き、出力先はサブフォルダを `--output-dir` で指定する。
 
 ```bash
-# generator（要件）: 対応表とテスト項目書ビューは tests/、feature は features/ へ
-python3 evaluation/render_traceability_docs.py  <phase>/traceability.yaml --output-dir <phase>/tests
-python3 evaluation/render_feature_files.py      <phase>/traceability.yaml --output-dir <phase>/features
+# generator（要件）: funcごとのUS/requirements孤立検出（形式検証のみ。flow_step_idsの実在確認等はsystem_traceability_gate側）
+python3 evaluation/traceability_gate.py <phase>/func-<名前>/traceability.yaml
 
-# design（設計）: 設計対応表は tests/ へ
-python3 evaluation/render_design_traceability_docs.py <phase>/design-traceability.yaml --output-dir <phase>/tests
+# generator（業務フロー・AC・ST）: phase単位で全funcを横断し、ID一意性・参照整合・カバレッジを検証
+python3 evaluation/system_traceability_gate.py <phase>/system-traceability.yaml
 
-# 共通（閲覧用HTML）: フェーズ内に存在する文書だけを views/ へ生成
+# generator（要件対応表・システムテスト項目書）: system-traceability.yaml から phase直下 tests/ へ
+python3 evaluation/render_traceability_docs.py <phase>/system-traceability.yaml --output-dir <phase>/tests
+
+# generator（.feature）: system-traceability.yaml から phase直下 features/ へ（func単位では生成しない）
+python3 evaluation/render_feature_files.py <phase>/system-traceability.yaml --output-dir <phase>/features
+
+# design（設計対応表）: func内で完結するため入出力とも変更なし。func直下 tests/ へ
+python3 evaluation/render_design_traceability_docs.py <phase>/func-<名前>/design-traceability.yaml --output-dir <phase>/func-<名前>/tests
+
+# test-item（テスト項目書）: test-traceability.yaml の system_traceability フィールド経由でAC/STを解決し、func直下 tests/ へ
+python3 evaluation/render_test_item_docs.py <phase>/func-<名前>/test-traceability.yaml --output-dir <phase>/func-<名前>/tests
+
+# task-planner: phase横断のrequirements/AC/ST索引を検証してからタスク計画を出力
+python3 evaluation/task_plan_gate.py <phase>/task-plan.yaml --system-traceability <phase>/system-traceability.yaml
+python3 evaluation/render_task_plan.py <phase>/task-plan.yaml --output <phase>/implementation-task-plan.md
+
+# 共通（閲覧用HTML）: phase配下の各func-*/を走査し、views/func-<名前>/・views/system/へ名前空間分割
 python3 evaluation/render_html_views.py <phase>
 python3 evaluation/render_html_views.py <phase> --check
 ```
@@ -117,7 +144,7 @@ python3 evaluation/render_html_views.py <phase> --check
 
 `views/` は人が読みやすく確認するための派生物であり、**正本はMarkdown/YAMLのまま**とする。HTMLを手編集せず、正本を直して再生成する。品質ゲートとトレーサビリティも従来どおりMarkdown/YAMLを検証する。
 
-- `views/index.html` は「サマリ → 要件 → 設計 → テスト・対応表」の読む順番、各文書の役割、正本へのリンク、未決事項への導線を示す。
+- `views/index.html` は「サマリ → 要件 → 設計 → テスト・対応表」の読む順番、各文書の役割、正本へのリンク、未決事項への導線を、func別（`views/func-<名前>/`）・phase横断（`views/system/`）の両方について示す。画面モックがある場合は `views/画面モック.html` への導線も示す。
 - `views/README.md` はHTMLとの対応、再生成コマンド、Obsidianとブラウザの閲覧手順を示す。
 - 各HTMLは外部CDN、外部フォント、追跡コード、ネットワーク通信に依存しない単一ファイルとする。
 - 入力中のraw HTML、`script`、イベント属性、危険なURLは実行可能な形で出力しない。
@@ -134,8 +161,8 @@ docs/spec/phase-1_公開サイト・予約/views/index.html
 
 ## 7. `.feature` の位置づけ
 
-**標準で生成し `features/` に置く**（KEIGO 決定）。将来 Cucumber / playwright-bdd で自動テスト（E2E）を回す前提。
-`.feature` は `traceability.yaml` の受入試験（AC）から自動生成される派生物であり、手で保守しない（正本は YAML）。
+**標準で生成し phase直下の `features/` に置く**（KEIGO 決定）。将来 Cucumber / playwright-bdd で自動テスト（E2E）を回す前提。
+`.feature` は `system-traceability.yaml`（phase直下）の受入試験（AC）から自動生成される派生物であり、手で保守しない（正本は YAML）。業務フロー・受入試験は機能をまたぐことが多いため、func単位では生成しない（§3参照）。
 
 ## 8. system-baseline（フェーズ横断の共通書類）
 
@@ -147,11 +174,12 @@ docs/spec/phase-1_公開サイト・予約/views/index.html
 
 ## 9. なぜ「同じ内容」が複数ファイルに出るのか（設計意図の記録）
 
-`.feature`・`system-test-cases.md`・`requirements-traceability.md` は、いずれも `traceability.yaml`（正本）から**自動生成した別ビュー**であり、手で二重に書いていない。読み手・道具ごとに最適な見せ方をしているだけで、正本を1か所直せば全ビューが追従する。
+`.feature`・`system-test-cases.md`・`requirements-traceability.md` は、いずれも `system-traceability.yaml`（正本、phase直下。全funcの`traceability.yaml`を`func_traceability`で束ねて横断参照する）から**自動生成した別ビュー**であり、手で二重に書いていない。`01_要件定義書.md` は `func-<名前>/traceability.yaml`（正本、func直下）の `user_stories`・`requirements` から生成する。読み手・道具ごとに最適な見せ方をしているだけで、正本を1か所直せば全ビューが追従する。
 
 | ビュー | 読み手・道具 |
 | --- | --- |
-| `traceability.yaml` | 正本（機械） |
+| `func-<名前>/traceability.yaml` | 正本（機械）。US・要件 |
+| `system-traceability.yaml` | 正本（機械）。業務フロー・AC・ST |
 | `01_要件定義書.md` | ステークホルダー（物語） |
 | `features/*.feature` | テスト自動化ツール（実行用） |
 | `tests/system-test-cases.md` | テスト担当者（手順書） |

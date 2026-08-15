@@ -1,0 +1,44 @@
+version: "1.0"
+
+user_stories:
+  - id: US-001
+    status: in_scope
+    statement: "生徒は空きレッスン枠を確認して予約したい。DMでのやり取りをなくすため。"
+  - id: US-002
+    status: in_scope
+    statement: "生徒は予約をキャンセルしたい。都合が変わった枠を他の生徒に譲るため。"
+  - id: US-003
+    status: in_scope
+    statement: "生徒は予約確定を通知で確認したい。予約が受け付けられたことを知るため。"
+
+requirements:
+  - id: BR-001
+    status: in_scope
+    type: business
+    statement: "講師の手動台帳記入を廃止し、予約確定とキャンセルを業務記録として残す"
+    user_story_ids: [US-001, US-002]
+    flow_step_ids: [BF-001-S02, BF-001-S03]
+  - id: FR-001
+    status: in_scope
+    type: functional
+    statement: "生徒は日時・講師・残席を含む空き枠一覧を閲覧できる"
+    user_story_ids: [US-001]
+    flow_step_ids: [BF-001-S01]
+  - id: FR-002
+    status: in_scope
+    type: functional
+    statement: "生徒は空き枠を予約でき、確定時に通知を受け取る"
+    user_story_ids: [US-001, US-003]
+    flow_step_ids: [BF-001-S02]
+  - id: FR-003
+    status: in_scope
+    type: functional
+    statement: "生徒はレッスン前日まで予約をキャンセルでき、枠を空きへ戻せる"
+    user_story_ids: [US-002]
+    flow_step_ids: [BF-001-S03]
+  - id: NFR-001
+    status: in_scope
+    type: non_functional
+    statement: "同一の最終1枠に同時に予約要求が来ても、確定する予約は1件だけとする"
+    user_story_ids: [US-001]
+    flow_step_ids: [BF-001-S02]

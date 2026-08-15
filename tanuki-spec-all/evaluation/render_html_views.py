@@ -32,23 +32,21 @@ class Document:
     role: str
 
 
-DOCUMENTS = (
+FUNC_DOCUMENTS = (
     Document("00_サマリ.md", "00_サマリ.html", "サマリ", "決定事項・未決事項・リスクを最初に確認"),
     Document("01_要件定義書.md", "01_要件定義書.html", "要件定義書", "実現する目的と要件を確認"),
     Document("02_基本設計書.md", "02_基本設計書.html", "基本設計書", "システム全体の設計方針を確認"),
     Document("03_詳細設計書.md", "03_詳細設計書.html", "詳細設計書", "実装に必要な詳細を確認"),
     Document("tests/04_テスト項目書.md", "04_テスト項目書.html", "テスト項目書", "検証する振る舞いを確認"),
+    Document("tests/design-traceability.md", "design-traceability.html", "設計トレーサビリティ", "要件と設計の対応を確認"),
+)
+
+SYSTEM_DOCUMENTS = (
     Document(
         "tests/requirements-traceability.md",
         "requirements-traceability.html",
         "要件トレーサビリティ",
         "要件間の対応を確認",
-    ),
-    Document(
-        "tests/design-traceability.md",
-        "design-traceability.html",
-        "設計トレーサビリティ",
-        "要件と設計の対応を確認",
     ),
     Document(
         "tests/system-test-cases.md",
@@ -301,8 +299,9 @@ def phase_label(phase_dir: Path) -> str:
     return name.replace("_", " ") or phase_dir.name
 
 
-def source_href(document: Document) -> str:
-    return "../" + document.source
+def source_href(document: Document, depth: int, namespace: str | None = None) -> str:
+    prefix = f"{namespace}/" if namespace else ""
+    return "../" * depth + prefix + document.source
 
 
 def page_html(
@@ -311,10 +310,19 @@ def page_html(
     markdown: str,
     previous: Document | None,
     following: Document | None,
+    depth: int,
+    namespace: str | None = None,
 ) -> str:
     body, headings = markdown_to_html(markdown)
     phase = phase_label(phase_dir)
-    source = source_href(document)
+    source = source_href(document, depth, namespace)
+    # トップレベルのviews/index.htmlは常に1箇所にしか存在しない。depthは
+    # 「phase_dirまでの階層数」（source_href用。namespace配下では2）であり、
+    # views/直下（namespace配下のさらに1階層上）まではdepth - 1階層で届く。
+    # namespace配下（func-<名前>/やsystem/）のページから素の"index.html"のままだと
+    # 実在しないviews/<namespace>/index.htmlを指してしまう（壊れたリンク）。
+    views_root_hops = max(depth - 1, 0)
+    phase_entry_href = "../" * views_root_hops + "index.html"
     previous_link = (
         f'<a rel="prev" href="{quote(previous.output)}">← 前へ: {html.escape(previous.label)}</a>'
         if previous else "<span></span>"
@@ -327,7 +335,7 @@ def page_html(
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{SECURITY_META}
 <title>{html.escape(document.label)} — {html.escape(phase)}</title><style>{CSS}</style></head>
 <body><a class="skip-link" href="#main">本文へ移動</a>
-<header class="page-header"><nav aria-label="パンくず"><a href="index.html">フェーズ入口</a> / {html.escape(document.label)}</nav>
+<header class="page-header"><nav aria-label="パンくず"><a href="{quote(phase_entry_href)}">フェーズ入口</a> / {html.escape(document.label)}</nav>
 <h1>{html.escape(document.label)}</h1>
 <p class="derived"><strong>閲覧用の派生成果物です。</strong> 正本は <a href="{quote(source)}">{html.escape(document.source)}</a> です。</p>
 <p class="meta"><span>フェーズ: {html.escape(phase)}</span><span>文書種別: {html.escape(document.label)}</span>
@@ -340,12 +348,12 @@ def page_html(
 <span class="status status-excluded">[対象外] 意図して対象外</span>
 <span class="status status-missing">[未記入] 情報不足</span></p>
 <nav class="nav-links" aria-label="文書間の移動">{previous_link}
-<a href="index.html">フェーズ入口へ</a>{next_link}</nav>
+<a href="{quote(phase_entry_href)}">フェーズ入口へ</a>{next_link}</nav>
 <p><a href="{quote(source)}">正本Markdownを開く</a></p></footer></body></html>
 """
 
 
-def index_html(phase_dir: Path, available: list[Document]) -> str:
+def index_html(phase_dir: Path, available: list[Document], depth: int, namespace: str | None = None) -> str:
     phase = phase_label(phase_dir)
     all_update_values = [source_updated(phase_dir / doc.source) for doc in available]
     update_values = [value for value in all_update_values if value != "正本に記載なし"]
@@ -353,7 +361,7 @@ def index_html(phase_dir: Path, available: list[Document]) -> str:
     cards = "".join(
         f'<li class="card"><strong>{number}. <a href="{quote(doc.output)}">{html.escape(doc.label)}</a></strong>'
         f"<p>{html.escape(doc.role)}</p>"
-        f'<p><a href="{quote(source_href(doc))}">正本: {html.escape(doc.source)}</a></p></li>'
+        f'<p><a href="{quote(source_href(doc, depth, namespace))}">正本: {html.escape(doc.source)}</a></p></li>'
         for number, doc in enumerate(available, 1)
     )
     unresolved = next(
@@ -367,6 +375,11 @@ def index_html(phase_dir: Path, available: list[Document]) -> str:
         f'<p><a href="{quote(unresolved.output)}">未決事項・注意事項を確認する</a></p>'
         if unresolved else '<p class="muted">正本内に状態マーカーは見つかりませんでした。</p>'
     )
+    # views/README.md はトップレベルに1箇所だけ存在する。depthは「phase_dirまでの
+    # 階層数」（source_href用）であり、views/直下まではdepth - 1階層で届く
+    # （page_htmlのphase_entry_hrefと同じ理屈）。
+    views_root_hops = max(depth - 1, 0)
+    readme_href = "../" * views_root_hops + "README.md"
     return f"""<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{SECURITY_META}
 <title>{html.escape(phase)} — 仕様書ビュー</title><style>{CSS}</style></head>
@@ -378,22 +391,65 @@ def index_html(phase_dir: Path, available: list[Document]) -> str:
 </header><main id="main" class="layout" tabindex="-1"><section class="content">
 <h2>読む順番</h2><p>まずサマリ、次に要件、設計、最後にテストと対応表を確認します。</p>
 <ol class="cards">{cards}</ol><h2>未決事項への導線</h2>{unresolved_link}
+<h2>閲覧方法</h2><p><a href="{quote(readme_href)}">Obsidian・ブラウザでの閲覧方法と再生成方法</a></p>
+</section></main><footer class="page-footer"><p>このHTMLを変更せず、正本を変更して再生成してください。</p></footer>
+</body></html>
+"""
+
+
+def phase_index_html(phase_dir: Path, func_available: dict[str, list[Document]], system_available: list[Document]) -> str:
+    phase = phase_label(phase_dir)
+    func_sections = "".join(
+        f'<section><h3>{html.escape(func_name)}</h3><ul class="cards">' +
+        "".join(
+            f'<li class="card"><a href="{quote(func_name)}/{quote(doc.output)}">{html.escape(doc.label)}</a>'
+            f"<p>{html.escape(doc.role)}</p></li>"
+            for doc in docs
+        ) +
+        f'</ul><p><a href="{quote(func_name)}/index.html">{html.escape(func_name)}の目次</a></p></section>'
+        for func_name, docs in func_available.items()
+    )
+    system_cards = "".join(
+        f'<li class="card"><a href="system/{quote(doc.output)}">{html.escape(doc.label)}</a>'
+        f"<p>{html.escape(doc.role)}</p></li>"
+        for doc in system_available
+    )
+    screen_mock_link = (
+        '<p><a href="画面モック.html">画面モックを確認する</a></p>'
+        if (phase_dir / "views" / "画面モック.html").is_file()
+        else ""
+    )
+    return f"""<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{SECURITY_META}
+<title>{html.escape(phase)} — 仕様書ビュー</title><style>{CSS}</style></head>
+<body><a class="skip-link" href="#main">本文へ移動</a><header class="page-header">
+<h1>{html.escape(phase)} 仕様書ビュー</h1>
+<p class="derived"><strong>読むための地図（派生成果物）です。</strong>
+正本はフェーズ配下のMarkdown/YAMLであり、HTMLは編集対象ではありません。</p>
+{screen_mock_link}
+</header><main id="main" class="layout" tabindex="-1"><section class="content">
+<h2>機能ごとの文書</h2>{func_sections}
+<h2>phase共通の文書</h2><ul class="cards">{system_cards}</ul>
 <h2>閲覧方法</h2><p><a href="README.md">Obsidian・ブラウザでの閲覧方法と再生成方法</a></p>
 </section></main><footer class="page-footer"><p>このHTMLを変更せず、正本を変更して再生成してください。</p></footer>
 </body></html>
 """
 
 
-def readme_text(phase_dir: Path, available: list[Document]) -> str:
-    rows = "\n".join(
-        f"| [{doc.output}](./{doc.output}) | [{doc.source}](../{doc.source}) | {doc.role} |"
-        for doc in available
-    )
+def readme_text(phase_dir: Path, func_available: dict[str, list[Document]], system_available: list[Document]) -> str:
+    rows = []
+    for namespace, docs in func_available.items():
+        for doc in docs:
+            rows.append(f"| [{doc.output}](./{namespace}/{doc.output}) | [{doc.source}](../{namespace}/{doc.source}) | {doc.role} |")
+    for doc in system_available:
+        rows.append(f"| [{doc.output}](./system/{doc.output}) | [{doc.source}](../{doc.source}) | {doc.role} |")
+    table_rows = "\n".join(rows)
     return f"""# {phase_label(phase_dir)} HTMLビュー
 
-この `views/` は閲覧用の派生成果物です。正本は一つ上の階層にあるMarkdown/YAMLです。
-HTMLを直接編集せず、正本を直してから再生成してください。各HTMLは外部通信やJavaScriptを
-使わない単一ファイルで、ブラウザでも開けます。
+この `views/` は閲覧用の派生成果物です。正本は機能ごとに `func-<名前>/` 配下、
+またはphase直下（業務フロー・AC・ST等）にあるMarkdown/YAMLです。HTMLを直接編集せず、
+正本を直してから再生成してください。各HTMLは外部通信やJavaScriptを使わない単一ファイルで、
+ブラウザでも開けます。
 
 ## 閲覧
 
@@ -416,7 +472,7 @@ HTMLを直接編集せず、正本を直してから再生成してください�
 
 | HTMLビュー | 正本 | 役割 |
 | --- | --- | --- |
-{rows}
+{table_rows}
 
 ## 再生成と検証
 
@@ -431,50 +487,79 @@ python3 tanuki-spec-all/evaluation/render_html_views.py "<phase>" --check
 """
 
 
-def expected_outputs(phase_dir: Path) -> tuple[dict[Path, str], list[Document]]:
-    available = [doc for doc in DOCUMENTS if (phase_dir / doc.source).is_file()]
+def discover_funcs(phase_dir: Path) -> list[Path]:
+    return sorted(
+        (path for path in phase_dir.glob("func-*") if path.is_dir()),
+        key=os.fspath,
+    )
+
+
+def expected_outputs(phase_dir: Path) -> tuple[dict[Path, str], dict[str, list[Document]], list[Document]]:
+    """戻り値: (出力パス→HTML内容, funcごとの available Document一覧, system の available Document一覧)"""
     outputs: dict[Path, str] = {}
-    for index, doc in enumerate(available):
-        outputs[Path(doc.output)] = page_html(
+    func_available: dict[str, list[Document]] = {}
+    for func_dir in discover_funcs(phase_dir):
+        namespace = func_dir.name
+        available = [doc for doc in FUNC_DOCUMENTS if (func_dir / doc.source).is_file()]
+        func_available[namespace] = available
+        for index, doc in enumerate(available):
+            outputs[Path(namespace) / doc.output] = page_html(
+                func_dir,
+                doc,
+                (func_dir / doc.source).read_text(encoding="utf-8"),
+                available[index - 1] if index else None,
+                available[index + 1] if index + 1 < len(available) else None,
+                depth=2,
+                namespace=namespace,
+            )
+        outputs[Path(namespace) / "index.html"] = index_html(func_dir, available, depth=2, namespace=namespace)
+
+    system_available = [doc for doc in SYSTEM_DOCUMENTS if (phase_dir / doc.source).is_file()]
+    for index, doc in enumerate(system_available):
+        outputs[Path("system") / doc.output] = page_html(
             phase_dir,
             doc,
             (phase_dir / doc.source).read_text(encoding="utf-8"),
-            available[index - 1] if index else None,
-            available[index + 1] if index + 1 < len(available) else None,
+            system_available[index - 1] if index else None,
+            system_available[index + 1] if index + 1 < len(system_available) else None,
+            depth=2,
+            namespace=None,
         )
-    outputs[Path("index.html")] = index_html(phase_dir, available)
-    outputs[Path("README.md")] = readme_text(phase_dir, available)
-    return outputs, available
+
+    outputs[Path("index.html")] = phase_index_html(phase_dir, func_available, system_available)
+    outputs[Path("README.md")] = readme_text(phase_dir, func_available, system_available)
+    return outputs, func_available, system_available
 
 
 def render_phase(phase_dir: Path, check: bool = False) -> bool:
-    """1フェーズを生成/検証する。成功ならTrue、差分があればFalse。"""
     phase_dir = phase_dir.resolve()
     view_dir = phase_dir / "views"
-    outputs, available = expected_outputs(phase_dir)
+    outputs, func_available, system_available = expected_outputs(phase_dir)
     if view_dir.is_symlink():
         print(f"安全のため処理を中止: views がシンボリックリンクです: {view_dir}")
         return False
-    known_names = {"index.html", "README.md", *(doc.output for doc in DOCUMENTS)}
+    known_html = {doc.output for doc in (*FUNC_DOCUMENTS, *SYSTEM_DOCUMENTS)}
     linked_outputs = [
-        view_dir / name for name in known_names if (view_dir / name).is_symlink()
-    ]
+        path for path in view_dir.rglob("*") if path.is_symlink() and (path.name in known_html or path.name in {"index.html", "README.md"})
+    ] if view_dir.exists() else []
     if linked_outputs:
         for path in sorted(linked_outputs, key=os.fspath):
             print(f"安全のため処理を中止: 既知の出力がシンボリックリンクです: {path}")
         return False
-    wanted_html = {path.name for path in outputs if path.suffix == ".html"}
-    known_html = {doc.output for doc in DOCUMENTS}
+    wanted = {str(path) for path in outputs}
     stale = sorted(
-        path for path in view_dir.glob("*.html")
-        if path.name in known_html and path.name not in wanted_html
+        path for path in view_dir.rglob("*.html")
+        if path.is_file() and path.name in known_html and str(path.relative_to(view_dir)) not in wanted
     ) if view_dir.exists() else []
     mismatches = [
         relative for relative, content in outputs.items()
         if not (view_dir / relative).is_file()
         or (view_dir / relative).read_text(encoding="utf-8") != content
     ]
-    skipped = [doc.source for doc in DOCUMENTS if doc not in available]
+    skipped = [
+        f"{func_name}/{doc.source}" for func_name in func_available for doc in FUNC_DOCUMENTS
+        if doc not in func_available[func_name]
+    ] + [doc.source for doc in SYSTEM_DOCUMENTS if doc not in system_available]
     if check:
         for source in skipped:
             print(f"スキップ: {source}（正本なし）")
@@ -492,6 +577,7 @@ def render_phase(phase_dir: Path, check: bool = False) -> bool:
         path.unlink()
         print(f"削除: {path}")
     for relative, content in outputs.items():
+        (view_dir / relative).parent.mkdir(parents=True, exist_ok=True)
         (view_dir / relative).write_text(content, encoding="utf-8")
         print(f"生成: {view_dir / relative}")
     for source in skipped:
@@ -507,7 +593,7 @@ def discover_phase_dirs(paths: list[Path]) -> list[Path]:
         root = root.resolve()
         if root.is_dir() and (
             root.name.startswith("phase-")
-            or any((root / doc.source).is_file() for doc in DOCUMENTS)
+            or any(path.is_dir() for path in root.glob("func-*"))
         ):
             found.add(root)
             continue

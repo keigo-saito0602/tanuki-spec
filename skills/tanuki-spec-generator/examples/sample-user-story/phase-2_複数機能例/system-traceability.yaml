@@ -1,0 +1,40 @@
+version: "1.0"
+func_traceability:
+  - func-予約/traceability.yaml
+  - func-認証/traceability.yaml
+business_flows:
+  - id: BF-001
+    status: in_scope
+    name: "予約フロー"
+    steps:
+      - id: BF-001-S01
+        action: "ログインする"
+        user_story_ids: [US-002]
+      - id: BF-001-S02
+        action: "空きレッスン枠を予約する"
+        user_story_ids: [US-001]
+acceptance_tests:
+  - id: AC-001
+    status: in_scope
+    feature: "予約"
+    # FR-001（予約）とFR-002（ログイン）の両方をまたぐ受入試験。
+    # 新しいsystem_traceability_gate.pyは「ACの対象US/対象手順が、参照する各要件の
+    # 対象US/対象手順と重なること」を要件ごとに検証するため、AC側もFR-001・FR-002
+    # 両方の対象US（US-001, US-002）・対象手順（BF-001-S01, BF-001-S02）を含める。
+    user_story_ids: [US-001, US-002]
+    requirement_ids: [FR-001, FR-002]
+    flow_step_ids: [BF-001-S01, BF-001-S02]
+    scenario:
+      name: "ログインしてから予約確定"
+      given: ["空きレッスン枠がある"]
+      when: ["ログインする", "予約確定ボタンを押す"]
+      then: ["予約が確定する"]
+system_tests:
+  - id: ST-001
+    status: in_scope
+    test_type: integration
+    requirement_ids: [FR-001, FR-002]
+    acceptance_test_ids: [AC-001]
+    preconditions: ["APIサーバが起動している"]
+    steps: ["ログインしてから予約APIを呼び出す"]
+    expected_results: ["200が返り予約が確定する"]

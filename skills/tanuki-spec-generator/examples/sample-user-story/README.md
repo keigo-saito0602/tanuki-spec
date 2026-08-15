@@ -1,9 +1,16 @@
 # sample-user-story
 
 レッスン予約・キャンセルのユーザーストーリーから生成したサンプルです。
-従来のフラット配置は回帰テストとの互換性のため残し、HTMLビューは標準フェーズ構成の
+func/phase再構成（2026-08-12設計）に対応済みで、要件・トレーサビリティ正本は
+[`phase-1_レッスン予約/func-予約/traceability.yaml`](./phase-1_レッスン予約/func-予約/traceability.yaml)、
+業務フロー・AC・STは
+[`phase-1_レッスン予約/system-traceability.yaml`](./phase-1_レッスン予約/system-traceability.yaml)
+にあります。root直下の`traceability.yaml`は`spec_gate`等の既存テストのために残した
+func正本へのsymlinkです。HTMLビューは
 [`phase-1_レッスン予約/views/index.html`](./phase-1_レッスン予約/views/index.html)
 から確認できます。
+
+複数funcの構成例は[`phase-2_複数機能例/`](./phase-2_複数機能例/README.md)を参照してください。
 
 HTMLビューを再生成・検証する場合は、リポジトリルートで次を実行します。
 

@@ -13,6 +13,7 @@
 ```text
 tanuki-spec-generator
 工程:            # requirements（要件定義）/ basic_design（基本設計）/ detailed_design（詳細設計）
+対象func:        # phase内の機能名（例: 予約）。出力先 <phase>/func-<名前>/ の <名前> になる
 ストーリー:      # 誰が/いつ/何を/なぜ、のユーザーストーリー群
 参照仕様:        # 過去仕様から今回使う内容の抜粋。無ければ空欄
 モード:          # full（既定・全項目＋評価）/ quick（必須のみ＋簡易）。空欄ならfull
@@ -25,6 +26,7 @@ tanuki-spec-generator
 ```text
 tanuki-spec-design
 要件定義書:              # 必須。未完成でも可
+対象func:                # phase内の機能名（例: 予約）。出力先 <phase>/func-<名前>/ の <名前> になる
 既存コード:               # 任意。リポジトリまたは対象パス
 要件トレーサビリティ:      # traceability.yaml。なければ作成を提案
 モード:                   # new（既定）/ update
@@ -33,15 +35,17 @@ tanuki-spec-design
 
 ## tanuki-spec-test-item
 
-要件定義書と設計書からUT/ITのテスト項目書とV字カバレッジを作る。実装が未了のため、現時点では手順の設計として読む（[SKILLS.md](./SKILLS.md)の状態欄を参照）。
+要件定義書と設計書からUT/ITのテスト項目書とV字カバレッジを作る。
 
 ```text
 tanuki-spec-test-item
 要件定義書:                   # 必須
 基本設計書:                    # 必須
 詳細設計書:                    # 必須
-要件トレーサビリティ:           # traceability.yaml。必須
-設計トレーサビリティ:           # design-traceability.yaml。必須
+対象phase:                    # phaseディレクトリのパス
+対象func:                     # phase内の機能名（例: 予約）。出力先 <phase>/func-<名前>/ の <名前> になる
+要件トレーサビリティ:           # func直下のtraceability.yaml。必須
+設計トレーサビリティ:           # func直下のdesign-traceability.yaml。必須
 モード:                        # new（既定）/ update
 前回のテスト成果物:             # update では必須
 ```
@@ -55,6 +59,7 @@ tanuki-spec-reviewer
 対象仕様書:      # レビューする記入済み.mdのパス
 トレーサビリティ: # 対応する traceability.yaml のパス
 設計トレーサビリティ: # 設計工程のみ design-traceability.yaml のパス
+モード: # requirements / basic_design / detailed_design / unit_test / integration_test / phase_integration
 reviewer:        # 例: codex / claude-new-session。生成担当と別であること
 ```
 
@@ -65,7 +70,7 @@ reviewer:        # 例: codex / claude-new-session。生成担当と別である
 ```text
 tanuki-task-planner
 対象機能:          # 例: レッスン予約機能
-トレーサビリティ:  # traceability.yaml のパス
+対象phase:         # phaseディレクトリのパス
 対象リリース:      # MVP / Release 2 など
 ```
 
@@ -75,7 +80,7 @@ tanuki-task-planner
 
 ```text
 tanuki-spec-screen-mock
-要件定義書(必須): docs/spec/phase-1_公開サイト・予約/01_要件定義書.md
+要件定義書(必須): docs/spec/phase-1_公開サイト・予約/func-予約/01_要件定義書.md, docs/spec/phase-1_公開サイト・予約/func-認証/01_要件定義書.md  # 複数funcを横断して指定
 フェーズ(必須): docs/spec/phase-1_公開サイト・予約
 参考ソース(任意): tailwind.config.ts / ./ref/top.png / https://example.com
 対象アクター(任意): 生徒, 講師

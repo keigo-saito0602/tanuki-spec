@@ -145,12 +145,27 @@ def validate_item_result(item: dict) -> list[str]:
     return errors
 
 
+def resolve_system_traceability_path(traceability_path: Path) -> Path:
+    """funcのtraceability.yamlから見て、正本のsystem-traceability.yaml（phase直下）のパスを返す。
+
+    func単位のtraceability.yamlはuser_stories/requirementsだけを持つ縮小形式で、
+    acceptance_tests/system_testsはfuncの1階層上（phase直下）のsystem-traceability.yamlに
+    しかない（phase_traceability.py・system_traceability_gate.pyと同じ解決規則）。
+
+    traceability_pathは互換用のsymlink（例: 旧配置互換のroot直下traceability.yaml）の
+    ことがあるため、まずresolve()して実体の場所を起点にする（symlinkの設置場所を
+    起点にすると、実体とは無関係な誤ったphaseディレクトリを指してしまう）。
+    """
+    return traceability_path.resolve().parent.parent / "system-traceability.yaml"
+
+
 def requirement_results(traceability_path: Path, design_path: Path | None, items: list[dict]) -> list[dict]:
     trace = load(traceability_path)
     design = load(design_path) if design_path else {}
     design_elements = design.get("design_elements", [])
-    acceptance = trace.get("acceptance_tests", [])
-    tests = trace.get("system_tests", [])
+    system_data = load(resolve_system_traceability_path(traceability_path))
+    acceptance = system_data.get("acceptance_tests", [])
+    tests = system_data.get("system_tests", [])
     failed_required = {item["id"] for item in items if item.get("importance") == "required" and item.get("status") != "pass" and item.get("status") != "not_applicable"}
     results = []
     for requirement in trace.get("requirements", []):

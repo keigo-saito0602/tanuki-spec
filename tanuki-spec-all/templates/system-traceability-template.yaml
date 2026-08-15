@@ -1,0 +1,42 @@
+version: "1.0"
+
+# phase配下の各funcのtraceability.yamlへの相対パス。
+# system_traceability_gate.pyがここを起点にUS/requirementを横断で読み、ID一意性を検査する。
+func_traceability:
+  - func-<機能名1>/traceability.yaml
+  - func-<機能名2>/traceability.yaml
+
+business_flows:
+  - id: BF-001
+    status: in_scope
+    name: "<業務フロー名>"
+    steps:
+      - id: BF-001-S01
+        action: "<利用者または担当者が行う業務>"
+        user_story_ids: [US-001] # funcをまたいで存在するUSを指してよい
+
+acceptance_tests:
+  - id: AC-001
+    status: in_scope
+    feature: "<.feature のグルーピング名。未指定なら『受入シナリオ』へ集約>"
+    user_story_ids: [US-001]
+    requirement_ids: [FR-001] # funcをまたいで存在するrequirementを指してよい
+    flow_step_ids: [BF-001-S01]
+    scenario:
+      name: "<シナリオ名（単一の振る舞い）>"
+      given: ["<前提状態（操作ではない）>"]
+      when: ["<利用者の操作・イベント（原則1つ）>"]
+      then: ["<観測可能な期待結果>"]
+      # examples は任意（同一振る舞いのデータ違いのときだけ）
+      # examples:
+      #   - {列名A: "値1", 列名B: "値2"}
+
+system_tests:
+  - id: ST-001
+    status: in_scope
+    test_type: functional # functional / integration / non_functional / performance / security / recovery / usability
+    requirement_ids: [FR-001]
+    acceptance_test_ids: [AC-001]
+    preconditions: ["<テストデータ・環境の条件>"]
+    steps: ["<システムへの入力・操作>"]
+    expected_results: ["<システムが返す結果・状態>"]

@@ -46,7 +46,97 @@ def design_traceability_path(data: dict, test_traceability_path: Path) -> Path:
     path = Path(value)
     if path.is_absolute():
         raise ValueError("design_traceability は相対パスで指定してください")
+    func_dir = test_traceability_path.parent
+    if (func_dir / path).resolve().parent != func_dir.resolve():
+        raise ValueError("design_traceability は同じfunc直下のdesign-traceability.yamlを指してください")
+    return func_dir / path
+
+
+SYSTEM_TRACEABILITY_RELATIVE_VALUE = "../system-traceability.yaml"
+
+
+def system_traceability_path(data: dict, test_traceability_path: Path) -> Path:
+    value = data.get("system_traceability")
+    if not nonempty_text(value):
+        raise ValueError("system_traceability は system-traceability.yaml への相対パスで指定してください")
+    path = Path(value)
+    if path.is_absolute():
+        raise ValueError("system_traceability は相対パスで指定してください")
+    # phase直下の正本は1つに固定する。別名（例: ../shadow.yaml）を許すと、
+    # phase内の別funcが別の「正本」を参照してphase横断のAC/ST検証を迂回できてしまう。
+    if value != SYSTEM_TRACEABILITY_RELATIVE_VALUE:
+        raise ValueError(
+            f"system_traceability は {SYSTEM_TRACEABILITY_RELATIVE_VALUE} で固定してください（別名は不可）"
+        )
     return test_traceability_path.parent / path
+
+
+def validate_system_traceability(
+    test_traceability_path: Path, data: dict, func_requirement_ids: set[str]
+) -> list[str]:
+    """test-traceability.yamlのsystem_traceabilityフィールドを検証する。
+
+    ①未記入でない相対パス、②参照先ファイルが存在する、③system_traceability_gate.pyを
+    通過済みの正本である、④対象funcのrequirement_idsが参照可能、⑤同じphase直下である、
+    ⑥参照先のfunc_traceabilityに対象func自身が登録されている、の6点。
+    """
+    import system_traceability_gate
+    import phase_traceability
+
+    failures: list[str] = []
+    try:
+        path = system_traceability_path(data, test_traceability_path)
+    except ValueError as error:
+        return [str(error)]
+
+    if not path.is_file():
+        return [f"system_traceability の参照先が存在しません: {path}"]
+
+    # ⑤ 同じphase直下であること（test-traceability.yamlの祖父ディレクトリ＝phaseと一致するか）。
+    # symlink自体の設置場所ではなく、解決先（ファイル本体）の親ディレクトリで判定する
+    # （system-traceability.yamlという名前のsymlinkが別phaseの実体を指すケースを防ぐため）。
+    func_dir = test_traceability_path.parent
+    phase_dir = func_dir.parent
+    if path.resolve().parent != phase_dir.resolve():
+        failures.append(
+            f"system_traceability は同じphase直下のsystem-traceability.yamlを指してください: {path}"
+        )
+        return failures
+
+    try:
+        system_data = system_traceability_gate.load(path)
+    except (OSError, ValueError) as error:
+        return [f"system_traceability を読み込めません: {error}"]
+
+    # ⑥ 参照先のfunc_traceabilityに対象func自身が登録されていること
+    func_traceability_path = func_dir / "traceability.yaml"
+    expected_relative = phase_traceability.relative_func_traceability(path, func_traceability_path)
+    registered = system_data.get("func_traceability") or []
+    if expected_relative not in registered:
+        failures.append(
+            f"system_traceability の参照先（{path}）のfunc_traceabilityに、"
+            f"このfunc自身（{expected_relative}）が登録されていません"
+        )
+        return failures
+
+    # ③ system_traceability_gate.pyを通過済みの正本であること
+    user_stories, requirements, index_failures = phase_traceability.build_phase_index(path, system_data)
+    if index_failures:
+        failures.extend(f"system_traceability の参照先が不正です: {message}" for message in index_failures)
+        return failures
+    gate_failures = system_traceability_gate.validate(system_data, user_stories, requirements)
+    if gate_failures:
+        failures.append(f"system_traceability の参照先がsystem_traceability_gate.pyを通過していません: {path}")
+        return failures
+
+    # ④ 対象funcのrequirement_idsが、system_traceability側の要件索引で解決できること
+    unresolvable = func_requirement_ids - set(requirements)
+    if unresolvable:
+        failures.append(
+            f"system_traceability の参照先で解決できない要件IDがあります: {', '.join(sorted(unresolvable))}"
+        )
+
+    return failures
 
 
 def design_element_index(design_traceability_path: Path) -> tuple[dict[str, dict], list[str]]:
@@ -212,6 +302,12 @@ def main() -> None:
     try:
         data = load(args.test_traceability)
         design_elements, failures = full_design_element_index(args.test_traceability, data)
+        if not failures:
+            # design_elementsのrequirement_idsを平坦化する
+            func_requirement_ids: set[str] = set()
+            for element in design_elements.values():
+                func_requirement_ids.update(element.get("requirement_ids") or [])
+            failures = validate_system_traceability(args.test_traceability, data, func_requirement_ids)
         if not failures:
             failures = validate(data, design_elements)
     except (OSError, ValueError, yaml.YAMLError) as error:

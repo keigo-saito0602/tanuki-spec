@@ -19,7 +19,10 @@ class EvaluateReviewItemsTest(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.review_path = Path(self.directory.name) / "review.yaml"
         self.context_path = Path(self.directory.name) / "context.yaml"
-        self.traceability = ROOT.parent / "tanuki-spec-generator" / "examples" / "sample-user-story" / "traceability.yaml"
+        self.traceability = (
+            ROOT.parent / "tanuki-spec-generator" / "examples" / "sample-user-story"
+            / "phase-1_レッスン予約" / "func-予約" / "traceability.yaml"
+        )
         self.design = ROOT.parent / "tanuki-spec-design" / "examples" / "sample-user-story" / "design-traceability.yaml"
         self.rules = ROOT / "templates" / "review-rules.yaml"
         self.context_path.write_text(yaml.safe_dump({"review_context": {"workload_types": ["web_ui"], "data_classifications": [], "has_user_roles": True, "deployment_required": True}}, allow_unicode=True), encoding="utf-8")
@@ -59,3 +62,36 @@ class EvaluateReviewItemsTest(unittest.TestCase):
         evaluate_review_items.emit_skeleton(self.review_path, self.context_path, self.rules, False)
         with self.assertRaisesRegex(ValueError, "status が未記入"):
             evaluate_review_items.aggregate(self.review_path, self.context_path, self.rules, self.traceability, self.design, None, False)
+
+    def test_requirement_results_reads_ac_st_from_phase_system_traceability(self):
+        """func単位のtraceability.yamlはAC/STを持たない縮小形式なので、
+        phase直下のsystem-traceability.yaml（../system-traceability.yaml）から
+        acceptance_tests/system_testsを解決できないと、全要件が黙って not_evaluable
+        になってしまう（証跡が正しく参照されていることの回帰テスト）。
+        """
+        results = evaluate_review_items.requirement_results(self.traceability, None, [])
+        self.assertTrue(results, "要件が1件も見つかっていません")
+        by_id = {result["requirement_id"]: result for result in results}
+        self.assertIn("FR-001", by_id)
+        fr_001 = by_id["FR-001"]
+        self.assertNotEqual(fr_001["status"], "not_evaluable")
+        self.assertTrue(fr_001["acceptance_criteria_ids"], "受入試験の証跡が空です")
+        self.assertTrue(fr_001["test_evidence_ids"], "システムテストの証跡が空です")
+
+    def test_requirement_results_resolves_symlinked_traceability_path(self):
+        """互換用に残しているroot直下のtraceability.yaml（func-予約/traceability.yamlへの
+        symlink）を渡した場合も、symlinkの設置場所ではなく実体の場所を起点に
+        phase直下のsystem-traceability.yamlを解決できないといけない。
+        """
+        symlinked_traceability = (
+            ROOT.parent / "tanuki-spec-generator" / "examples" / "sample-user-story" / "traceability.yaml"
+        )
+        self.assertTrue(symlinked_traceability.is_symlink(), "このテストの前提（symlink）が崩れています")
+        results = evaluate_review_items.requirement_results(symlinked_traceability, None, [])
+        self.assertTrue(results, "要件が1件も見つかっていません")
+        by_id = {result["requirement_id"]: result for result in results}
+        self.assertIn("FR-001", by_id)
+        fr_001 = by_id["FR-001"]
+        self.assertNotEqual(fr_001["status"], "not_evaluable")
+        self.assertTrue(fr_001["acceptance_criteria_ids"], "受入試験の証跡が空です")
+        self.assertTrue(fr_001["test_evidence_ids"], "システムテストの証跡が空です")

@@ -27,6 +27,13 @@ ID_PATTERNS = {
     "system_tests": re.compile(r"^ST-\d{3,}$"),
     "flow_steps": re.compile(r"^BF-\d{3,}-S\d{2,}$"),
 }
+FLOW_STEP_ID_PATTERN = re.compile(r"^BF-\d{3,}-S\d{2,}$")
+# func/phase再構成前の旧フラット形式が持っていたキー。今のtraceability.yamlは
+# user_stories/requirementsだけを持つ縮小形式で、これらはphase直下の
+# system-traceability.yamlへ移管された。validate()が縮小後の2セクションしか見ないと、
+# 旧形式のファイルをそのまま渡してもAC/STセクションが単に無視されるだけで
+# サイレントに「通過」してしまう（AC/STがもう何にも検証されていないのに緑に見える罠）。
+LEGACY_KEYS = ("business_flows", "acceptance_tests", "system_tests")
 REQUIREMENT_TYPES = {"business", "functional", "non_functional"}
 SYSTEM_TEST_TYPES = {"functional", "integration", "non_functional", "performance", "security", "recovery", "usability"}
 UNFILLED_RE = re.compile(r"<[^>]+>|\[要確認|\b(?:TODO|TBD)\b|[（(]未記入[）)]", re.IGNORECASE)
@@ -161,57 +168,25 @@ def validate(data: dict) -> list[str]:
     if data.get("version") != "1.0":
         failures.append("version は 1.0 を指定してください")
 
+    legacy_keys_present = [key for key in LEGACY_KEYS if key in data]
+    if legacy_keys_present:
+        failures.append(
+            "旧形式のtraceability.yamlです（" + "・".join(legacy_keys_present) + "を含む）。"
+            "func/phase構成への移行が必要です。business_flows・acceptance_tests・system_testsは"
+            "phase直下のsystem-traceability.yamlへ移し、このファイルにはuser_stories・requirementsだけを残してください。"
+        )
+
     user_stories = records(data, "user_stories", failures)
-    business_flows = records(data, "business_flows", failures)
     requirements = records(data, "requirements", failures)
-    acceptance_tests = records(data, "acceptance_tests", failures)
-    system_tests = records(data, "system_tests", failures)
 
     users = index_by_id(user_stories, "user_stories", "ユーザーストーリー", failures)
-    flows = index_by_id(business_flows, "business_flows", "業務フロー", failures)
     reqs = index_by_id(requirements, "requirements", "要件", failures)
-    acceptances = index_by_id(acceptance_tests, "acceptance_tests", "受入試験", failures)
-    systems = index_by_id(system_tests, "system_tests", "システムテスト", failures)
-
-    flow_steps: dict[str, dict] = {}
-    for flow_id, flow in flows.items():
-        if not validate_status(flow, "業務フロー", failures):
-            continue
-        require_text(flow, "name", "業務フロー", failures)
-        steps = flow.get("steps")
-        if not isinstance(steps, list) or not steps:
-            failures.append(f"業務フロー {flow_id}: steps は1件以上必要です")
-            continue
-        for step in steps:
-            if not isinstance(step, dict):
-                failures.append(f"業務フロー {flow_id}: steps の要素はオブジェクトで指定してください")
-                continue
-            step_id = step.get("id")
-            if not nonempty_text(step_id) or not ID_PATTERNS["flow_steps"].fullmatch(step_id):
-                failures.append(f"業務フロー {flow_id}: 手順IDの形式が不正です")
-                continue
-            if not step_id.startswith(f"{flow_id}-"):
-                failures.append(f"業務フロー {flow_id}: 手順ID {step_id} は業務フローIDで始めてください")
-            if step_id in flow_steps:
-                failures.append(f"業務フロー手順 {step_id}: IDが重複しています")
-            # 手順の対象状態は親業務フローに従う。
-            flow_steps[step_id] = {**step, "status": flow["status"]}
-            require_text(step, "action", "業務フロー手順", failures)
-            validate_references(step, "user_story_ids", users, "業務フロー手順", "ユーザーストーリー", failures)
 
     for story in users.values():
         if validate_status(story, "ユーザーストーリー", failures):
             require_text(story, "statement", "ユーザーストーリー", failures)
 
     requirement_story_links: dict[str, set[str]] = {key: set() for key in users}
-    requirement_step_links: dict[str, set[str]] = {key: set() for key in flow_steps}
-    acceptance_story_links: dict[str, set[str]] = {key: set() for key in users}
-    acceptance_step_links: dict[str, set[str]] = {key: set() for key in flow_steps}
-    acceptance_requirement_links: dict[str, set[str]] = {key: set() for key in reqs}
-    system_requirement_links: dict[str, set[str]] = {key: set() for key in reqs}
-    system_acceptance_links: dict[str, set[str]] = {key: set() for key in acceptances}
-    requirement_targets: dict[str, dict[str, set[str]]] = {}
-    acceptance_targets: dict[str, dict[str, set[str]]] = {}
 
     for requirement in reqs.values():
         if not validate_status(requirement, "要件", failures):
@@ -222,74 +197,17 @@ def validate(data: dict) -> list[str]:
         if requirement.get("type") not in REQUIREMENT_TYPES:
             failures.append(f"要件 {requirement.get('id', '<IDなし>')}: type は business/functional/non_functional で指定してください")
         story_ids = validate_references(requirement, "user_story_ids", users, "要件", "ユーザーストーリー", failures)
-        step_ids = validate_references(requirement, "flow_step_ids", flow_steps, "要件", "業務フロー手順", failures)
-        requirement_targets[requirement["id"]] = {"stories": set(story_ids), "steps": set(step_ids)}
-        flow_story_ids = set().union(*(set(flow_steps[step_id].get("user_story_ids", [])) for step_id in step_ids)) if step_ids else set()
-        if story_ids and step_ids and not set(story_ids) & flow_story_ids:
-            failures.append(f"要件 {requirement['id']}: 対象USと関連業務フロー手順の対象USが対応していません")
+        flow_step_ids = requirement.get("flow_step_ids")
+        if not isinstance(flow_step_ids, list) or not flow_step_ids or not all(
+            isinstance(item, str) and FLOW_STEP_ID_PATTERN.fullmatch(item) for item in flow_step_ids
+        ):
+            failures.append(f"要件 {requirement.get('id', '<IDなし>')}: flow_step_ids は1件以上、BF-xxx-Sxx形式の配列で指定してください")
         for story_id in story_ids:
             requirement_story_links[story_id].add(requirement["id"])
-        for step_id in step_ids:
-            requirement_step_links[step_id].add(requirement["id"])
-
-    for acceptance in acceptances.values():
-        if not validate_status(acceptance, "受入試験", failures):
-            continue
-        validate_scenario(acceptance, failures)
-        story_ids = validate_references(acceptance, "user_story_ids", users, "受入試験", "ユーザーストーリー", failures)
-        requirement_ids = validate_references(acceptance, "requirement_ids", reqs, "受入試験", "要件", failures)
-        step_ids = validate_references(acceptance, "flow_step_ids", flow_steps, "受入試験", "業務フロー手順", failures)
-        acceptance_targets[acceptance["id"]] = {"stories": set(story_ids), "requirements": set(requirement_ids), "steps": set(step_ids)}
-        flow_story_ids = set().union(*(set(flow_steps[step_id].get("user_story_ids", [])) for step_id in step_ids)) if step_ids else set()
-        if story_ids and step_ids and not set(story_ids) & flow_story_ids:
-            failures.append(f"受入試験 {acceptance['id']}: 対象USと対象業務フロー手順の対象USが対応していません")
-        for story_id in story_ids:
-            acceptance_story_links[story_id].add(acceptance["id"])
-        for requirement_id in requirement_ids:
-            acceptance_requirement_links[requirement_id].add(acceptance["id"])
-            requirement_target = requirement_targets.get(requirement_id, {"stories": set(), "steps": set()})
-            if not acceptance_targets[acceptance["id"]]["stories"] & requirement_target["stories"]:
-                failures.append(f"受入試験 {acceptance['id']}: 要件 {requirement_id} と対象USが対応していません")
-            if not acceptance_targets[acceptance["id"]]["steps"] & requirement_target["steps"]:
-                failures.append(f"受入試験 {acceptance['id']}: 要件 {requirement_id} と対象業務フロー手順が対応していません")
-        for step_id in step_ids:
-            acceptance_step_links[step_id].add(acceptance["id"])
-
-    for system in systems.values():
-        if not validate_status(system, "システムテスト", failures):
-            continue
-        if system.get("test_type") not in SYSTEM_TEST_TYPES:
-            failures.append(f"システムテスト {system.get('id', '<IDなし>')}: test_type が不正です")
-        for field in ("preconditions", "steps", "expected_results"):
-            require_list(system, field, "システムテスト", failures)
-        requirement_ids = validate_references(system, "requirement_ids", reqs, "システムテスト", "要件", failures)
-        acceptance_ids = validate_references(system, "acceptance_test_ids", acceptances, "システムテスト", "受入試験", failures)
-        for requirement_id in requirement_ids:
-            system_requirement_links[requirement_id].add(system["id"])
-        for acceptance_id in acceptance_ids:
-            system_acceptance_links[acceptance_id].add(system["id"])
-            acceptance_requirement_ids = acceptance_targets.get(acceptance_id, {"requirements": set()})["requirements"]
-            if not set(requirement_ids) & acceptance_requirement_ids:
-                failures.append(f"システムテスト {system['id']}: 受入試験 {acceptance_id} と対象要件が対応していません")
 
     for story_id, story in users.items():
         if story.get("status") == "in_scope" and not requirement_story_links[story_id]:
             failures.append(f"ユーザーストーリーが孤立しています: {story_id} を満たす要件がありません")
-        if story.get("status") == "in_scope" and not acceptance_story_links[story_id]:
-            failures.append(f"ユーザーストーリーが孤立しています: {story_id} の受入試験がありません")
-    for step_id in flow_steps:
-        if not requirement_step_links[step_id]:
-            failures.append(f"業務フロー手順が孤立しています: {step_id} を満たす要件がありません")
-        if not acceptance_step_links[step_id]:
-            failures.append(f"業務フロー手順が孤立しています: {step_id} の受入試験がありません")
-    for requirement_id, requirement in reqs.items():
-        if requirement.get("status") == "in_scope" and not acceptance_requirement_links[requirement_id]:
-            failures.append(f"要件が孤立しています: {requirement_id} の受入試験がありません")
-        if requirement.get("status") == "in_scope" and not system_requirement_links[requirement_id]:
-            failures.append(f"要件が孤立しています: {requirement_id} のシステムテストがありません")
-    for acceptance_id, acceptance in acceptances.items():
-        if acceptance.get("status") == "in_scope" and not system_acceptance_links[acceptance_id]:
-            failures.append(f"受入試験が孤立しています: {acceptance_id} のシステムテストがありません")
     return failures
 
 

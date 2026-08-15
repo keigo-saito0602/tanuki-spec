@@ -1,0 +1,12 @@
+version: "1.0"
+user_stories:
+  - id: US-001
+    status: in_scope
+    statement: "生徒は空きレッスン枠を予約したい。なぜなら講座を受けたいから。"
+requirements:
+  - id: FR-001
+    status: in_scope
+    type: functional
+    statement: "生徒は予約を確定できる"
+    user_story_ids: [US-001]
+    flow_step_ids: [BF-001-S02]
