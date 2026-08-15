@@ -393,18 +393,47 @@ class SystemTraceabilityFieldTest(unittest.TestCase):
             failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-001"})
             self.assertTrue(any("system_traceability" in failure for failure in failures))
 
+    def test_system_traceability_pointing_to_a_differently_named_file_is_rejected(self):
+        """system_traceabilityは`../system-traceability.yaml`固定の正本を指さなければならない。
+
+        同じphase直下にある別名YAML（例: `../shadow.yaml`）は、内容が正当な
+        system-traceability.yaml相当でも受理してはいけない。別名を許すと、
+        phase内の別funcが別の「正本」を参照してphase横断のAC/ST検証を迂回できてしまう。
+        """
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory_str:
+            root = Path(directory_str)
+            path = self._write_valid_chain(root)
+            shadow_path = root / "shadow.yaml"
+            shadow_path.write_text(SYSTEM_TRACEABILITY_YAML, encoding="utf-8")
+            data = test_traceability_gate.load(path)
+            data["system_traceability"] = "../shadow.yaml"
+            failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-001"})
+            self.assertTrue(
+                any("system_traceability" in failure for failure in failures),
+                msg=f"別名YAMLへのsystem_traceabilityは拒否されるべきです: {failures}",
+            )
+
     def test_system_traceability_pointing_to_missing_file_is_rejected(self):
         import tempfile
 
         with tempfile.TemporaryDirectory() as directory_str:
-            path = self._write_valid_chain(Path(directory_str))
+            root = Path(directory_str)
+            path = self._write_valid_chain(root)
+            (root / "system-traceability.yaml").unlink()
             data = test_traceability_gate.load(path)
-            data["system_traceability"] = "../does-not-exist.yaml"
             failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-001"})
             self.assertTrue(any("存在しません" in failure or "読み込めません" in failure for failure in failures))
 
     def test_system_traceability_in_different_phase_is_rejected(self):
-        """解決先が対象test-traceability.yamlと同じphase直下でなければ拒否する。"""
+        """`../../`等で別phaseを指す値は、正本パスの固定値チェックで拒否する。
+
+        system_traceabilityは`../system-traceability.yaml`固定のため、別phaseを指す
+        文字列（`../../他phase/system-traceability.yaml`等）はすべてこの固定値チェックで
+        弾かれる（symlink経由で別phaseの実体を指すケースは
+        test_system_traceability_symlink_escaping_phase_is_rejected が別途検証する）。
+        """
         import tempfile
 
         with tempfile.TemporaryDirectory() as directory_str:
@@ -416,7 +445,7 @@ class SystemTraceabilityFieldTest(unittest.TestCase):
             data = test_traceability_gate.load(path)
             data["system_traceability"] = "../../" + other_phase.name + "/system-traceability.yaml"
             failures = test_traceability_gate.validate_system_traceability(path, data, {"FR-001"})
-            self.assertTrue(any("同じphase" in failure for failure in failures))
+            self.assertTrue(any("system_traceability" in failure and "固定してください" in failure for failure in failures))
 
     def test_system_traceability_not_registering_this_func_is_rejected(self):
         """system-traceability.yaml側のfunc_traceabilityに対象funcが登録されていなければ拒否する。"""

@@ -52,6 +52,9 @@ def design_traceability_path(data: dict, test_traceability_path: Path) -> Path:
     return func_dir / path
 
 
+SYSTEM_TRACEABILITY_RELATIVE_VALUE = "../system-traceability.yaml"
+
+
 def system_traceability_path(data: dict, test_traceability_path: Path) -> Path:
     value = data.get("system_traceability")
     if not nonempty_text(value):
@@ -59,6 +62,12 @@ def system_traceability_path(data: dict, test_traceability_path: Path) -> Path:
     path = Path(value)
     if path.is_absolute():
         raise ValueError("system_traceability は相対パスで指定してください")
+    # phase直下の正本は1つに固定する。別名（例: ../shadow.yaml）を許すと、
+    # phase内の別funcが別の「正本」を参照してphase横断のAC/ST検証を迂回できてしまう。
+    if value != SYSTEM_TRACEABILITY_RELATIVE_VALUE:
+        raise ValueError(
+            f"system_traceability は {SYSTEM_TRACEABILITY_RELATIVE_VALUE} で固定してください（別名は不可）"
+        )
     return test_traceability_path.parent / path
 
 
