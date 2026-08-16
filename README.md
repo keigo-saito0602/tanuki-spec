@@ -42,6 +42,7 @@ tanuki-spec/
 ├── SKILLS.md                     # スキル一覧と実装状態
 ├── TEMPLATES.md                  # 各スキルの起動テンプレート集
 ├── AGENTS.md                     # Codex等のエージェント向け入口
+├── CLAUDE.md                     # Claude Code向けの生成・レビュー運用ガイド
 ├── FLOW.md                       # 工程の流れと役割分担
 ├── GLOSSARY.md                   # SPEC関連の用語集
 │
@@ -90,7 +91,7 @@ python3 -m unittest discover -s tests -v
 
 ## エージェントからの利用
 
-Codexはルートの[AGENTS.md](./AGENTS.md)から該当スキルを選びます。Claude CodeでPlugin経由ではなく手動で認識させる場合は、`skills/`配下の各スキルディレクトリを`~/.claude/skills/`へsymlinkします。
+Codexはルートの[AGENTS.md](./AGENTS.md)から該当スキルを選びます。Claude Codeは[CLAUDE.md](./CLAUDE.md)から生成・レビュー時の共通規約を読みます。Claude CodeでPlugin経由ではなく手動で認識させる場合は、`skills/`配下の各スキルディレクトリを`~/.claude/skills/`へsymlinkします。
 
 スキルを追加・変更・削除したときは、[AGENTS.md](./AGENTS.md)の「ドキュメント同期」に従い、関連ドキュメントを同じコミットで更新してください。
 
