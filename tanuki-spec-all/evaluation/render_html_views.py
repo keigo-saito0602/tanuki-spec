@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""仕様書 Markdown から、再生成可能な自己完結 HTML ビューを作る。
+"""正本の仕様書を、フェーズ単位の人間向け HTML ビューへまとめる。
 
-Markdown/YAML が正本であり、このモジュールが出力する ``views/`` は閲覧用の
-派生成果物である。外部アセット、JavaScript、現在時刻には依存しない。
+Markdown/YAML は正本であり、``views/`` は常に再生成する派生成果物である。
+出力はフェーズ直下の4ファイルだけに限定し、画面モックだけは別生成器の管理物として
+保存する。外部アセット・JavaScript・ファイルシステム時刻には依存しない。
 """
 from __future__ import annotations
 
@@ -14,7 +15,7 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import quote, unquote, urlsplit
+from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
 try:
     from markdown_it import MarkdownIt
@@ -25,41 +26,41 @@ except ImportError:
 
 
 @dataclass(frozen=True)
-class Document:
-    source: str
-    output: str
+class SourceDocument:
+    """一つの正本と、束の中で表示する文書種別。"""
+
+    path: Path
+    func_name: str
+    kind: str
     label: str
-    role: str
 
 
-FUNC_DOCUMENTS = (
-    Document("00_サマリ.md", "00_サマリ.html", "サマリ", "決定事項・未決事項・リスクを最初に確認"),
-    Document("01_要件定義書.md", "01_要件定義書.html", "要件定義書", "実現する目的と要件を確認"),
-    Document("02_基本設計書.md", "02_基本設計書.html", "基本設計書", "システム全体の設計方針を確認"),
-    Document("03_詳細設計書.md", "03_詳細設計書.html", "詳細設計書", "実装に必要な詳細を確認"),
-    Document("tests/04_テスト項目書.md", "04_テスト項目書.html", "テスト項目書", "検証する振る舞いを確認"),
-    Document("tests/design-traceability.md", "design-traceability.html", "設計トレーサビリティ", "要件と設計の対応を確認"),
+OUTPUT_FILES = (
+    "00_サマリ.html",
+    "01_要件定義書.html",
+    "02_設計書.html",
+    "03_テストケース.html",
 )
+SCREEN_MOCK = "画面モック.html"
 
-SYSTEM_DOCUMENTS = (
-    Document(
-        "tests/requirements-traceability.md",
-        "requirements-traceability.html",
-        "要件トレーサビリティ",
-        "要件間の対応を確認",
-    ),
-    Document(
-        "tests/system-test-cases.md",
-        "system-test-cases.html",
-        "システムテストケース",
-        "要件とシステムテストの対応を確認",
-    ),
-)
+# 既存レンダラが生成した既知のHTML。通常実行では安全に削除するが、
+# 利用者が置いた未知のHTMLは保存する。
+LEGACY_HTML_NAMES = {
+    "index.html",
+    "README.html",
+    "00_サマリ.html",
+    "01_要件定義書.html",
+    "02_基本設計書.html",
+    "03_詳細設計書.html",
+    "04_テスト項目書.html",
+    "design-traceability.html",
+    "requirements-traceability.html",
+    "system-test-cases.html",
+}
+LEGACY_OUTPUT_NAMES = LEGACY_HTML_NAMES | {"README.md"}
+LEGACY_DIR_NAMES = {"system"}
 
-STATUS_RE = re.compile(
-    r"(\[(?:要確認|対象外|未記入)(?::[^\]\n]*)?\]|⚠️|❓)"
-)
-FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---(?:\s*\n|$)", re.DOTALL)
+STATUS_RE = re.compile(r"(\[(?:要確認|対象外|未記入)(?::[^\]\n]*)?\]|⚠️|❓)")
 STATUS_CLASS = {
     "要確認": "status-pending",
     "対象外": "status-excluded",
@@ -67,72 +68,127 @@ STATUS_CLASS = {
     "⚠️": "status-warning",
     "❓": "status-pending",
 }
+FRONTMATTER_RE = re.compile(r"\A---\s*\n.*?\n---(?:\s*\n|\Z)", re.DOTALL)
+HTML_COMMENT_RE = re.compile(r"<!--.*?(?:-->|\Z)", re.DOTALL)
+HEADING_RE = re.compile(r"^( {0,3})(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$", re.MULTILINE)
+GUIDE_RE = re.compile(
+    r"(?:記入ガイド|記入方法|記入形式|書き方|FILL|この節で確認すべきこと|ゴール|読み手|読み方|凡例|レビュー(?:観点|チェック|項目|用チェック)?|"
+    r"チェックリスト|第三者レビュー|writing\s+guide|review\s+checklist|checklist)",
+    re.IGNORECASE,
+)
+APPENDIX_RE = re.compile(
+    r"(?:^|[：:・\s])(?:付録|根拠一覧|出典一覧|provenance|appendix|evidence(?:\s+index)?)(?:$|[：:・\s])",
+    re.IGNORECASE,
+)
 
 
 def status_markup(text: str) -> str:
-    """状態マーカーを、属性やコードではなくテキストノード内だけ装飾する。"""
+    """状態マーカーをエスケープ済みテキスト内だけ装飾する。"""
+
+    escaped = html.escape(text)
 
     def replace(match: re.Match[str]) -> str:
         marker = match.group(0)
         key = next((item for item in STATUS_CLASS if item in marker), "要確認")
-        return f'<span class="status {STATUS_CLASS[key]}">{html.escape(marker)}</span>'
+        return f'<span class="status {STATUS_CLASS[key]}">{marker}</span>'
 
-    return STATUS_RE.sub(replace, html.escape(text))
-
-
-def slugify(text: str, used: set[str]) -> str:
-    plain = re.sub(r"<[^>]+>", "", text)
-    plain = html.unescape(plain).strip().lower()
-    slug = re.sub(r"[^\w\u3040-\u30ff\u3400-\u9fff-]+", "-", plain).strip("-_")
-    slug = slug or "section"
-    candidate = slug
-    number = 2
-    while candidate in used:
-        candidate = f"{slug}-{number}"
-        number += 1
-    used.add(candidate)
-    return candidate
-
-
-def inline_text(token) -> str:
-    if not token.children:
-        return token.content
-    return "".join(child.content for child in token.children if child.type in {"text", "code_inline"})
+    return STATUS_RE.sub(replace, escaped)
 
 
 def safe_link_target(target: str) -> bool:
-    """相対リンクと明示的に許可したURLだけを通す。"""
+    """相対URLと http(s)/mailto だけを許可する。"""
+
     decoded = html.unescape(unquote(target))
-    normalized = "".join(character for character in decoded if ord(character) >= 0x20).strip()
+    normalized = "".join(char for char in decoded if ord(char) >= 0x20).strip()
     parsed = urlsplit(normalized)
     if parsed.scheme.lower() not in {"", "http", "https", "mailto"}:
         return False
+    # //host/path は scheme が空でも外部ネットワークへのURLなので拒否する。
     return not (not parsed.scheme and parsed.netloc)
 
 
-def sanitize_links(tokens: list[Token]) -> None:
-    """危険なリンクを実行できないspanへ変える。"""
-    for token in tokens:
-        if not token.children:
+def rewrite_relative_link(target: str, source: Path, phase_dir: Path) -> str:
+    """正本Markdownから、views直下の出力を起点に解決できる相対URLへ変換する。"""
+
+    if not safe_link_target(target):
+        return target
+    parsed = urlsplit(target)
+    if parsed.scheme or parsed.netloc or target.startswith("#"):
+        return target
+    # URLのパスだけをファイルとして解決し、query/fragmentは保持する。
+    decoded_path = unquote(parsed.path)
+    resolved = (source.parent / decoded_path).resolve()
+    output_root = phase_dir.resolve() / "views"
+    # フェーズ外（例: docs/spec/_project）へのリンクも、生成HTMLの出力
+    # ルートから解決できる位置へ変換する。
+    output_root_relative = Path(os.path.relpath(resolved, output_root)).as_posix()
+    return urlunsplit(("", "", quote(output_root_relative, safe="/-_.~%"), parsed.query, parsed.fragment))
+
+
+def strip_reader_only_content(markdown: str) -> str:
+    """読者向けには不要なメタデータ・作成ガイド・出典付録を取り除く。
+
+    この関数は入力文字列を返すだけで正本ファイルを書き換えない。
+    """
+
+    markdown = FRONTMATTER_RE.sub("", markdown, count=1)
+    markdown = HTML_COMMENT_RE.sub("", markdown)
+    lines = markdown.splitlines()
+
+    # ガイド用の blockquote は、開始行から連続する引用ブロック全体を除く。
+    cleaned: list[str] = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if re.match(r"^ {0,3}>[ \t]?", line):
+            start = index
+            block: list[str] = []
+            while index < len(lines):
+                current = lines[index]
+                if re.match(r"^ {0,3}>[ \t]?", current):
+                    block.append(re.sub(r"^ {0,3}>[ \t]?", "", current))
+                    index += 1
+                    continue
+                # 引用内の空行は次の引用行まで含める。
+                if current.strip() == "" and index + 1 < len(lines) and re.match(r"^ {0,3}>", lines[index + 1]):
+                    block.append("")
+                    index += 1
+                    continue
+                break
+            if GUIDE_RE.search("\n".join(block)):
+                if cleaned and cleaned[-1].strip() == "":
+                    cleaned.pop()
+                continue
+            cleaned.extend(lines[start:index])
             continue
-        unsafe_stack: list[bool] = []
-        for child in token.children:
-            if child.type == "link_open":
-                unsafe = not safe_link_target(child.attrGet("href") or "")
-                unsafe_stack.append(unsafe)
-                if unsafe:
-                    child.type = "span_open"
-                    child.tag = "span"
-                    child.attrs = {"class": "unsafe-link"}
-            elif child.type == "link_close":
-                unsafe = unsafe_stack.pop() if unsafe_stack else False
-                if unsafe:
-                    child.type = "span_close"
-                    child.tag = "span"
+        cleaned.append(line)
+        index += 1
+
+    # 「付録: 項目の根拠一覧」等は見出しから同階層以上の次見出しまでを除く。
+    without_appendix: list[str] = []
+    appendix_level: int | None = None
+    for line in cleaned:
+        heading = re.match(r"^ {0,3}(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$", line)
+        if heading:
+            level = len(heading.group(1))
+            title = heading.group(2).strip()
+            if appendix_level is not None and level <= appendix_level:
+                appendix_level = None
+            if appendix_level is None and APPENDIX_RE.search(title):
+                appendix_level = level
+                continue
+        if appendix_level is None:
+            without_appendix.append(line)
+    return "\n".join(without_appendix).strip() + "\n"
 
 
 class SafeViewRenderer(RendererHTML):
-    """画像を埋め込まず、状態表示・表アクセシビリティを加えるレンダラ。"""
+    """raw HTML・画像を実行/取得せず、安全な読み取り専用HTMLにする。"""
+
+    def __init__(self, parser=None, source: Path | None = None, phase_dir: Path | None = None):
+        super().__init__(parser)
+        self.source = source or Path("source.md")
+        self.phase_dir = phase_dir or self.source.parent
 
     def text(self, tokens, idx, options, env) -> str:  # noqa: ANN001
         return status_markup(tokens[idx].content)
@@ -147,8 +203,7 @@ class SafeViewRenderer(RendererHTML):
     def table_open(self, tokens, idx, options, env) -> str:  # noqa: ANN001
         return (
             '<div class="table-scroll" tabindex="0" role="region" '
-            'aria-label="表（横方向にスクロールできます）">'
-            "<table><caption>文書内の表</caption>"
+            'aria-label="表（横方向にスクロールできます）"><table><caption>文書内の表</caption>'
         )
 
     def table_close(self, tokens, idx, options, env) -> str:  # noqa: ANN001
@@ -158,140 +213,90 @@ class SafeViewRenderer(RendererHTML):
         return '<th scope="col">'
 
 
-def markdown_to_html(markdown: str) -> tuple[str, list[tuple[int, str, str]]]:
-    """安全な HTML 本文と、目次用の (level, title, id) を返す。"""
-    frontmatter = FRONTMATTER_RE.match(markdown)
-    if frontmatter:
-        markdown = markdown[frontmatter.end():]
+def _inline_text(token: Token) -> str:
+    if not token.children:
+        return token.content
+    return "".join(child.content for child in token.children if child.type in {"text", "code_inline"})
+
+
+def slugify(text: str, used: set[str]) -> str:
+    plain = html.unescape(re.sub(r"<[^>]+>", "", text)).strip().lower()
+    slug = re.sub(r"[^\w\u3040-\u30ff\u3400-\u9fff-]+", "-", plain).strip("-_") or "section"
+    candidate = slug
+    number = 2
+    while candidate in used:
+        candidate = f"{slug}-{number}"
+        number += 1
+    used.add(candidate)
+    return candidate
+
+
+def markdown_to_html(
+    markdown: str,
+    source: Path | None = None,
+    phase_dir: Path | None = None,
+    anchor_prefix: str | None = None,
+    heading_offset: int = 1,
+) -> tuple[str, list[tuple[int, str, str]]]:
+    """Markdownを安全に描画し、目次用の (level, title, id) を返す。"""
+
+    source = source or Path("source.md")
+    phase_dir = phase_dir or source.parent
+    prepared = strip_reader_only_content(markdown)
     md = MarkdownIt(
         "commonmark",
         {"html": False, "linkify": False, "typographer": False},
-        renderer_cls=SafeViewRenderer,
+        renderer_cls=lambda parser: SafeViewRenderer(parser, source, phase_dir),
     ).enable("table")
-    tokens = md.parse(markdown)
-    sanitize_links(tokens)
+    tokens = md.parse(prepared)
+    unsafe_stack: list[bool] = []
+    for token in tokens:
+        if not token.children:
+            continue
+        for child in token.children:
+            if child.type == "link_open":
+                target = child.attrGet("href") or ""
+                unsafe = not safe_link_target(target)
+                unsafe_stack.append(unsafe)
+                if unsafe:
+                    child.type = "span_open"
+                    child.tag = "span"
+                    child.attrs = {"class": "unsafe-link"}
+                else:
+                    child.attrSet("href", rewrite_relative_link(target, source, phase_dir))
+            elif child.type == "link_close":
+                unsafe = unsafe_stack.pop() if unsafe_stack else False
+                if unsafe:
+                    child.type = "span_close"
+                    child.tag = "span"
     headings: list[tuple[int, str, str]] = []
     used: set[str] = set()
-    last_level = 1
-    collapsible: dict[int, int] = {}
     for index, token in enumerate(tokens):
         if token.type != "heading_open":
             continue
-        original = int(token.tag[1])
-        level = min(6, original + 1)
-        level = min(level, last_level + 1)
-        title = inline_text(tokens[index + 1])
-        anchor = slugify(title, used)
+        level = min(6, int(token.tag[1]) + heading_offset)
+        inline = tokens[index + 1]
+        original_title = _inline_text(inline)
+        title = re.sub(r"^\[(?:必須|任意|条件付)\]\s*", "", original_title)
+        if title != original_title:
+            inline.content = title
+            if inline.children:
+                for child in inline.children:
+                    if child.type in {"text", "code_inline"}:
+                        child.content = re.sub(r"^\[(?:必須|任意|条件付)\]\s*", "", child.content, count=1)
+                        break
+        anchor = slugify(f"{anchor_prefix}-{title}" if anchor_prefix else title, used)
         token.tag = f"h{level}"
         token.attrSet("id", anchor)
         tokens[index + 2].tag = f"h{level}"
         headings.append((level, title, anchor))
-        if re.search(r"(?:付録|根拠|記入ガイド|補足)", title):
-            collapsible[index] = level
-        last_level = level
-    if collapsible:
-        wrapped: list[Token] = []
-        opened_level: int | None = None
-        for index, token in enumerate(tokens):
-            if token.type == "heading_open" and opened_level is not None:
-                level = int(token.tag[1])
-                if level <= opened_level:
-                    close = Token("html_block", "", 0)
-                    close.content = "</details>\n"
-                    wrapped.append(close)
-                    opened_level = None
-            if index in collapsible and opened_level is None:
-                opening = Token("html_block", "", 0)
-                title = inline_text(tokens[index + 1])
-                opening.content = (
-                    '<details class="supporting-detail" open><summary>'
-                    f"「{html.escape(title)}」詳細を表示/折りたたむ</summary>\n"
-                )
-                wrapped.append(opening)
-                opened_level = collapsible[index]
-            wrapped.append(token)
-        if opened_level is not None:
-            close = Token("html_block", "", 0)
-            close.content = "</details>\n"
-            wrapped.append(close)
-        tokens = wrapped
     return md.renderer.render(tokens, md.options, {}), headings
 
 
-def toc_html(headings: list[tuple[int, str, str]]) -> str:
-    if not headings:
-        return '<p class="muted">本文に見出しはありません。</p>'
-    return '<ol class="toc-list">' + "".join(
-        f'<li class="toc-level-{level}"><a href="#{html.escape(anchor, quote=True)}">{html.escape(title)}</a></li>'
-        for level, title, anchor in headings
-    ) + "</ol>"
-
-
 CSS = """
-:root{color-scheme:light dark;--bg:#fff;--panel:#f5f7fa;--text:#17202a;--muted:#52606d;
---line:#b8c2cc;--link:#075ea8;--focus:#d97706;--pending:#fff2cc;--excluded:#e8edf2;
---missing:#ffe4e6;--warning:#fff0d5}*{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;background:var(--background-primary,var(--bg));color:var(--text-normal,var(--text));font-family:system-ui,-apple-system,
-"Hiragino Sans","Yu Gothic UI",sans-serif;font-size:1rem;line-height:1.65}
-a{color:var(--link-color,var(--link));text-underline-offset:.2em}a:focus-visible,summary:focus-visible,
-.table-scroll:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
-.skip-link{position:absolute;left:.5rem;top:-5rem;background:var(--text);color:var(--bg);
-padding:.6rem;z-index:10}.skip-link:focus{top:.5rem}.page-header,.page-footer{background:var(--background-secondary,var(--panel));
-border-block:1px solid var(--background-modifier-border,var(--line));padding:1rem clamp(1rem,4vw,3rem)}
-.derived{border-left:.35rem solid var(--focus);padding:.75rem 1rem;background:var(--panel)}
-.meta{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;color:var(--muted)}
-.layout{display:grid;grid-template-columns:minmax(12rem,19rem) minmax(0,1fr);
-gap:clamp(1rem,4vw,3rem);max-width:110rem;margin:auto;padding:2rem clamp(1rem,4vw,3rem)}
-.toc{align-self:start;position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow:auto}
-.toc-list{padding-left:1.3rem}.toc-level-3{margin-left:.75rem}.toc-level-4,
-.toc-level-5,.toc-level-6{margin-left:1.5rem}.content{min-width:0}.prose{max-width:75ch}
-.prose h2,.prose h3,.prose h4,.prose h5,.prose h6{scroll-margin-top:1rem;margin-top:2em;
-margin-bottom:.5em;line-height:1.3}.table-scroll{max-width:100%;overflow-x:auto;margin:1.5rem 0}
-.prose :is(h2,h3,h4,h5,h6):target{outline:3px solid var(--focus);outline-offset:.25rem}
-.supporting-detail{border-left:.2rem solid var(--line);padding-left:1rem;margin-block:1.5rem}
-.supporting-detail summary{cursor:pointer;font-weight:700}
-table{border-collapse:collapse;min-width:100%;background:var(--bg)}caption{text-align:left;
-font-weight:700;padding:.5rem 0}th,td{border:1px solid var(--line);padding:.55rem .7rem;
-text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:var(--panel)}
-code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}pre{overflow:auto;padding:1rem;
-border:1px solid var(--line);background:var(--panel)}blockquote{margin-left:0;border-left:.3rem solid
-var(--line);padding:.25rem 1rem;color:var(--muted)}.status{display:inline-block;border:1px solid
-currentColor;border-radius:.3rem;padding:0 .25rem;font-weight:650;color:#512b00}
-.status-pending{background:var(--pending)}.status-excluded{background:var(--excluded)}
-.status-missing{background:var(--missing)}.status-warning{background:var(--warning)}
-.image-alt{display:inline-block;border:1px dashed var(--line);padding:.25rem;color:var(--muted)}
-.nav-links{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}.cards{list-style:none;
-padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:1rem}
-.card{border:1px solid var(--line);border-radius:.5rem;padding:1rem;background:var(--panel)}
-.muted{color:var(--muted)}
-@media(prefers-color-scheme:dark){:root{--bg:#111820;--panel:#1c2630;--text:#f1f5f9;
---muted:#bdc8d3;--line:#607080;--link:#86c8ff;--focus:#ffc857;--pending:#503c00;
---excluded:#273747;--missing:#55252d;--warning:#543400}.status{color:var(--text)}}
-@media(max-width:48rem){.layout{grid-template-columns:1fr}.toc{position:static;max-height:none}}
-@media print{.skip-link,.toc,.nav-links{display:none}.layout{display:block;padding:0}.page-header,
-.page-footer{background:none}.prose{max-width:none}a{color:inherit;text-decoration:none}
-.table-scroll{overflow:visible}.supporting-detail{display:block}.supporting-detail>summary{list-style:none}
-body{font-size:11pt}}
+:root{color-scheme:light dark;--bg:#fff;--panel:#f4f6f8;--text:#17202a;--muted:#52606d;--line:#b8c2cc;--link:#075ea8;--focus:#d97706;--pending:#fff2cc;--excluded:#e8edf2;--missing:#ffe4e6;--warning:#fff0d5}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--background-primary,var(--bg));color:var(--text-normal,var(--text));font-family:system-ui,-apple-system,"Hiragino Sans","Yu Gothic UI",sans-serif;font-size:1rem;line-height:1.65}a{color:var(--link-color,var(--link));text-underline-offset:.2em}a:focus-visible,.table-scroll:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.skip-link{position:absolute;left:.5rem;top:-5rem;background:var(--text);color:var(--bg);padding:.6rem;z-index:10}.skip-link:focus{top:.5rem}.page-header,.page-footer{background:var(--background-secondary,var(--panel));border-block:1px solid var(--background-modifier-border,var(--line));padding:1rem clamp(1rem,4vw,3rem)}.derived{border-left:.35rem solid var(--focus);padding:.75rem 1rem;background:var(--panel)}.meta{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;color:var(--muted)}.layout{display:grid;grid-template-columns:minmax(12rem,19rem) minmax(0,1fr);gap:clamp(1rem,4vw,3rem);max-width:110rem;margin:auto;padding:2rem clamp(1rem,4vw,3rem)}.toc{align-self:start;position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow:auto}.toc-list{padding-left:1.3rem}.toc-level-3{margin-left:.75rem}.toc-level-4,.toc-level-5,.toc-level-6{margin-left:1.5rem}.content{min-width:0}.prose{max-width:82ch}.prose h2,.prose h3,.prose h4,.prose h5,.prose h6{scroll-margin-top:1rem;margin-top:2em;margin-bottom:.5em;line-height:1.3}.table-scroll{max-width:100%;overflow-x:auto;margin:1.5rem 0}.prose :is(h2,h3,h4,h5,h6):target{outline:3px solid var(--focus);outline-offset:.25rem}table{border-collapse:collapse;min-width:100%;background:var(--bg)}caption{text-align:left;font-weight:700;padding:.5rem 0}th,td{border:1px solid var(--line);padding:.55rem .7rem;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:var(--panel)}code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}pre{overflow:auto;padding:1rem;border:1px solid var(--line);background:var(--panel)}blockquote{margin-left:0;border-left:.3rem solid var(--line);padding:.25rem 1rem;color:var(--muted)}.status{display:inline-block;border:1px solid currentColor;border-radius:.3rem;padding:0 .25rem;font-weight:650;color:#512b00}.status-pending{background:var(--pending)}.status-excluded{background:var(--excluded)}.status-missing{background:var(--missing)}.status-warning{background:var(--warning)}.image-alt{display:inline-block;border:1px dashed var(--line);padding:.25rem;color:var(--muted)}.bundle-nav{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}.bundle-nav a,.bundle-nav strong{border:1px solid var(--line);border-radius:.35rem;padding:.35rem .7rem}.bundle-nav strong{background:var(--panel)}.source-card{border:1px solid var(--line);border-radius:.5rem;padding:1rem;margin:1.25rem 0;background:var(--panel)}.source-card h2{margin-top:0}.source-card .prose{background:var(--bg);padding:1rem;border-radius:.35rem}.muted{color:var(--muted)}.coverage-nav{border:2px solid var(--focus);padding:1rem;background:var(--panel);border-radius:.5rem}.coverage-nav ul{display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:0}@media(prefers-color-scheme:dark){:root{--bg:#111820;--panel:#1c2630;--text:#f1f5f9;--muted:#bdc8d3;--line:#607080;--link:#86c8ff;--focus:#ffc857;--pending:#503c00;--excluded:#273747;--missing:#55252d;--warning:#543400}.status{color:var(--text)}}@media(max-width:48rem){.layout{grid-template-columns:1fr}.toc{position:static;max-height:none}}@media print{.skip-link,.toc,.bundle-nav{display:none}.layout{display:block;padding:0}.page-header,.page-footer{background:none}.prose{max-width:none}a{color:inherit;text-decoration:none}.table-scroll{overflow:visible}body{font-size:11pt}.source-card{break-inside:avoid}}
 """
-
-SECURITY_META = """<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; font-src 'none'; script-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<meta name="referrer" content="no-referrer">"""
-
-
-def source_updated(path: Path) -> str:
-    """frontmatterの更新日を返す。ファイルシステム時刻には依存しない。"""
-    text = path.read_text(encoding="utf-8")
-    if not text.startswith("---"):
-        return "正本に記載なし"
-    match = FRONTMATTER_RE.match(text)
-    if not match:
-        return "正本に記載なし"
-    frontmatter = match.group(1)
-    for field in ("updated", "date"):
-        value = re.search(rf"(?m)^{field}:\s*[\"']?([^\"'\n]+?)[\"']?\s*$", frontmatter)
-        if value and value.group(1).strip():
-            return value.group(1).strip()
-    return "正本に記載なし"
+SECURITY_META = """<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; font-src 'none'; script-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'><meta name="referrer" content="no-referrer">"""
 
 
 def phase_label(phase_dir: Path) -> str:
@@ -299,302 +304,262 @@ def phase_label(phase_dir: Path) -> str:
     return name.replace("_", " ") or phase_dir.name
 
 
-def source_href(document: Document, depth: int, namespace: str | None = None) -> str:
-    prefix = f"{namespace}/" if namespace else ""
-    return "../" * depth + prefix + document.source
+def source_updated(path: Path) -> str:
+    """frontmatterの更新日を返す（FS mtimeは使わない）。"""
 
-
-def page_html(
-    phase_dir: Path,
-    document: Document,
-    markdown: str,
-    previous: Document | None,
-    following: Document | None,
-    depth: int,
-    namespace: str | None = None,
-) -> str:
-    body, headings = markdown_to_html(markdown)
-    phase = phase_label(phase_dir)
-    source = source_href(document, depth, namespace)
-    # トップレベルのviews/index.htmlは常に1箇所にしか存在しない。depthは
-    # 「phase_dirまでの階層数」（source_href用。namespace配下では2）であり、
-    # views/直下（namespace配下のさらに1階層上）まではdepth - 1階層で届く。
-    # namespace配下（func-<名前>/やsystem/）のページから素の"index.html"のままだと
-    # 実在しないviews/<namespace>/index.htmlを指してしまう（壊れたリンク）。
-    views_root_hops = max(depth - 1, 0)
-    phase_entry_href = "../" * views_root_hops + "index.html"
-    previous_link = (
-        f'<a rel="prev" href="{quote(previous.output)}">← 前へ: {html.escape(previous.label)}</a>'
-        if previous else "<span></span>"
-    )
-    next_link = (
-        f'<a rel="next" href="{quote(following.output)}">次へ: {html.escape(following.label)} →</a>'
-        if following else "<span></span>"
-    )
-    return f"""<!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{SECURITY_META}
-<title>{html.escape(document.label)} — {html.escape(phase)}</title><style>{CSS}</style></head>
-<body><a class="skip-link" href="#main">本文へ移動</a>
-<header class="page-header"><nav aria-label="パンくず"><a href="{quote(phase_entry_href)}">フェーズ入口</a> / {html.escape(document.label)}</nav>
-<h1>{html.escape(document.label)}</h1>
-<p class="derived"><strong>閲覧用の派生成果物です。</strong> 正本は <a href="{quote(source)}">{html.escape(document.source)}</a> です。</p>
-<p class="meta"><span>フェーズ: {html.escape(phase)}</span><span>文書種別: {html.escape(document.label)}</span>
-<span>正本ファイル: {html.escape(document.source)}</span><span>更新日時: {source_updated(phase_dir / document.source)}</span></p>
-<p>{html.escape(document.role)}。内容を補完・再解釈せず、正本Markdownを表示しています。</p></header>
-<div class="layout"><nav class="toc" aria-label="目次"><h2>目次</h2>{toc_html(headings)}</nav>
-<main id="main" class="content" tabindex="-1"><article class="prose">{body}</article></main></div>
-<footer class="page-footer"><p><strong>状態の凡例:</strong>
-<span class="status status-pending">[要確認] 未決定</span>
-<span class="status status-excluded">[対象外] 意図して対象外</span>
-<span class="status status-missing">[未記入] 情報不足</span></p>
-<nav class="nav-links" aria-label="文書間の移動">{previous_link}
-<a href="{quote(phase_entry_href)}">フェーズ入口へ</a>{next_link}</nav>
-<p><a href="{quote(source)}">正本Markdownを開く</a></p></footer></body></html>
-"""
-
-
-def index_html(phase_dir: Path, available: list[Document], depth: int, namespace: str | None = None) -> str:
-    phase = phase_label(phase_dir)
-    all_update_values = [source_updated(phase_dir / doc.source) for doc in available]
-    update_values = [value for value in all_update_values if value != "正本に記載なし"]
-    updated = max(update_values, default="正本に記載なし")
-    cards = "".join(
-        f'<li class="card"><strong>{number}. <a href="{quote(doc.output)}">{html.escape(doc.label)}</a></strong>'
-        f"<p>{html.escape(doc.role)}</p>"
-        f'<p><a href="{quote(source_href(doc, depth, namespace))}">正本: {html.escape(doc.source)}</a></p></li>'
-        for number, doc in enumerate(available, 1)
-    )
-    unresolved = next(
-        (
-            doc for doc in available
-            if STATUS_RE.search((phase_dir / doc.source).read_text(encoding="utf-8"))
-        ),
-        None,
-    )
-    unresolved_link = (
-        f'<p><a href="{quote(unresolved.output)}">未決事項・注意事項を確認する</a></p>'
-        if unresolved else '<p class="muted">正本内に状態マーカーは見つかりませんでした。</p>'
-    )
-    # views/README.md はトップレベルに1箇所だけ存在する。depthは「phase_dirまでの
-    # 階層数」（source_href用）であり、views/直下まではdepth - 1階層で届く
-    # （page_htmlのphase_entry_hrefと同じ理屈）。
-    views_root_hops = max(depth - 1, 0)
-    readme_href = "../" * views_root_hops + "README.md"
-    return f"""<!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{SECURITY_META}
-<title>{html.escape(phase)} — 仕様書ビュー</title><style>{CSS}</style></head>
-<body><a class="skip-link" href="#main">本文へ移動</a><header class="page-header">
-<h1>{html.escape(phase)} 仕様書ビュー</h1>
-<p class="derived"><strong>読むための地図（派生成果物）です。</strong>
-正本はフェーズ配下のMarkdown/YAMLであり、HTMLは編集対象ではありません。</p>
-<p class="meta"><span>フェーズ: {html.escape(phase)}</span><span>正本の最終更新日時: {updated}</span></p>
-</header><main id="main" class="layout" tabindex="-1"><section class="content">
-<h2>読む順番</h2><p>まずサマリ、次に要件、設計、最後にテストと対応表を確認します。</p>
-<ol class="cards">{cards}</ol><h2>未決事項への導線</h2>{unresolved_link}
-<h2>閲覧方法</h2><p><a href="{quote(readme_href)}">Obsidian・ブラウザでの閲覧方法と再生成方法</a></p>
-</section></main><footer class="page-footer"><p>このHTMLを変更せず、正本を変更して再生成してください。</p></footer>
-</body></html>
-"""
-
-
-def phase_index_html(phase_dir: Path, func_available: dict[str, list[Document]], system_available: list[Document]) -> str:
-    phase = phase_label(phase_dir)
-    func_sections = "".join(
-        f'<section><h3>{html.escape(func_name)}</h3><ul class="cards">' +
-        "".join(
-            f'<li class="card"><a href="{quote(func_name)}/{quote(doc.output)}">{html.escape(doc.label)}</a>'
-            f"<p>{html.escape(doc.role)}</p></li>"
-            for doc in docs
-        ) +
-        f'</ul><p><a href="{quote(func_name)}/index.html">{html.escape(func_name)}の目次</a></p></section>'
-        for func_name, docs in func_available.items()
-    )
-    system_cards = "".join(
-        f'<li class="card"><a href="system/{quote(doc.output)}">{html.escape(doc.label)}</a>'
-        f"<p>{html.escape(doc.role)}</p></li>"
-        for doc in system_available
-    )
-    screen_mock_link = (
-        '<p><a href="画面モック.html">画面モックを確認する</a></p>'
-        if (phase_dir / "views" / "画面モック.html").is_file()
-        else ""
-    )
-    return f"""<!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{SECURITY_META}
-<title>{html.escape(phase)} — 仕様書ビュー</title><style>{CSS}</style></head>
-<body><a class="skip-link" href="#main">本文へ移動</a><header class="page-header">
-<h1>{html.escape(phase)} 仕様書ビュー</h1>
-<p class="derived"><strong>読むための地図（派生成果物）です。</strong>
-正本はフェーズ配下のMarkdown/YAMLであり、HTMLは編集対象ではありません。</p>
-{screen_mock_link}
-</header><main id="main" class="layout" tabindex="-1"><section class="content">
-<h2>機能ごとの文書</h2>{func_sections}
-<h2>phase共通の文書</h2><ul class="cards">{system_cards}</ul>
-<h2>閲覧方法</h2><p><a href="README.md">Obsidian・ブラウザでの閲覧方法と再生成方法</a></p>
-</section></main><footer class="page-footer"><p>このHTMLを変更せず、正本を変更して再生成してください。</p></footer>
-</body></html>
-"""
-
-
-def readme_text(phase_dir: Path, func_available: dict[str, list[Document]], system_available: list[Document]) -> str:
-    rows = []
-    for namespace, docs in func_available.items():
-        for doc in docs:
-            rows.append(f"| [{doc.output}](./{namespace}/{doc.output}) | [{doc.source}](../{namespace}/{doc.source}) | {doc.role} |")
-    for doc in system_available:
-        rows.append(f"| [{doc.output}](./system/{doc.output}) | [{doc.source}](../{doc.source}) | {doc.role} |")
-    table_rows = "\n".join(rows)
-    return f"""# {phase_label(phase_dir)} HTMLビュー
-
-この `views/` は閲覧用の派生成果物です。正本は機能ごとに `func-<名前>/` 配下、
-またはphase直下（業務フロー・AC・ST等）にあるMarkdown/YAMLです。HTMLを直接編集せず、
-正本を直してから再生成してください。各HTMLは外部通信やJavaScriptを使わない単一ファイルで、
-ブラウザでも開けます。
-
-## 閲覧
-
-- 入口は [index.html](./index.html) です。
-- Obsidianデスクトップでは Local HTML Embed コミュニティプラグインを利用できます。
-  ノートに次のように、コードブロック本文の1行目へVaultルート相対パスを書きます。
-
-````markdown
-```html-embed
-<Vault内のphaseパス>/views/index.html
-```
-````
-
-- Local HTML Embedはデスクトップ限定です。スクリプトを許可できる設定には安全上のリスクが
-  あるため、信頼済みの生成HTMLだけを表示してください（このレンダラのHTMLはスクリプトを含みません）。
-- プラグインを導入しない場合は、OSのファイル操作から `index.html` をブラウザで開いてください。
-- コミュニティプラグインとローカルHTMLは、信頼できるVault・生成物だけで利用してください。
-
-## 正本との対応
-
-| HTMLビュー | 正本 | 役割 |
-| --- | --- | --- |
-{table_rows}
-
-## 再生成と検証
-
-リポジトリルートから実行します。
-
-```bash
-python3 tanuki-spec-all/evaluation/render_html_views.py "<phase>"
-python3 tanuki-spec-all/evaluation/render_html_views.py "<phase>" --check
-```
-
-`--check` は書き換えず、欠落・古い内容・不要になった既知HTMLを検出します。
-"""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return "正本に記載なし"
+    match = re.match(r"\A---\s*\n(.*?)\n---(?:\s*\n|\Z)", text, re.DOTALL)
+    if match:
+        for field in ("updated", "date"):
+            value = re.search(rf"(?m)^{field}:\s*[\"']?([^\"'\n]+?)[\"']?\s*$", match.group(1))
+            if value and value.group(1).strip():
+                return value.group(1).strip()
+    return "正本に記載なし"
 
 
 def discover_funcs(phase_dir: Path) -> list[Path]:
-    return sorted(
-        (path for path in phase_dir.glob("func-*") if path.is_dir()),
-        key=os.fspath,
+    return sorted((path for path in phase_dir.glob("func-*") if path.is_dir() and not path.is_symlink()), key=os.fspath)
+
+
+def _docs_for_func(func_dir: Path) -> list[SourceDocument]:
+    specs = (
+        ("summary", "00_サマリ.md", "サマリ"),
+        ("requirements", "01_要件定義書.md", "要件定義書"),
+        ("basic_design", "02_基本設計書.md", "基本設計書"),
+        ("detailed_design", "03_詳細設計書.md", "詳細設計書"),
+        ("tests", "tests/04_テスト項目書.md", "テスト項目書"),
+    )
+    return [SourceDocument(func_dir / filename, func_dir.name, kind, label) for kind, filename, label in specs if (func_dir / filename).is_file()]
+
+
+def collect_documents(phase_dir: Path) -> list[SourceDocument]:
+    docs: list[SourceDocument] = []
+    for func in discover_funcs(phase_dir):
+        docs.extend(_docs_for_func(func))
+    system = phase_dir / "tests" / "system-test-cases.md"
+    if system.is_file():
+        docs.append(SourceDocument(system, "phase共通", "system_tests", "システムテストケース"))
+    return docs
+
+
+def _kind_for_output(output: str) -> tuple[str, ...]:
+    return {
+        "00_サマリ.html": ("summary",),
+        "01_要件定義書.html": ("requirements",),
+        "02_設計書.html": ("basic_design", "detailed_design"),
+        "03_テストケース.html": ("tests", "system_tests"),
+    }[output]
+
+
+def _source_href(source: Path, phase_dir: Path) -> str:
+    output_root = (phase_dir / "views").resolve()
+    relative = Path(os.path.relpath(source.resolve(), output_root)).as_posix()
+    return quote(relative, safe="/-_.~%")
+
+
+def _bundle_nav(current: str, available_outputs: set[str], screen_exists: bool) -> str:
+    links = []
+    for output in OUTPUT_FILES:
+        if output not in available_outputs:
+            continue
+        if output == current:
+            links.append(f"<strong aria-current=\"page\">{html.escape(output[:-5])}</strong>")
+        else:
+            links.append(f'<a href="{quote(output, safe="/-_.~%")}">{html.escape(output[:-5])}</a>')
+    if screen_exists:
+        links.append(f'<a href="{quote(SCREEN_MOCK, safe="/-_.~%")}">画面モック</a>')
+    return '<nav class="bundle-nav" aria-label="フェーズ文書">' + "".join(links) + "</nav>"
+
+
+def _render_source(document: SourceDocument, phase_dir: Path) -> tuple[str, list[tuple[int, str, str]]]:
+    return markdown_to_html(
+        document.path.read_text(encoding="utf-8"),
+        document.path,
+        phase_dir,
+        anchor_prefix=f"{document.func_name}-{document.kind}",
+        heading_offset=3,
     )
 
 
-def expected_outputs(phase_dir: Path) -> tuple[dict[Path, str], dict[str, list[Document]], list[Document]]:
-    """戻り値: (出力パス→HTML内容, funcごとの available Document一覧, system の available Document一覧)"""
-    outputs: dict[Path, str] = {}
-    func_available: dict[str, list[Document]] = {}
-    for func_dir in discover_funcs(phase_dir):
-        namespace = func_dir.name
-        available = [doc for doc in FUNC_DOCUMENTS if (func_dir / doc.source).is_file()]
-        func_available[namespace] = available
-        for index, doc in enumerate(available):
-            outputs[Path(namespace) / doc.output] = page_html(
-                func_dir,
-                doc,
-                (func_dir / doc.source).read_text(encoding="utf-8"),
-                available[index - 1] if index else None,
-                available[index + 1] if index + 1 < len(available) else None,
-                depth=2,
-                namespace=namespace,
-            )
-        outputs[Path(namespace) / "index.html"] = index_html(func_dir, available, depth=2, namespace=namespace)
+def _toc_html(headings: list[tuple[int, str, str]]) -> str:
+    if not headings:
+        return '<p class="muted">本文に見出しはありません。</p>'
+    return '<ol class="toc-list">' + "".join(f'<li class="toc-level-{level}"><a href="#{html.escape(anchor, quote=True)}">{html.escape(title)}</a></li>' for level, title, anchor in headings) + "</ol>"
 
-    system_available = [doc for doc in SYSTEM_DOCUMENTS if (phase_dir / doc.source).is_file()]
-    for index, doc in enumerate(system_available):
-        outputs[Path("system") / doc.output] = page_html(
-            phase_dir,
-            doc,
-            (phase_dir / doc.source).read_text(encoding="utf-8"),
-            system_available[index - 1] if index else None,
-            system_available[index + 1] if index + 1 < len(system_available) else None,
-            depth=2,
-            namespace=None,
+
+def _coverage_navigation(headings: list[tuple[int, str, str]]) -> str:
+    checks = (
+        ("業務フロー・シーケンス", (r"シーケンス", r"処理フロー|業務フロー", r"状態遷移")),
+        ("ER・データモデル", (r"ER図", r"データモデル|DB論理")),
+        ("DDL / NoSQL物理スキーマ", (r"DDL|DB物理|NoSQL", r"物理設計", r"データファイル仕様")),
+        ("インデックス", (r"DB物理.*インデックス", r"インデックス")),
+        ("セキュリティルール", (r"セキュリティルール|Firestore Rules", r"認証・アクセス制御|アクセス制御")),
+    )
+    items: list[str] = []
+    for label, patterns in checks:
+        match = next(
+            (
+                match
+                for pattern in patterns
+                if (match := next(((title, anchor) for _, title, anchor in headings if re.search(pattern, title, re.IGNORECASE)), None))
+            ),
+            None,
         )
+        if match:
+            items.append(f'<li><a href="#{html.escape(match[1], quote=True)}">{html.escape(label)}</a></li>')
+        else:
+            items.append(f'<li>{html.escape(label)}: <span class="status status-pending">[要確認: 未記載]</span></li>')
+    return '<aside class="coverage-nav" aria-label="設計の確認導線"><strong>設計レビューの確認導線</strong><ul>' + "".join(items) + "</ul></aside>"
 
-    outputs[Path("index.html")] = phase_index_html(phase_dir, func_available, system_available)
-    outputs[Path("README.md")] = readme_text(phase_dir, func_available, system_available)
-    return outputs, func_available, system_available
+
+def bundle_html(
+    phase_dir: Path,
+    output: str,
+    documents: list[SourceDocument],
+    available_outputs: set[str],
+) -> str:
+    selected = [document for document in documents if document.kind in _kind_for_output(output)]
+    grouped: dict[str, list[SourceDocument]] = {}
+    for document in selected:
+        if document.kind == "system_tests":
+            continue
+        grouped.setdefault(document.func_name, []).append(document)
+    all_headings: list[tuple[int, str, str]] = []
+    sections: list[str] = []
+    for func_name, func_documents in grouped.items():
+        func_anchor = slugify(func_name, {item[2] for item in all_headings})
+        all_headings.append((2, func_name, func_anchor))
+        chunks: list[str] = []
+        for document in func_documents:
+            body, headings = _render_source(document, phase_dir)
+            anchor = slugify(f"{func_name} {document.label}", {item[2] for item in all_headings})
+            all_headings.append((3, f"{document.label}（{func_name}）", anchor))
+            all_headings.extend(headings)
+            chunks.append(
+                f'<section class="source-card" id="{html.escape(anchor, quote=True)}"><h3>{html.escape(document.label)} '
+                f'— {html.escape(func_name)}</h3><p class="meta"><span>正本: '
+                f'<a href="{_source_href(document.path, phase_dir)}">{html.escape(document.path.relative_to(phase_dir).as_posix())}</a></span>'
+                f'<span>更新日: {html.escape(source_updated(document.path))}</span></p><div class="prose">{body}</div></section>'
+            )
+        sections.append(f'<section class="func-section"><h2 id="{html.escape(func_anchor, quote=True)}">{html.escape(func_name)}</h2>{"".join(chunks)}</section>')
+    # 03_テストケースのシステムテストはfunc横断の最後に独立して置く。
+    system = [document for document in selected if document.kind == "system_tests"]
+    for document in system:
+        body, headings = _render_source(document, phase_dir)
+        anchor = slugify("phase共通 システムテスト", {item[2] for item in all_headings})
+        all_headings.append((2, "phase共通 システムテスト", anchor))
+        all_headings.extend(headings)
+        sections.append(f'<section class="source-card" id="{html.escape(anchor, quote=True)}"><h2>phase共通 — システムテストケース</h2><p class="meta"><a href="{_source_href(document.path, phase_dir)}">正本: {html.escape(document.path.relative_to(phase_dir).as_posix())}</a></p><div class="prose">{body}</div></section>')
+    screen_exists = (phase_dir / "views" / SCREEN_MOCK).is_file()
+    coverage = _coverage_navigation(all_headings) if output == "02_設計書.html" else ""
+    title = output[:-5]
+    return f'''<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{SECURITY_META}<title>{html.escape(phase_label(phase_dir))} — {html.escape(title)}</title><style>{CSS}</style></head><body><a class="skip-link" href="#main">本文へ移動</a><header class="page-header"><h1>{html.escape(phase_label(phase_dir))} — {html.escape(title)}</h1><p class="derived"><strong>閲覧用の派生成果物です。</strong> 正本Markdown/YAMLを変更して再生成してください。</p>{_bundle_nav(output, available_outputs, screen_exists)}</header><div class="layout"><nav class="toc" aria-label="この文書の目次"><h2>目次</h2>{_toc_html(all_headings)}</nav><main id="main" class="content" tabindex="-1">{coverage}{''.join(sections) if sections else '<p class="muted">該当する正本はありません。</p>'}</main></div><footer class="page-footer"><p>各カードに機能名と正本へのリンクを表示しています。状態マーカーは正本の記載です。</p></footer></body></html>'''
+
+
+def expected_outputs(phase_dir: Path) -> dict[Path, str]:
+    documents = collect_documents(phase_dir)
+    available = {
+        output for output in OUTPUT_FILES
+        if any(document.kind in _kind_for_output(output) for document in documents)
+    }
+    return {
+        Path(output): bundle_html(phase_dir, output, documents, available)
+        for output in OUTPUT_FILES if output in available
+    }
+
+
+def _iter_safe_entries(root: Path):
+    if not root.exists() or root.is_symlink():
+        return
+    for entry in root.rglob("*"):
+        yield entry
+
+
+def _legacy_stale(view_dir: Path, wanted: set[Path]) -> list[Path]:
+    stale: list[Path] = []
+    if not view_dir.exists() or view_dir.is_symlink():
+        return stale
+    for entry in _iter_safe_entries(view_dir):
+        if entry.is_symlink():
+            continue
+        relative = entry.relative_to(view_dir)
+        if entry.is_file() and entry.name in LEGACY_OUTPUT_NAMES and relative not in wanted and entry.name != SCREEN_MOCK:
+            stale.append(entry)
+    return sorted(stale, key=os.fspath)
+
+
+def _empty_legacy_dirs(view_dir: Path, stale: list[Path]) -> list[Path]:
+    """既知の旧namespaceが空になった場合だけ削除対象とする。"""
+
+    if not view_dir.exists() or view_dir.is_symlink():
+        return []
+    dirs = [entry for entry in view_dir.iterdir() if entry.is_dir() and not entry.is_symlink() and (entry.name in LEGACY_DIR_NAMES or entry.name.startswith("func-"))]
+    stale_set = set(stale)
+    result: list[Path] = []
+    for directory in sorted(dirs, key=os.fspath, reverse=True):
+        children = [child for child in directory.iterdir() if child not in stale_set]
+        if not children:
+            result.append(directory)
+    return result
+
+
+def _symlink_violation(view_dir: Path) -> list[Path]:
+    if view_dir.is_symlink():
+        return [view_dir]
+    violations: list[Path] = []
+    if view_dir.exists():
+        for entry in _iter_safe_entries(view_dir):
+            if entry.is_symlink() and (entry.name in LEGACY_OUTPUT_NAMES or entry.name in OUTPUT_FILES or entry.name == SCREEN_MOCK or entry.is_dir()):
+                violations.append(entry)
+    return sorted(violations, key=os.fspath)
 
 
 def render_phase(phase_dir: Path, check: bool = False) -> bool:
     phase_dir = phase_dir.resolve()
     view_dir = phase_dir / "views"
-    outputs, func_available, system_available = expected_outputs(phase_dir)
-    if view_dir.is_symlink():
-        print(f"安全のため処理を中止: views がシンボリックリンクです: {view_dir}")
+    violations = _symlink_violation(view_dir)
+    if violations:
+        for violation in violations:
+            print(f"安全のため処理を中止: 出力先がシンボリックリンクです: {violation}")
         return False
-    known_html = {doc.output for doc in (*FUNC_DOCUMENTS, *SYSTEM_DOCUMENTS)}
-    linked_outputs = [
-        path for path in view_dir.rglob("*") if path.is_symlink() and (path.name in known_html or path.name in {"index.html", "README.md"})
-    ] if view_dir.exists() else []
-    if linked_outputs:
-        for path in sorted(linked_outputs, key=os.fspath):
-            print(f"安全のため処理を中止: 既知の出力がシンボリックリンクです: {path}")
-        return False
-    wanted = {str(path) for path in outputs}
-    stale = sorted(
-        path for path in view_dir.rglob("*.html")
-        if path.is_file() and path.name in known_html and str(path.relative_to(view_dir)) not in wanted
-    ) if view_dir.exists() else []
-    mismatches = [
-        relative for relative, content in outputs.items()
-        if not (view_dir / relative).is_file()
-        or (view_dir / relative).read_text(encoding="utf-8") != content
-    ]
-    skipped = [
-        f"{func_name}/{doc.source}" for func_name in func_available for doc in FUNC_DOCUMENTS
-        if doc not in func_available[func_name]
-    ] + [doc.source for doc in SYSTEM_DOCUMENTS if doc not in system_available]
+    outputs = expected_outputs(phase_dir)
+    wanted = set(outputs)
+    stale = _legacy_stale(view_dir, wanted)
+    empty_dirs = _empty_legacy_dirs(view_dir, stale)
+    mismatches = [relative for relative, content in outputs.items() if not (view_dir / relative).is_file() or (view_dir / relative).read_text(encoding="utf-8") != content]
     if check:
-        for source in skipped:
-            print(f"スキップ: {source}（正本なし）")
         for relative in mismatches:
             print(f"不一致: {view_dir / relative}")
         for path in stale:
             print(f"不要: {path}")
-        if mismatches or stale:
-            return False
-        print(f"検証: {view_dir}")
-        return True
-
+        for path in empty_dirs:
+            print(f"不要な空ディレクトリ: {path}")
+        return not (mismatches or stale or empty_dirs)
     view_dir.mkdir(parents=True, exist_ok=True)
     for path in stale:
         path.unlink()
         print(f"削除: {path}")
+    for directory in empty_dirs:
+        if directory.exists() and not any(directory.iterdir()):
+            directory.rmdir()
+            print(f"削除: {directory}")
     for relative, content in outputs.items():
-        (view_dir / relative).parent.mkdir(parents=True, exist_ok=True)
-        (view_dir / relative).write_text(content, encoding="utf-8")
-        print(f"生成: {view_dir / relative}")
-    for source in skipped:
-        print(f"スキップ: {source}（正本なし）")
+        target = view_dir / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+        print(f"生成: {target}")
     return True
 
 
 def discover_phase_dirs(paths: list[Path]) -> list[Path]:
-    """指定先そのもの、または標準 ``docs/spec/phase-*`` 配下を探索する。"""
     roots = paths or [Path.cwd()]
     found: set[Path] = set()
     for root in roots:
         root = root.resolve()
-        if root.is_dir() and (
-            root.name.startswith("phase-")
-            or any(path.is_dir() for path in root.glob("func-*"))
-        ):
+        if root.is_dir() and (root.name.startswith("phase-") or any(path.is_dir() for path in root.glob("func-*"))):
             found.add(root)
             continue
         spec_root = root / "docs" / "spec"
@@ -604,18 +569,14 @@ def discover_phase_dirs(paths: list[Path]) -> list[Path]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="正本Markdownから自己完結HTMLビューを生成")
-    parser.add_argument(
-        "paths", type=Path, nargs="*", help="フェーズディレクトリ、または標準docs/specを含むルート"
-    )
+    parser = argparse.ArgumentParser(description="正本Markdownからフェーズ単位の自己完結HTMLビューを生成")
+    parser.add_argument("paths", type=Path, nargs="*", help="フェーズディレクトリ、または標準docs/specを含むルート")
     parser.add_argument("--check", action="store_true", help="生成物との差分を読み取り専用で検証")
     args = parser.parse_args()
     phase_dirs = discover_phase_dirs(args.paths)
     if not phase_dirs:
         parser.error("フェーズディレクトリが見つかりません")
-    results = [render_phase(path, check=args.check) for path in phase_dirs]
-    success = all(results)
-    if not success:
+    if not all(render_phase(path, check=args.check) for path in phase_dirs):
         raise SystemExit(1)
 
 

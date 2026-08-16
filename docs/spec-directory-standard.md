@@ -21,19 +21,12 @@ docs/spec/
 │   ├── tests/
 │   │   ├── system-test-cases.md        # ST（system-traceability.yamlから生成）
 │   │   └── requirements-traceability.md    # 全func横断の要件・業務フロー・AC対応表
-│   ├── views/                          # HTML。phase単位で1つ、func別に名前空間を分ける（§4参照）
-│   │   ├── index.html                  # phase共有の画面モックへもここから導線を張る
-│   │   ├── README.md
-│   │   ├── 画面モック.html              # screen-mockが生成（render_screen_mock.py管轄。views/直下のまま）
-│   │   ├── system/
-│   │   │   ├── requirements-traceability.html
-│   │   │   └── system-test-cases.html
-│   │   ├── func-予約/
-│   │   │   ├── index.html
-│   │   │   ├── 01_要件定義書.html
-│   │   │   └── ...
-│   │   └── func-認証/
-│   │       └── ...
+│   ├── views/                          # 人向けHTML。phase単位で5種類以下に集約（§6参照）
+│   │   ├── 00_サマリ.html              # 全funcのサマリ
+│   │   ├── 01_要件定義書.html          # 全funcの要件
+│   │   ├── 02_設計書.html              # 基本・詳細、シーケンス、ER、物理設計を一枚に統合
+│   │   ├── 03_テストケース.html        # 全funcのUT/ITとphaseのST
+│   │   └── 画面モック.html              # 画面がある場合のみscreen-mockが生成
 │   ├── func-予約/
 │   │   ├── README.md
 │   │   ├── 00_サマリ.md
@@ -66,7 +59,7 @@ docs/spec/
 - func単位の正本 YAML は内容を表す固定名で `func-<名前>/` 直下に置く: `traceability.yaml`（US・要件のみ。`business_flows`/`acceptance_tests`/`system_tests`は含まない）／`design-traceability.yaml`／`test-traceability.yaml`（`system_traceability`フィールドで `../system-traceability.yaml` を参照する）。
 - phase単位の正本 YAML はフェーズ直下に置く: `system-traceability.yaml`（業務フロー・AC・ST・`func_traceability`索引の正本）／`screens.yaml`／`design-tokens.json`／`task-plan.yaml`。
 - レンダラが出す派生 Markdown（表・テスト項目）は固定名のまま `tests/` に置く。func単位の派生物（`04_テスト項目書.md`・`design-traceability.md`）は `func-<名前>/tests/`、phase横断の派生物（`requirements-traceability.md`・`system-test-cases.md`）は phase直下 `tests/`。
-- 閲覧用HTMLは正本Markdownと派生Markdownに対応する名前で `views/` 直下に置く。func個別の文書は `views/func-<名前>/`、phase横断の文書は `views/system/` へ名前空間を分ける。HTML用のCSS・JavaScript・画像フォルダは作らない。
+- 閲覧用HTMLは`views/`直下へphase単位で置く。func別フォルダ、system別フォルダ、索引、README、トレーサビリティ単独HTMLは作らない。HTML用のCSS・JavaScript・画像フォルダも作らない。
 - `features/` の `.feature` はレンダラが付ける名前のまま。phase単位に集約し、func単位では作らない。
 
 ## 3. どのスキルの生成物がどこへ行くか（対応表）
@@ -86,8 +79,9 @@ docs/spec/
 | UT/IT/V字カバレッジ（test-item） | **`func-<名前>/tests/04_テスト項目書.md` に1本統合**（下記§4） |
 | `requirements-traceability.md`・`system-test-cases.md`（generator。`system-traceability.yaml`をfunc横断で集約して生成） | phase直下 `tests/` |
 | `*.feature`（generator。`system-traceability.yaml`の`acceptance_tests`から生成） | phase直下 `features/`（★func単位では作らない） |
-| 閲覧用HTML（func個別文書。generator / design / test-item） | `views/func-<名前>/`（対応する文書があるものだけ生成） |
-| 閲覧用HTML（phase横断文書。要件対応表・システムテスト） | `views/system/` |
+| 閲覧用HTML（generator） | `views/00_サマリ.html`、`views/01_要件定義書.html` |
+| 閲覧用HTML（design） | `views/02_設計書.html`（全funcの基本・詳細設計を統合） |
+| 閲覧用HTML（test-item） | `views/03_テストケース.html`（全funcのUT/ITとphaseのSTを統合） |
 | 画面モックHTML（screen-mock） | `views/画面モック.html`（正本ではない。`render_screen_mock.py`が生成し、共有レンダラは触らない。phase直下） |
 | 要確認・未決事項・差分影響・レビュー要約（参照したsystem-baseline文書も含む） | `func-<名前>/reports/01_差分・未決事項.md` |
 | `phase_integration_review`（reviewer。業務フロー・AC・ST・共有画面・タスク計画のphase単位レビュー記録） | `<phase>/reports/`直下 |
@@ -133,7 +127,7 @@ python3 evaluation/render_test_item_docs.py <phase>/func-<名前>/test-traceabil
 python3 evaluation/task_plan_gate.py <phase>/task-plan.yaml --system-traceability <phase>/system-traceability.yaml
 python3 evaluation/render_task_plan.py <phase>/task-plan.yaml --output <phase>/implementation-task-plan.md
 
-# 共通（閲覧用HTML）: phase配下の各func-*/を走査し、views/func-<名前>/・views/system/へ名前空間分割
+# 共通（閲覧用HTML）: phase配下の各func-*/とphase共通テストを走査し、4つのHTMLへ統合
 python3 evaluation/render_html_views.py <phase>
 python3 evaluation/render_html_views.py <phase> --check
 ```
@@ -144,8 +138,12 @@ python3 evaluation/render_html_views.py <phase> --check
 
 `views/` は人が読みやすく確認するための派生物であり、**正本はMarkdown/YAMLのまま**とする。HTMLを手編集せず、正本を直して再生成する。品質ゲートとトレーサビリティも従来どおりMarkdown/YAMLを検証する。
 
-- `views/index.html` は「サマリ → 要件 → 設計 → テスト・対応表」の読む順番、各文書の役割、正本へのリンク、未決事項への導線を、func別（`views/func-<名前>/`）・phase横断（`views/system/`）の両方について示す。画面モックがある場合は `views/画面モック.html` への導線も示す。
-- `views/README.md` はHTMLとの対応、再生成コマンド、Obsidianとブラウザの閲覧手順を示す。
+- `00_サマリ.html`は全funcの目的・決定・未決・リスクをまとめ、最初に読む入口にする。
+- `01_要件定義書.html`は全funcの要件本文をまとめる。記入ガイド、FILLマーカー、根拠付録は表示しない。
+- `02_設計書.html`は基本・詳細設計を一枚へまとめる。シーケンス、ER、RDBのDDLまたはNoSQLのコレクション・インデックス・ルール設計へ直接移動できるようにする。
+- `03_テストケース.html`は全funcのUT/ITとphase共通のSTをまとめる。
+- `画面モック.html`は画面がある場合だけscreen-mockが生成する。共有HTMLレンダラは変更・削除しない。
+- 監査用の要件・設計トレーサビリティは正本YAMLと派生Markdownで確認する。内容を再掲した単独HTMLは作らない。
 - 各HTMLは外部CDN、外部フォント、追跡コード、ネットワーク通信に依存しない単一ファイルとする。
 - 入力中のraw HTML、`script`、イベント属性、危険なURLは実行可能な形で出力しない。
 
@@ -153,11 +151,11 @@ Obsidianではデスクトップ版に [Local HTML Embed](https://obsidian.md/pl
 
 ````markdown
 ```html-embed
-docs/spec/phase-1_公開サイト・予約/views/index.html
+docs/spec/phase-1_公開サイト・予約/views/00_サマリ.html
 ```
 ````
 
-このプラグインは埋め込んだHTML内のスクリプト実行を許すため、**自分で生成した信頼済みHTMLだけ**を開く。現時点ではデスクトップ限定であり、モバイルでは正本Markdownを読む。プラグインを導入しない場合は `views/index.html` を通常のブラウザで開く。
+このプラグインは埋め込んだHTML内のスクリプト実行を許すため、**自分で生成した信頼済みHTMLだけ**を開く。現時点ではデスクトップ限定であり、モバイルでは正本Markdownを読む。プラグインを導入しない場合は `views/00_サマリ.html` を通常のブラウザで開く。
 
 ## 7. `.feature` の位置づけ
 
@@ -174,7 +172,7 @@ docs/spec/phase-1_公開サイト・予約/views/index.html
 
 ## 9. なぜ「同じ内容」が複数ファイルに出るのか（設計意図の記録）
 
-`.feature`・`system-test-cases.md`・`requirements-traceability.md` は、いずれも `system-traceability.yaml`（正本、phase直下。全funcの`traceability.yaml`を`func_traceability`で束ねて横断参照する）から**自動生成した別ビュー**であり、手で二重に書いていない。`01_要件定義書.md` は `func-<名前>/traceability.yaml`（正本、func直下）の `user_stories`・`requirements` から生成する。読み手・道具ごとに最適な見せ方をしているだけで、正本を1か所直せば全ビューが追従する。
+`.feature`・`system-test-cases.md`・`requirements-traceability.md` は、いずれも `system-traceability.yaml`（正本、phase直下。全funcの`traceability.yaml`を`func_traceability`で束ねて横断参照する）から生成する機械・監査向け成果物である。人向け`views/`では同じ対応表を単独HTMLにせず、判断に必要なサマリ・要件・設計・テストへ統合する。
 
 | ビュー | 読み手・道具 |
 | --- | --- |
@@ -184,4 +182,4 @@ docs/spec/phase-1_公開サイト・予約/views/index.html
 | `features/*.feature` | テスト自動化ツール（実行用） |
 | `tests/system-test-cases.md` | テスト担当者（手順書） |
 | `tests/requirements-traceability.md` | 監査（抜け漏れ・影響のマトリクス） |
-| `views/*.html` | 人がブラウザまたはObsidianデスクトップで読む派生ビュー |
+| `views/00〜03_*.html` | 人がブラウザまたはObsidianデスクトップで読む、phase単位に統合した派生ビュー |

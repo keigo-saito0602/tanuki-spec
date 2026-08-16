@@ -152,7 +152,7 @@ python3 evaluation/render_html_views.py <phase> --check
 - `<phase>/func-<名前>/traceability.yaml`（US → BR/FR/NFR → AC → ST の正本）
 - `<phase>/tests/requirements-traceability.md`、`<phase>/tests/system-test-cases.md`
 - `<phase>/features/*.feature`（受入試験はGherkinの `.feature` として標準で生成。将来E2E（Cucumber/playwright-bdd）へ直接投入できる）
-- `<phase>/views/`（`index.html`、`README.md`、存在する要件・サマリ・対応表の閲覧用HTML。正本ではなく再生成する派生物）
+- `<phase>/views/00_サマリ.html`、`01_要件定義書.html`（全funcをphase単位で統合した、人向けの閲覧用HTML。正本ではなく再生成する派生物）
 - `<phase>/func-<名前>/reports/01_差分・未決事項.md`（カバレッジ評価レポート：必須充足率／欠落リスト）
 
 実例は `examples/sample-user-story/` を参照（サンプルストーリー1件のE2E成果物）。

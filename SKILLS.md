@@ -19,7 +19,7 @@
 
 ## 共有コア
 
-[`tanuki-spec-all`](./tanuki-spec-all/)は、SSOT（`spec-items.yaml`）、テンプレート、決定論的評価器、閲覧用HTMLの共有レンダラを持つ共有コアであり、直接呼び出さない。各スキルはsymlinkで参照する。HTMLはMarkdown/YAMLから再生成できる派生物である。
+[`tanuki-spec-all`](./tanuki-spec-all/)は、SSOT（`spec-items.yaml`）、テンプレート、決定論的評価器、閲覧用HTMLの共有レンダラを持つ共有コアであり、直接呼び出さない。各スキルはsymlinkで参照する。HTMLはMarkdown/YAMLから再生成でき、phase単位のサマリ・要件・一枚設計・テストケースだけに集約する派生物である。
 
 ## 文章の読みやすさ（全スキル共通）
 
@@ -31,6 +31,6 @@
 
 ## 連携
 
-`tanuki-spec-generator`で要件を整え、必要に応じて`tanuki-spec-design`で設計と設計トレーサビリティを作る。generator / design は生成工程の完了時に共有レンダラで`views/`を更新し、`tanuki-spec-test-item`は本体実装後に同じ工程へ合流する。レビューは対象成果物を`tanuki-spec-reviewer`へ渡し、生成担当と別の担当が独立採点する。DoDを満たしたら`tanuki-task-planner`で実装タスクへ分解する。
+`tanuki-spec-generator`で要件を整え、必要に応じて`tanuki-spec-design`で設計と設計トレーサビリティを作る。generator / design / test-item は生成工程の完了時に共有レンダラで4つの人向けHTMLを更新する。監査用トレーサビリティは正本・派生Markdownとして残すが、重複する単独HTMLは作らない。レビューは対象成果物を`tanuki-spec-reviewer`へ渡し、生成担当と別の担当が独立採点する。DoDを満たしたら`tanuki-task-planner`で実装タスクへ分解する。
 
 要件定義がカバレッジ評価を通過したら、画面を伴う案件では`tanuki-spec-screen-mock`で画面モックを生成し、実装前に画面構成と遷移をレビューする。確定した画面定義は`tanuki-spec-design`の画面一覧・画面遷移設計へ渡す。

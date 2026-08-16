@@ -62,7 +62,7 @@ HTMLレンダラはフェーズ内に存在する文書だけを生成対象と�
 
 - `<phase>/func-<名前>/test-traceability.yaml`（UT/IT と設計・要件の正本。`system_traceability: ../system-traceability.yaml`でAC/STの正本を参照する）
 - `<phase>/func-<名前>/tests/04_テスト項目書.md`（単体・結合・V字カバレッジを1本に統合。見出しは `## 単体テスト（UT）`、`## 結合テスト（IT）`、`## V字モデルカバレッジ`）
-- `<phase>/views/`（`index.html`、`README.md`、存在する文書の閲覧用HTML。正本ではなく再生成する派生物）
+- `<phase>/views/03_テストケース.html`（全funcのUT・ITとphase横断のSTを統合した閲覧用HTML。正本ではなく再生成する派生物）
 - `<phase>/func-<名前>/reports/01_差分・未決事項.md`（要確認事項、差分追従時の影響範囲、既存 AC/ST の再利用方針）
 
 ## 禁止事項

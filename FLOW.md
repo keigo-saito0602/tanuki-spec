@@ -101,9 +101,9 @@ python3 evaluation/render_html_views.py <phase> --check
 
 ### 閲覧用HTMLビュー（各生成工程の完了時）
 
-`render_html_views.py`は共有コアに1つだけ置き、generator / design / test-item がsymlink経由で呼び出す。通常実行はフェーズ内に存在する文書だけを`views/`へ生成し、`--check`は書き換えずに欠落・正本との差分を検出する。
+`render_html_views.py`は共有コアに1つだけ置き、generator / design / test-item がsymlink経由で呼び出す。通常実行はフェーズ内に存在する正本を統合し、`views/00_サマリ.html`、`01_要件定義書.html`、`02_設計書.html`、`03_テストケース.html`だけを生成する。画面モックはscreen-mockが`views/画面モック.html`へ生成する。`--check`は書き換えずに欠落・正本との差分・旧形式HTMLの残存を検出する。
 
-HTMLは人が読むための派生物であり、正本はMarkdown/YAMLのまま変わらない。HTMLに修正が必要な場合も正本を直して再生成する。`views/index.html`はブラウザで直接開けるほか、ObsidianデスクトップではLocal HTML Embedを使って表示できる。構成、`html-embed`記法、安全上の注意は[`docs/spec-directory-standard.md`](./docs/spec-directory-standard.md)を参照する。
+HTMLは人が読むための派生物であり、正本はMarkdown/YAMLのまま変わらない。HTMLに修正が必要な場合も正本を直して再生成する。普段は`views/00_サマリ.html`から読み、ページ上部の導線で要件・設計・テスト・画面モックへ移動する。監査用の対応表は正本側で確認し、重複するHTMLは作らない。
 
 ### ⑤ AI品質採点（tanuki-spec-reviewer／別担当）
 `evaluation/ai-quality-rubric.md`の6軸（完全性/曖昧性/整合性/トレーサビリティ/実装可能性/根拠）を

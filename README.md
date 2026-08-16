@@ -68,7 +68,7 @@ tanuki-spec/
 6. [FLOW.md](./FLOW.md)のDoD（⑥）を満たした仕様書だけを実装へ渡す。
 7. `tanuki-task-planner`で実装タスクへ分解する。
 
-generator / design は各工程の成果物を作った後、共有の`render_html_views.py`で`views/`に閲覧用HTMLを生成します。HTMLは派生物であり、正本はMarkdown/YAMLです。生成コマンド、ファイル配置、Obsidianデスクトップでの開き方は[仕様書ディレクトリ標準](./docs/spec-directory-standard.md)を参照してください。
+generator / design / test-item は各工程の成果物を作った後、共有の`render_html_views.py`で、phaseごとにサマリ・要件・一枚設計・テストケースの4つだけを`views/`へ生成します。画面があるphaseではscreen-mockが`画面モック.html`を加えます。HTMLは派生物であり、正本はMarkdown/YAMLです。生成コマンドと配置は[仕様書ディレクトリ標準](./docs/spec-directory-standard.md)を参照してください。
 
 ## 検証
 
