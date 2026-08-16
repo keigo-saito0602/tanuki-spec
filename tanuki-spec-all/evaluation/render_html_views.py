@@ -167,11 +167,19 @@ def strip_reader_only_content(markdown: str) -> str:
     # 「付録: 項目の根拠一覧」等は見出しから同階層以上の次見出しまでを除く。
     without_appendix: list[str] = []
     appendix_level: int | None = None
+    audit_tail = False
     for line in cleaned:
+        if audit_tail:
+            continue
         heading = re.match(r"^ {0,3}(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$", line)
         if heading:
             level = len(heading.group(1))
             title = heading.group(2).strip()
+            # 生成テンプレートの監査項目は、この見出し以降がすべて作成者向け。
+            # 配下に同階層のカテゴリ見出しが続いても、読者ビューへ戻さない。
+            if re.search(r"監査用項目", title):
+                audit_tail = True
+                continue
             if appendix_level is not None and level <= appendix_level:
                 appendix_level = None
             if appendix_level is None and APPENDIX_RE.search(title):

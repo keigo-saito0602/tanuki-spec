@@ -8,6 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "evaluation"))
 import generate_templates
+import render_html_views
 
 
 CHAR_LABELS = {"functional": "機能性"}
@@ -176,6 +177,21 @@ class DocumentHeaderTest(unittest.TestCase):
         self.assertIn("🔤 **凡例**:", text)
         self.assertIn("🔎 **第三者レビュー視点（PBR）**", text)
         self.assertIn("実装者視点で確認: 実装可能な粒度か", text)
+
+    def test_human_body_precedes_audit_items(self):
+        text = generate_templates.render_phase("demo", self._minimal_data())
+        self.assertLess(text.index("## 読者向け本文"), text.index("## 付録: 監査用項目"))
+        self.assertLess(text.index("## 付録: 監査用項目"), text.index("### [必須] 項目"))
+        self.assertIn("<!-- HUMAN:START -->", text)
+        self.assertIn("<!-- FILL:START demo-x -->", text)
+
+    def test_reader_view_hides_audit_template_fields(self):
+        text = generate_templates.render_phase("demo", self._minimal_data())
+        reader_text = render_html_views.strip_reader_only_content(text)
+        self.assertIn("## 読者向け本文", reader_text)
+        self.assertNotIn("## 付録: 監査用項目", reader_text)
+        self.assertNotIn("FILL:START", reader_text)
+        self.assertNotIn("### [必須] 項目", reader_text)
 
 
 class ReviewChecklistTest(unittest.TestCase):

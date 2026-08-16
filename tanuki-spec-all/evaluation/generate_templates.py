@@ -5,8 +5,9 @@
 テンプレートを手書きせずSSOTから生成することで、項目定義を1箇所に集約し
 （保守性要件）、資料改訂時は spec-items.yaml だけ直せばテンプレも追随する。
 
-本文には、読み手が必要とする情報だけを置く（段階的開示）。各項目は1行の
-FILLブロックだけを持つ:
+文書の先頭には、案件と読者に合わせて再編集する「読者向け本文」を置く。
+品質項目のFILLブロックは末尾の監査用付録へ隔離し、テンプレート充足の順番を
+人が読む順番にしない。各監査項目は1行のFILLブロックを持つ:
 
     ### [必須] 項目名
     <!-- FILL:START id -->（未記入）<!-- FILL:END id -->
@@ -15,7 +16,7 @@ FILLブロックだけを持つ:
 とっては無駄な負荷（extraneous load）になる。そのため文書末尾の「付録: 項目の
 根拠一覧」へ表として集約し、記入担当のAIとレビュー時だけが参照する。
 
-FILLマーカーは coverage.py が本文を切り出す境界であり、削除も移動もできない。
+FILLマーカーは coverage.py が監査項目を切り出す境界であり、削除できない。
 1行に畳んであるのは、find_body が正規表現でマーカーの内側だけを抜くため、
 本文の判定に影響しないと確認済みだからである。
 
@@ -171,6 +172,21 @@ def render_phase(phase_key: str, data: dict) -> str:
         for guide in ph["pbr_guide"]:
             out.append(f"> - {guide}")
     out.append("> 📎 **記入方法**: 末尾の「付録: 項目の根拠一覧」を参照する。")
+    out.append("")
+    out.append("## 読者向け本文")
+    out.append("")
+    out.append("> **記入ガイド**: この領域は品質項目の並びを写さず、案件の読者が判断する順序へ再編集する。")
+    out.append("> サマリではなく、この本文だけで要件・設計判断が完結する内容にする。低リスク部分は表へ畳み、高リスク部分を深掘りする。")
+    out.append("")
+    out.append("<!-- HUMAN:START -->")
+    out.append("[要確認: 案件と読者に合わせた本文を作成してください]")
+    out.append("<!-- HUMAN:END -->")
+    out.append("")
+    out.append("---")
+    out.append("")
+    out.append("## 付録: 監査用項目")
+    out.append("")
+    out.append("以下はカバレッジ・根拠・トレーサビリティを検査するための領域。閲覧用HTMLでは表示しない。本文を複製せず、根拠と本文見出し・IDへの参照を記録する。")
     out.append("")
     for cat in ph["categories"]:
         out.append(f"## {cat['label']}")

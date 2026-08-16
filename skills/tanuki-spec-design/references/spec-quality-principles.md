@@ -1,0 +1,1 @@
+../../../tanuki-spec-all/references/spec-quality-principles.md

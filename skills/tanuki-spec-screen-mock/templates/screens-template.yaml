@@ -13,6 +13,23 @@ screens:
     actor: "<操作する役割>"
     layout: list-with-filter
     trace: ["<FR-001>"]
+    design_question: "<このモックでレビューして決めたい問い>"
+    hypothesis: "<現時点で置く利用者・業務上の仮説>"
+    risk: medium
+    validation_task: "<レビュー参加者が行う具体的な操作・確認課題>"
+    rationale: "<画面構成・導線・既存UIとの差分を採用した根拠>"
+    exploration_mode: compare
+    alternatives:
+      - id: alt-a
+        name: "<代替案A>"
+        summary: "<案Aの情報構造・導線の要約>"
+        decision: adopted
+        reason: "<採用理由>"
+      - id: alt-b
+        name: "<代替案B>"
+        summary: "<案Bの情報構造・導線の要約>"
+        decision: rejected
+        reason: "<却下理由>"
     blocks:
       - type: header
         nav: ["<メニュー1>", "<メニュー2>"]
@@ -38,6 +55,9 @@ screens:
       loading: "<待たせる場合の表示>"
       error: "<失敗理由と復旧手段>"
       forbidden: "該当なし: <理由>"
+    state_strategy:
+      priority_states: [normal, empty, error]
+      rationale: "<この画面で重点的にレビューする状態と、その理由>"
     transitions:
       - action: "<操作名>"
         to: SC-002
@@ -50,6 +70,19 @@ screens:
     actor: "<操作する役割>"
     layout: form
     trace: ["<FR-002>"]
+    design_question: "<このモックでレビューして決めたい問い>"
+    hypothesis: "<現時点で置く利用者・業務上の仮説>"
+    risk: medium
+    validation_task: "<レビュー参加者が行う具体的な操作・確認課題>"
+    rationale: "<画面構成・導線・既存UIとの差分を採用した根拠>"
+    exploration_mode: inherit
+    inherited_from: "<継承する既存画面・デザインシステム・業務パターン>"
+    alternatives:
+      - id: alt-a
+        name: "<継承する既存パターン>"
+        summary: "<継承する情報構造・導線の要約>"
+        decision: adopted
+        reason: "<今回も利用者・業務・制約に適合する理由>"
     blocks:
       - type: header
         nav: ["<メニュー1>"]
@@ -76,6 +109,9 @@ screens:
       loading: "<待たせる場合の表示>"
       error: "<失敗理由と復旧手段>"
       forbidden: "<見えない・押せない場合の扱い>"
+    state_strategy:
+      priority_states: [normal, loading, error]
+      rationale: "<この画面で重点的にレビューする状態と、その理由>"
     terminal: true
     transitions:
       - action: "<戻る操作>"
@@ -94,6 +130,23 @@ screens:
     actor: "<操作する役割>"
     layout: error
     trace: ["<FR-003>"]
+    design_question: "<失敗から元の作業へ復旧できるか>"
+    hypothesis: "<エラー理由と復旧操作を同時に示せば、作業を再開できる>"
+    risk: high
+    validation_task: "<エラーの原因を説明し、元の作業へ戻る操作を選んでください>"
+    rationale: "<元画面では安全に復旧できない条件と、専用画面から戻す理由>"
+    exploration_mode: compare
+    alternatives:
+      - id: alt-inline
+        name: "元画面内で通知"
+        summary: "元画面にエラーと再試行を表示する"
+        decision: rejected
+        reason: "セッションや処理状態が無効な場合は元画面内で安全に再試行できないため"
+      - id: alt-error-screen
+        name: "専用エラー画面"
+        summary: "エラーだけを独立画面で表示する"
+        decision: adopted
+        reason: "無効になった処理を中断し、安全な入口へ戻す必要があるため"
     blocks:
       - type: header
         nav: ["<メニュー1>"]
@@ -108,6 +161,9 @@ screens:
       loading: "該当なし: 遷移した時点で表示が確定している"
       error: "<失敗理由と復旧手段>"
       forbidden: "該当なし: <理由>"
+    state_strategy:
+      priority_states: [error]
+      rationale: "<失敗理由と復旧導線がこの画面の主要な検証対象のため>"
     transitions:
       - action: "<一覧へ戻る>"
         to: SC-001

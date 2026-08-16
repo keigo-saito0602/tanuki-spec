@@ -5,7 +5,7 @@
 
 要件定義書を入力に設計書を新規作成または追従更新する案件では、`tanuki-spec-design`をgeneratorと併存して使う。既存コード調査、確認質問、`design-traceability.yaml`の生成を担い、generatorの設計工程は変更しない。
 
-DoDを通過した仕様書を実装タスクへ分解する案件では、`tanuki-task-planner`を⑦の前段に置く。`traceability.yaml`を入力に`task-plan.yaml`と実装タスク計画を作る。
+cc-sdd併用時の実装タスク正本は`.kiro/specs/<spec>/tasks.md`とし、`tanuki-task-planner`は原則使わない。cc-sddを使えない単独運用時だけ、`traceability.yaml`を入力に`task-plan.yaml`と実装タスク計画を作る。
 
 UT/IT のテスト項目書と V 字カバレッジについては、設計工程の後に`tanuki-spec-test-item`を使う。既存の AC（受入試験）・ST（システムテスト）は`system-traceability.yaml`が正本のまま再定義しない。
 
@@ -13,7 +13,7 @@ UT/IT のテスト項目書と V 字カバレッジについては、設計工�
 
 ## 全体像（1行）
 
-> **ユーザが要望を出す → Claudeが品質項目に沿って仕様書を生成し決定論チェック → 別担当が品質採点 → ユーザがDoD判定 → Codexが実装する**
+> **cc-sddで変更単位と境界を決める → tanuki-specで業務・要件・設計・UXを深掘りする → 別担当が機械品質と判断品質を分けて確認する → cc-sddでタスク化・実装・実装検証する**
 
 ---
 
@@ -21,16 +21,17 @@ UT/IT のテスト項目書と V 字カバレッジについては、設計工�
 
 | # | ステージ | ユーザ | Claude（設計/レビュー・生成側） | Codex（実装・採点側） |
 |---|---|---|---|---|
+| -1 | cc-sddプリフライト・Discovery | 構想と対象プロジェクトを伝える | 対象エージェントのcc-sdd状態を確認し、完全未導入時だけ安全に追加。`kiro-discovery`で直接実装・単一spec・複数specを判断 | 既存`AGENTS.md`・`.kiro/settings`を上書きせず、境界候補と`brief.md`を引き継ぐ |
 | 0 | 起動 | 起動テンプレを埋める（工程・ストーリー・参照仕様・モード） | テンプレを提示。工程/ストーリーが埋まるまで生成しない | — |
 | ① | 入力ゲート(INVEST) | Testable等の不足を補足 | INVEST 6軸をYES/NO判定。NOの軸は質問リスト化して仕様書に残す（生成は止めないが根拠なき記入はしない） | — |
-| ② | 穴埋め生成 | 過去仕様の採用可否を承認 | `spec-items.yaml`＋テンプレを読み、各FILLに**根拠明記**で記入。根拠なし→`[要確認]`、条件外→`[対象外:理由]` | — |
+| ② | 深掘り・正本生成 | 過去仕様の採用可否と高リスク判断を承認 | 読者向け本文を案件の理解順で編集し、監査用付録のFILLへ**根拠明記**で記入。リスクが高い要件だけ例外・復旧・状態・代替案まで掘る | — |
 | ③ | カバレッジ評価 | 結果を見る | `coverage.py --strict` → `spec_gate.py`。**必須欠落/要確認があれば②へ戻る** | — |
 | ③.5 | 画面モック | **モックを確認し修正を依頼**（画面のある案件のみ） | `tanuki-spec-screen-mock`で`screens.yaml`・`design-tokens.json`・モックHTMLを生成 | — |
 | ④ | 設計派生 | 設計に必要な未確定事項へ回答する | 必要に応じて`tanuki-spec-design`で設計書と`design-traceability.yaml`を生成する | — |
 | ④.5 | テスト項目書 | テスト観点で必要な前提を回答する | `tanuki-spec-test-item`でUT/IT・`test-traceability.yaml`・V字カバレッジを生成する（設計工程を経た案件のみ） | — |
 | ⑤ | AI品質採点 | — | （自己採点しない＝バイアス回避） | **別担当として6軸採点**＋`validate_review.py`で記録検証（または新しいClaudeセッションが採点） |
 | ⑥ | 出力ゲート(DoD) | **最終判定**（下記条件） | 差し戻しがあれば該当ステージへ | — |
-| ⑦ | 実装引き渡し | 進捗を見る | `tanuki-task-planner`でタスク分解 | **DoD通過の仕様書を入力に実装（TDD）** |
+| ⑦ | 実装引き渡し | 進捗を見る | 要件・設計・テスト・境界をcc-sddへ橋渡し。単独運用時だけ`tanuki-task-planner`を使う | **cc-sddの`kiro-spec-tasks`／`kiro-impl`で実行（TDD）** |
 
 **⑤の採点は「生成した本人以外」が原則**（自己採点の甘さを防ぐ）。ユーザの分業では
 **Codexに採点も兼ねさせる**（実装前の仕様レビューにもなる）か、**新しいClaudeチャットで採点**が手軽。
@@ -38,6 +39,16 @@ UT/IT のテスト項目書と V 字カバレッジについては、設計工�
 ---
 
 ## ステップ詳細（コマンド付き）
+
+### -1. cc-sddプリフライトとDiscovery
+
+対象エージェントごとに共通プリフライトを実行する。完全未導入の場合だけ、互換性台帳で検証済みの公式Skills版を導入する。旧版・部分導入では自動上書きせず、状態を報告して移行判断を求める。cc-sdd本体は外部依存のまま保ち、版更新は隔離環境の実CLI試験を通してから台帳を更新する。
+
+```bash
+python3 tanuki-spec-all/evaluation/cc_sdd_preflight.py <project-root> --agent codex --ensure
+```
+
+導入後は`kiro-discovery`で変更を、直接実装・単一spec・複数spec・混合へ振り分ける。`brief.md`・`roadmap.md`・`.kiro/steering/`をtanuki-specの調査入力として使う。仕様の正本は`docs/spec/`に置き、`.kiro/specs/`へ同じ内容を独立して再生成しない。
 
 ### 0. 起動（ユーザ → Claude）
 SKILLを呼ぶとClaudeが起動テンプレを出す。ユーザが埋める:
@@ -143,13 +154,23 @@ phase直下の業務フロー・AC・ST・共有画面・タスク計画とい�
 - [ ] 受入基準がテスト可能
 - [ ] 受入基準がGherkin（Given/When/Then）で書かれ、`.feature` が生成できる
 
-### ⑦ タスク分解と実装（tanuki-task-planner → Codex）
-DoD通過後、実装タスクへ分解する:
+### ⑦ タスク分解と実装（cc-sdd → Codex）
+
+cc-sdd併用時は、DoD通過後の正本を共通ブリッジで`.kiro/specs/<spec>/spec.json`・`requirements.md`・`design.md`の薄い参照カードへ変換する。tanuki IDとcc-sdd数値IDの対応、正本リンク、境界だけを生成し、本文は複製しない。
+
+```bash
+python3 evaluation/cc_sdd_bridge.py render <project-root> --phase <phase-path> --func <func-名前> --spec <spec名> --approve
+python3 evaluation/cc_sdd_bridge.py check <project-root> --phase <phase-path> --func <func-名前> --spec <spec名> --approve
+```
+
+`draft`要件が残る場合、`--approve`は失敗する。通過後に`kiro-spec-tasks <spec名>`へ渡し、`.kiro/specs/<spec>/tasks.md`を実装タスクの正本にする。`tanuki-task-planner`で同じタスクを別に作らない。
+
+cc-sddを利用できない単独運用時だけ、次で代替タスク計画を作る:
 ```bash
 python3 evaluation/task_plan_gate.py <task-plan.yaml> --system-traceability <phase>/system-traceability.yaml
 python3 evaluation/render_task_plan.py <task-plan.yaml> --output <implementation-task-plan.md>
 ```
-Codexは`implementation-task-plan.md`と仕様書を入力に実装する。指示書の形に落とす工程は、このリポジトリの範囲外（別のリポジトリ側のスキル）で扱う。
+単独運用では`task-plan.yaml`を計画の正本にする。cc-sdd併用と単独運用を同じ案件で混在させない。Codexはcc-sddの`kiro-impl`から1タスクずつTDDで実装し、境界違反と実装結果をcc-sdd側で検証する。仕様変更が必要なら`.kiro`だけを直さず`docs/spec/`へ差し戻す。
 
 ---
 

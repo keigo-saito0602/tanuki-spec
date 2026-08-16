@@ -65,13 +65,14 @@ reviewer:        # 例: codex / claude-new-session。生成担当と別である
 
 ## tanuki-task-planner
 
-トレーサビリティ正本から実装タスク、依存関係、完了条件を作る。
+cc-sdd併用時は承認済みtanuki正本の橋渡しを確認する。cc-sddを使えない単独運用時だけ、トレーサビリティ正本から実装タスク、依存関係、完了条件を作る。
 
 ```text
 tanuki-task-planner
 対象機能:          # 例: レッスン予約機能
 対象phase:         # phaseディレクトリのパス
 対象リリース:      # MVP / Release 2 など
+運用モード(任意):  # cc-sdd（既定） / standalone
 ```
 
 ## tanuki-spec-screen-mock

@@ -32,6 +32,28 @@ SCREEN = {
     "actor": "生徒",
     "layout": "list-with-filter",
     "trace": ["FR-001", "FR-002"],
+    "design_question": "生徒が候補を比較して予約へ進めるか",
+    "hypothesis": "日付を先に選ぶと候補を比較しやすい",
+    "risk": "medium",
+    "validation_task": "明日の午後の候補を探し、最初に押す場所を説明してください",
+    "rationale": "既存予約画面の日付フィルタと用語を踏襲する",
+    "exploration_mode": "compare",
+    "alternatives": [
+        {
+            "id": "alt-filter-first",
+            "name": "条件を先に絞る",
+            "summary": "日付と講師を先頭に置く",
+            "decision": "adopted",
+            "reason": "候補数を減らしやすいため",
+        },
+        {
+            "id": "alt-calendar",
+            "name": "カレンダー中心",
+            "summary": "月間カレンダーから日付を選ぶ",
+            "decision": "rejected",
+            "reason": "週単位の比較では情報密度が高いため",
+        },
+    ],
     "blocks": [
         {"type": "header", "nav": ["予約", "履歴"]},
         {"type": "filter-bar", "fields": [{"label": "日付", "control": "date", "required": False}]},
@@ -43,6 +65,10 @@ SCREEN = {
         "loading": "スケルトン",
         "error": "再試行ボタン",
         "forbidden": "該当なし: 全員が閲覧できる",
+    },
+    "state_strategy": {
+        "priority_states": ["normal", "empty", "error"],
+        "rationale": "候補がない場合と取得失敗を重点的に確認する",
     },
     "transitions": [{"action": "枠を選ぶ", "to": "SC-002", "kind": "forward"}],
     "notes": ["[要確認] 残席0の枠を出すか"],
@@ -205,6 +231,31 @@ class RenderScreenTest(unittest.TestCase):
         html = RENDER.render_screen(SCREEN)
         self.assertIn("空き枠一覧", html)
         self.assertIn("生徒が予約可能なレッスン枠を探す", html)
+
+    def test_shows_design_exploration_card(self) -> None:
+        html = RENDER.render_screen(SCREEN)
+        for value in (
+            SCREEN["design_question"],
+            SCREEN["hypothesis"],
+            SCREEN["validation_task"],
+            SCREEN["rationale"],
+            "条件を先に絞る",
+            "カレンダー中心",
+            "重点状態",
+            "比較検討",
+        ):
+            self.assertIn(value, html)
+
+    def test_shows_inherited_pattern_source(self) -> None:
+        inherited_screen = dict(
+            SCREEN,
+            exploration_mode="inherit",
+            inherited_from="既存の生徒向け予約一覧 SC-010",
+            alternatives=[SCREEN["alternatives"][0]],
+        )
+        html = RENDER.render_screen(inherited_screen)
+        self.assertIn("既存パターンを継承", html)
+        self.assertIn("既存の生徒向け予約一覧 SC-010", html)
 
     def test_shows_trace_ids(self) -> None:
         html = RENDER.render_screen(SCREEN)

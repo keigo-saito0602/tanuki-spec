@@ -2,6 +2,10 @@
 
 このディレクトリは`tanuki-spec-generator`、`tanuki-spec-design`、`tanuki-spec-test-item`、`tanuki-spec-reviewer`が参照する共有コアです。単独のSKILLとしては起動しません。
 
+共通の生成判断は[`references/spec-quality-principles.md`](./references/spec-quality-principles.md)、cc-sddとの役割分担・導入判定・タスク生成への橋渡しは[`references/cc-sdd-integration.md`](./references/cc-sdd-integration.md)を正本とする。テンプレートは監査項目の器であり、人向け本文の章立てを固定しない。
+
+cc-sddは外部依存として扱い、`integrations/cc-sdd/compatibility.json`に検証済みバージョンと必須Skill・テンプレート・補助ファイル構成を固定する。プリフライトと互換性テストはこの台帳を読む。
+
 ## 導入と検証
 
 ```bash
@@ -16,7 +20,7 @@ python3 -m venv .venv
 
 `design-traceability-template.yaml`、`design_traceability_gate.py`、`render_design_traceability_docs.py`は、既存の要件トレーサビリティを変更せずにBR/FR/NFRとBD/DDの対応を管理する共有基盤です。
 
-`evaluation/render_html_views.py`は、フェーズ内に存在するMarkdownを `views/` の自己完結HTMLへ変換する共有レンダラです。Markdown/YAMLを正本のまま保ち、各スキルはsymlinkで同じ実装を呼び出します。
+`evaluation/render_html_views.py`は、フェーズ内に存在するMarkdownの「読者向け本文」を `views/` の自己完結HTMLへ変換する共有レンダラです。品質項目のFILLブロックと根拠一覧は監査用付録へ隔離し、HTMLには単純連結しません。Markdown/YAMLを正本のまま保ち、各スキルはsymlinkで同じ実装を呼び出します。
 
 ```bash
 # 生成・更新

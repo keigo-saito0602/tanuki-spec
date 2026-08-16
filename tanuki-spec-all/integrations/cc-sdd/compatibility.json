@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "dependency": {
+    "package": "cc-sdd",
+    "tested_version": "3.0.2",
+    "distribution": "external-npm",
+    "repository": "https://github.com/gotalab/cc-sdd",
+    "license": "MIT",
+    "tested_at": "2026-08-16"
+  },
+  "install": {
+    "language": "ja",
+    "agents": {
+      "codex": {
+        "flag": "--codex-skills",
+        "skills_root": ".agents/skills"
+      },
+      "claude": {
+        "flag": "--claude-skills",
+        "skills_root": ".claude/skills"
+      }
+    }
+  },
+  "required_skills": [
+    "kiro-debug",
+    "kiro-discovery",
+    "kiro-impl",
+    "kiro-review",
+    "kiro-spec-batch",
+    "kiro-spec-design",
+    "kiro-spec-init",
+    "kiro-spec-quick",
+    "kiro-spec-requirements",
+    "kiro-spec-status",
+    "kiro-spec-tasks",
+    "kiro-steering-custom",
+    "kiro-steering",
+    "kiro-validate-design",
+    "kiro-validate-gap",
+    "kiro-validate-impl",
+    "kiro-verify-completion"
+  ],
+  "required_artifacts": {
+    "shared": [
+      ".kiro/settings/templates/specs/design.md",
+      ".kiro/settings/templates/specs/init.json",
+      ".kiro/settings/templates/specs/requirements-init.md",
+      ".kiro/settings/templates/specs/requirements.md",
+      ".kiro/settings/templates/specs/research.md",
+      ".kiro/settings/templates/specs/tasks.md",
+      ".kiro/settings/templates/steering-custom/api-standards.md",
+      ".kiro/settings/templates/steering-custom/authentication.md",
+      ".kiro/settings/templates/steering-custom/database.md",
+      ".kiro/settings/templates/steering-custom/deployment.md",
+      ".kiro/settings/templates/steering-custom/error-handling.md",
+      ".kiro/settings/templates/steering-custom/security.md",
+      ".kiro/settings/templates/steering-custom/testing.md",
+      ".kiro/settings/templates/steering/product.md",
+      ".kiro/settings/templates/steering/structure.md",
+      ".kiro/settings/templates/steering/tech.md"
+    ],
+    "agents": {
+      "codex": [
+        ".codex/agents/spec-reviewer.toml"
+      ],
+      "claude": []
+    },
+    "skill_resources": [
+      "kiro-impl/templates/debugger-prompt.md",
+      "kiro-impl/templates/implementer-prompt.md",
+      "kiro-impl/templates/reviewer-prompt.md",
+      "kiro-spec-design/rules/design-discovery-full.md",
+      "kiro-spec-design/rules/design-discovery-light.md",
+      "kiro-spec-design/rules/design-principles.md",
+      "kiro-spec-design/rules/design-review-gate.md",
+      "kiro-spec-design/rules/design-synthesis.md",
+      "kiro-spec-requirements/rules/ears-format.md",
+      "kiro-spec-requirements/rules/requirements-review-gate.md",
+      "kiro-spec-tasks/rules/tasks-generation.md",
+      "kiro-spec-tasks/rules/tasks-parallel-analysis.md",
+      "kiro-steering-custom/rules/steering-principles.md",
+      "kiro-steering/rules/steering-principles.md",
+      "kiro-validate-design/rules/design-review.md",
+      "kiro-validate-gap/rules/gap-analysis.md"
+    ]
+  }
+}

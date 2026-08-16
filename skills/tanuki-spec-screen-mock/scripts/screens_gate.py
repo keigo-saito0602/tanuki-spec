@@ -11,10 +11,30 @@ from typing import Any
 from catalog import Catalog
 
 SCREEN_ID_PATTERN = re.compile(r"^SC-[EL]?\d+$")
-REQUIRED_SCREEN_FIELDS = ("id", "name", "purpose", "actor", "layout", "trace", "blocks", "states")
+REQUIRED_SCREEN_FIELDS = (
+    "id",
+    "name",
+    "purpose",
+    "actor",
+    "layout",
+    "trace",
+    "design_question",
+    "hypothesis",
+    "risk",
+    "validation_task",
+    "rationale",
+    "exploration_mode",
+    "alternatives",
+    "blocks",
+    "states",
+    "state_strategy",
+)
 REQUIRED_META_FIELDS = ("phase", "source_spec", "generated_at")
 GENERATED_AT_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 STATE_KEYS = ("normal", "empty", "loading", "error", "forbidden")
+RISK_LEVELS = ("low", "medium", "high")
+EXPLORATION_MODES = ("compare", "inherit")
+ALTERNATIVE_DECISIONS = ("adopted", "rejected")
 
 
 @dataclass
@@ -103,6 +123,8 @@ def validate_schema(data: Any, catalog: Catalog) -> Result:
             elif not trace:
                 result.warnings.append(f"{label}のtraceが空です。対応する要件IDを書いてください")
 
+        _validate_exploration(screen, label, result)
+
         block_types, block_states = _validate_blocks(screen.get("blocks"), label, catalog, result)
         if rule is not None:
             for missing in sorted(rule.required - block_types):
@@ -114,6 +136,91 @@ def validate_schema(data: Any, catalog: Catalog) -> Result:
 
     _validate_entry_screens(meta.get("entry_screens"), seen, result)
     return result
+
+
+def _validate_exploration(screen: dict, label: str, result: Result) -> None:
+    """画面を部品の充足だけで確定させず、探索と判断の根拠を残す。"""
+
+    for field_name in ("design_question", "hypothesis", "validation_task", "rationale"):
+        value = screen.get(field_name)
+        if not isinstance(value, str) or not value.strip():
+            result.errors.append(f"{label}の{field_name}にレビュー可能な内容を書いてください")
+
+    risk = screen.get("risk")
+    if risk not in RISK_LEVELS:
+        result.errors.append(f"{label}のrisk「{risk}」は{'/'.join(RISK_LEVELS)}のいずれかにしてください")
+
+    exploration_mode = screen.get("exploration_mode")
+    if exploration_mode not in EXPLORATION_MODES:
+        result.errors.append(
+            f"{label}のexploration_mode「{exploration_mode}」は{'/'.join(EXPLORATION_MODES)}のいずれかにしてください"
+        )
+
+    alternatives = screen.get("alternatives")
+    expected_count = (
+        isinstance(alternatives, list)
+        and (
+            (exploration_mode == "compare" and 2 <= len(alternatives) <= 3)
+            or (exploration_mode == "inherit" and len(alternatives) == 1)
+        )
+    )
+    if not expected_count:
+        if exploration_mode == "inherit":
+            result.errors.append(f"{label}のinheritモードではalternativesを採用案1件だけにしてください")
+        else:
+            result.errors.append(f"{label}のcompareモードではalternativesを比較可能な2〜3案にしてください")
+    else:
+        adopted = 0
+        alternative_ids: set[str] = set()
+        for index, alternative in enumerate(alternatives):
+            where = f"{label}のalternatives[{index}]"
+            if not isinstance(alternative, dict):
+                result.errors.append(f"{where}はマッピングで指定してください")
+                continue
+            for field_name in ("id", "name", "summary", "reason"):
+                value = alternative.get(field_name)
+                if not isinstance(value, str) or not value.strip():
+                    result.errors.append(f"{where}の{field_name}に比較内容を書いてください")
+            alternative_id = alternative.get("id")
+            if isinstance(alternative_id, str) and alternative_id.strip():
+                if alternative_id in alternative_ids:
+                    result.errors.append(f"{label}のalternativesでid「{alternative_id}」が重複しています")
+                alternative_ids.add(alternative_id)
+            decision = alternative.get("decision")
+            if decision not in ALTERNATIVE_DECISIONS:
+                result.errors.append(
+                    f"{where}のdecision「{decision}」は{'/'.join(ALTERNATIVE_DECISIONS)}のいずれかにしてください"
+                )
+            elif decision == "adopted":
+                adopted += 1
+        if adopted != 1:
+            result.errors.append(f"{label}のalternativesは採用案（decision: adopted）をちょうど1件にしてください")
+
+    if exploration_mode == "inherit":
+        inherited_from = screen.get("inherited_from")
+        if not isinstance(inherited_from, str) or not inherited_from.strip():
+            result.errors.append(f"{label}のinheritモードではinherited_fromに継承元を書いてください")
+        if risk == "high":
+            result.errors.append(f"{label}はrisk: highのためinheritではなくcompareモードで代替案を比較してください")
+
+    strategy = screen.get("state_strategy")
+    if not isinstance(strategy, dict):
+        result.errors.append(f"{label}のstate_strategyをマッピングで定義してください")
+        return
+    priority_states = strategy.get("priority_states")
+    if not isinstance(priority_states, list) or not priority_states:
+        result.errors.append(f"{label}のstate_strategy.priority_statesに重点状態を1件以上書いてください")
+    else:
+        unknown = [state for state in priority_states if state not in STATE_KEYS]
+        if unknown:
+            result.errors.append(
+                f"{label}のstate_strategy.priority_statesに5状態以外の値があります: {', '.join(map(str, unknown))}"
+            )
+        if len(priority_states) != len({repr(state) for state in priority_states}):
+            result.errors.append(f"{label}のstate_strategy.priority_statesに重複があります")
+    strategy_rationale = strategy.get("rationale")
+    if not isinstance(strategy_rationale, str) or not strategy_rationale.strip():
+        result.errors.append(f"{label}のstate_strategy.rationaleに重点状態を選んだ理由を書いてください")
 
 
 def _validate_blocks(blocks: Any, label: str, catalog: Catalog, result: Result) -> tuple[set[str], set[str]]:
