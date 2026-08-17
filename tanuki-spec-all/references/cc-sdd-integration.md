@@ -32,7 +32,7 @@ python3 evaluation/cc_sdd_bridge.py check <project-root> \
 - 参照カードには`kiro-spec-tasks`がタスク生成前に全文を読む正本一覧を明記する。カードの短い要点だけでタスクを生成しない。
 - 生成物には`tanuki-spec-cc-sdd-bridge-v1`所有マーカーを付ける。手書きspec、symlink、既存`tasks.md`があるディレクトリは`render`で上書きしない。`check`は読み取り専用のため、`tasks.md`が生成済みでも参照カードの最新性を検査できる。
 - 初回は未承認で生成する。tanukiのDoDとユーザー承認を終え、`draft`要件がゼロになった後だけ`render ... --approve`を実行する。
-- 承認後は`kiro-spec-tasks <spec名>`を実行する。タスク生成後も定期的に`check`を実行し、正本と参照カードの一致を確認する。正本変更で`check`が不一致を検出した場合、`check`は`tasks.md`を変更しないため、そのまま実装を続けず、既存`tasks.md`を退避してから`render`で参照カードを再生成し、`kiro-spec-tasks <spec名>`でタスクを再生成する。仕様変更は常に`docs/spec/`へ戻し、ブリッジ生成物を手編集しない。
+- 承認後は`kiro-spec-tasks <spec名>`を実行する。タスク生成後も定期的に`check`を実行し、正本と参照カードの一致を確認する。`spec.json`のうち`generated_by`・`source`・`bridge`・`feature_name`・`language`はブリッジ所有フィールドとして比較し、cc-sddが管理する承認状態・phase・日時・実装準備状態の更新は不一致にしない。正本変更で`check`が要件/設計カードまたはブリッジ所有フィールドの不一致を検出した場合は、そのまま実装を続けず、既存の`tasks.md`があるときだけ別名へ退避してから`render`で参照カードを再生成し、`kiro-spec-tasks <spec名>`でタスクを再生成する。仕様変更は常に`docs/spec/`へ戻し、ブリッジ生成物を手編集しない。
 
 ## 導入の安全条件
 

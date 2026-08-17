@@ -29,7 +29,7 @@ tanuki-spec-design
 python3 evaluation/cc_sdd_preflight.py <project-root> --agent <codex|claude> --check
 ```
 
-`missing`の場合は、固定版`cc-sdd@3.0.2`と、追加先（Codexは`.agents/skills/`、Claudeは`.claude/skills/`、共通は`.kiro/settings/`）をユーザーへ提示する。**ユーザーがこの導入へ明示的に同意した後だけ**、同じコマンドの`--check`を`--ensure`へ変えて実行する。`partial`または`legacy`の場合は`--ensure`を実行せず、既存状態と手動移行が必要な理由を報告する。
+`missing`の場合は、固定版`cc-sdd@3.0.2`と、追加先（Codexは`.agents/skills/`、Claudeは`.claude/skills/`、共通は`.kiro/settings/`）をユーザーへ提示する。**ユーザーがこの導入へ明示的に同意した後だけ**、同じコマンドの`--check`を`--ensure --consent`へ変えて実行する。`--agent`は省略しない。`partial`または`legacy`の場合は`--ensure`を実行せず、既存状態と手動移行が必要な理由を報告する。
 
 cc-sddはDiscovery、責任境界、実装運用（`.kiro/`）を担う。tanuki-specの正本はプロジェクトの`docs/spec/`であり、cc-sddの`requirements.md`・`design.md`は参照カードまたは自動生成要約に限る。詳しい同期規則、調査の深さ、読者向け再編集は[`references/cc-sdd-integration.md`](./references/cc-sdd-integration.md)と[`references/spec-quality-principles.md`](./references/spec-quality-principles.md)を読む。
 

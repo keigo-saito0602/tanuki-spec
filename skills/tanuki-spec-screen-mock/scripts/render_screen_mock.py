@@ -223,8 +223,8 @@ def render_screen(screen: Any) -> str:
     <h2>{screen_id} {esc(screen.get('name', ''))}</h2>
     <p>{esc(screen.get('purpose', ''))}／操作者: {esc(screen.get('actor', ''))}</p>
   </div>
-  {_render_exploration(screen)}
   <div class="canvas">{blocks}</div>
+  {_render_exploration(screen)}
   <div class="meta">
     <dl>
       <dt>対応要件</dt><dd>{trace}</dd>

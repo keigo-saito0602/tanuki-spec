@@ -47,7 +47,7 @@ UT/IT のテスト項目書と V 字カバレッジについては、設計工�
 ```bash
 python3 tanuki-spec-all/evaluation/cc_sdd_preflight.py <project-root> --agent codex --check
 # missingかつユーザーの明示同意後だけ実行
-python3 tanuki-spec-all/evaluation/cc_sdd_preflight.py <project-root> --agent codex --ensure
+python3 tanuki-spec-all/evaluation/cc_sdd_preflight.py <project-root> --agent codex --ensure --consent
 ```
 
 導入後は`kiro-discovery`で変更を、直接実装・単一spec・複数spec・混合へ振り分ける。`brief.md`・`roadmap.md`・`.kiro/steering/`をtanuki-specの調査入力として使う。仕様の正本は`docs/spec/`に置き、`.kiro/specs/`へ同じ内容を独立して再生成しない。
@@ -114,7 +114,7 @@ python3 evaluation/render_html_views.py <phase> --check
 
 ### 閲覧用HTMLビュー（各生成工程の完了時）
 
-`render_html_views.py`は共有コアに1つだけ置き、generator / design / test-item がsymlink経由で呼び出す。通常実行はフェーズ内に存在する正本を統合し、`views/00_サマリ.html`、`01_要件定義書.html`、`02_設計書.html`、`03_テストケース.html`だけを生成する。画面モックはscreen-mockが`views/画面モック.html`へ生成する。`--check`は書き換えずに欠落・正本との差分・旧形式HTMLの残存を検出する。
+`render_html_views.py`は共有コアに1つだけ置き、generator / design / test-item がsymlink経由で呼び出す。通常実行はフェーズ内に存在する正本を統合し、`views/00_サマリ.html`、`01_要件定義書.html`、`02_設計書.html`、`03_テストケース.html`だけを生成する。画面モックはscreen-mockが`views/画面モック.html`へ生成する。`--check`は書き換えずに欠落・正本との差分・旧形式HTMLの残存・未記入の読者向け本文を検出する。
 
 HTMLは人が読むための派生物であり、正本はMarkdown/YAMLのまま変わらない。HTMLに修正が必要な場合も正本を直して再生成する。普段は`views/00_サマリ.html`から読み、ページ上部の導線で要件・設計・テスト・画面モックへ移動する。監査用の対応表は正本側で確認し、重複するHTMLは作らない。
 

@@ -246,6 +246,10 @@ class RenderScreenTest(unittest.TestCase):
         ):
             self.assertIn(value, html)
 
+    def test_shows_canvas_before_design_exploration(self) -> None:
+        html = RENDER.render_screen(SCREEN)
+        self.assertLess(html.index('<div class="canvas">'), html.index('<div class="exploration">'))
+
     def test_shows_inherited_pattern_source(self) -> None:
         inherited_screen = dict(
             SCREEN,

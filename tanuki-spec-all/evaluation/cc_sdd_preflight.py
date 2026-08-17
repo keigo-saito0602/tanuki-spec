@@ -439,6 +439,7 @@ def ensure(
     project_dir: str | Path,
     agents: Sequence[Agent] = AGENTS,
     *,
+    consent: bool = False,
     runner: Runner | None = None,
 ) -> EnsureResult:
     """未導入のエージェントだけを dry-run 後に導入する。
@@ -446,6 +447,12 @@ def ensure(
     ``partial`` と ``legacy`` が一つでもあれば全体を中止する。複数エージェント
     を指定した際に、一方だけ導入して状態をさらに複雑にすることを避けるためである。
     """
+
+    if not consent:
+        raise PreflightError(
+            "cc-sdd の導入にはユーザーの明示同意が必要です。"
+            "固定版と追加先を提示して同意を得た後、--consent を指定してください。"
+        )
 
     root = Path(project_dir).expanduser().resolve()
     command_runner = subprocess.run if runner is None else runner
@@ -523,9 +530,17 @@ def _parser() -> argparse.ArgumentParser:
         subparser.add_argument(
             "--agent",
             choices=("codex", "claude", "both"),
-            default="both",
-            help="対象エージェント（既定: codex と claude）",
+            default="both" if operation == "check" else None,
+            help=(
+                "対象エージェント（check の既定: codex と claude、ensure は指定必須）"
+            ),
         )
+        if operation == "ensure":
+            subparser.add_argument(
+                "--consent",
+                action="store_true",
+                help="固定版と追加先を確認し、ユーザーが導入へ明示同意済みであることを示す",
+            )
         subparser.add_argument("--json", action="store_true", help="結果を JSON で出力")
     return parser
 
@@ -554,6 +569,9 @@ def _main(argv: Sequence[str] | None = None) -> int:
         raw_args.insert(0, operation)
 
     args = _parser().parse_args(raw_args)
+    if args.operation == "ensure" and args.agent is None:
+        print("エラー: ensure では --agent の明示指定が必要です。", file=sys.stderr)
+        return 2
     agents = _selected_agents(args.agent)
     try:
         if args.operation == "check":
@@ -565,7 +583,7 @@ def _main(argv: Sequence[str] | None = None) -> int:
                     print(_format_state(state))
             return 0
 
-        result = ensure(args.project, agents)
+        result = ensure(args.project, agents, consent=args.consent)
         if args.json:
             print(
                 json.dumps(

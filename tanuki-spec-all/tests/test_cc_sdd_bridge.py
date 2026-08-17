@@ -110,6 +110,57 @@ class CcSddBridgeTest(unittest.TestCase):
         (inputs.spec_dir / "requirements.md").write_text("changed\n", encoding="utf-8")
         self.assertEqual(check(inputs), ["requirements.md が最新のtanuki入力と一致しません"])
 
+    def test_check_allows_cc_sdd_managed_spec_fields_to_change(self) -> None:
+        inputs = self._inputs()
+        render(inputs)
+        spec_path = inputs.spec_dir / "spec.json"
+        metadata = json.loads(spec_path.read_text(encoding="utf-8"))
+
+        metadata.update(
+            {
+                "name": "cc-sdd-renamed-feature",
+                "created_at": "2026-08-17T10:00:00Z",
+                "updated_at": "2026-08-17T11:00:00Z",
+                "phase": "tasks",
+                "ready_for_implementation": True,
+            }
+        )
+        metadata["approvals"]["requirements"]["approved"] = True
+        metadata["approvals"]["tasks"]["generated"] = True
+        spec_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+        self.assertEqual(check(inputs), [])
+
+    def test_check_detects_bridge_owned_spec_fields_and_marker_corruption(self) -> None:
+        inputs = self._inputs()
+        render(inputs)
+        spec_path = inputs.spec_dir / "spec.json"
+
+        metadata = json.loads(spec_path.read_text(encoding="utf-8"))
+        metadata["source"]["tanuki_root"] = "../別の正本"
+        spec_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        self.assertEqual(check(inputs), ["spec.json が最新のtanuki入力と一致しません"])
+
+        render(inputs)
+        metadata = json.loads(spec_path.read_text(encoding="utf-8"))
+        metadata["bridge"]["requirement_count"] = 999
+        spec_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        self.assertEqual(check(inputs), ["spec.json が最新のtanuki入力と一致しません"])
+
+        render(inputs)
+        metadata = json.loads(spec_path.read_text(encoding="utf-8"))
+        metadata["feature_name"] = "別の機能"
+        metadata["language"] = "en"
+        spec_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        self.assertEqual(check(inputs), ["spec.json が最新のtanuki入力と一致しません"])
+
+        render(inputs)
+        metadata = json.loads(spec_path.read_text(encoding="utf-8"))
+        metadata["generated_by"] = "not-the-bridge"
+        spec_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(BridgeError, "所有マーカー"):
+            check(inputs)
+
     def test_check_allows_tasks_and_preserves_them_when_cards_are_stale(self) -> None:
         inputs = self._inputs()
         render(inputs)

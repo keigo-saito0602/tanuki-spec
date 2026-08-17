@@ -36,7 +36,11 @@ RISK_LEVELS = ("low", "medium", "high")
 EXPLORATION_MODES = ("compare", "inherit")
 ALTERNATIVE_DECISIONS = ("adopted", "rejected")
 PLACEHOLDER_PATTERN = re.compile(
-    r"(?:^\s*(?:未定|未確定|未設定|未記入|未入力|TBD|TBA|TODO|PLACEHOLDER|N/?A)\s*[。.]?\s*$|<\s*[^>\n]+\s*>)",
+    r"^\s*(?:未定|未確定|未設定|未記入|未入力|TBD|TBA|TODO|PLACEHOLDER|N/?A|<\s*[^>\n]+\s*>)\s*[。.]?\s*$",
+    re.IGNORECASE,
+)
+HTML_CONTROL_PATTERN = re.compile(
+    r"^\s*</?\s*(?:button|fieldset|form|input|label|legend|option|select|textarea)\b[^>\n]*>\s*[。.]?\s*$",
     re.IGNORECASE,
 )
 PLACEHOLDER_ERROR = "空欄・未定・TBD・TODO・<placeholder>などの仮値は指定できません"
@@ -64,7 +68,11 @@ def _screens(data: Any) -> list[dict]:
 def _is_placeholder_text(value: Any) -> bool:
     """未確定のまま残った埋め草を検出する。"""
 
-    return isinstance(value, str) and bool(PLACEHOLDER_PATTERN.search(value))
+    return (
+        isinstance(value, str)
+        and not HTML_CONTROL_PATTERN.fullmatch(value)
+        and bool(PLACEHOLDER_PATTERN.fullmatch(value))
+    )
 
 
 def _validate_required_text(value: Any, where: str, result: Result, message: str) -> None:

@@ -131,7 +131,7 @@ class CcSddPreflightTest(unittest.TestCase):
             state = inspect(root, "codex")
             self.assertEqual(state.status, "partial")
             with self.assertRaises(PreflightError):
-                ensure(root, ("codex",), runner=runner)
+                ensure(root, ("codex",), consent=True, runner=runner)
             runner.assert_not_called()
 
     def test_modern_and_legacy_mixture_is_partial(self) -> None:
@@ -159,7 +159,7 @@ class CcSddPreflightTest(unittest.TestCase):
                     self._modern(root, "codex")
                 return subprocess.CompletedProcess(command, 0, "", "")
 
-            result = ensure(root, ("codex",), runner=runner)
+            result = ensure(root, ("codex",), consent=True, runner=runner)
 
             self.assertEqual(result.installed, ("codex",))
             self.assertEqual(agents_file.read_text(encoding="utf-8"), "project-owned\n")
@@ -178,7 +178,7 @@ class CcSddPreflightTest(unittest.TestCase):
             runner = Mock()
 
             with self.assertRaises(PreflightError):
-                ensure(root, ("codex",), runner=runner)
+                ensure(root, ("codex",), consent=True, runner=runner)
 
             runner.assert_not_called()
 
@@ -194,7 +194,7 @@ class CcSddPreflightTest(unittest.TestCase):
                 return subprocess.CompletedProcess(command, 0, "", "")
 
             with self.assertRaises(PreflightError):
-                ensure(root, ("codex",), runner=runner)
+                ensure(root, ("codex",), consent=True, runner=runner)
 
             self.assertEqual(len(calls), 1)
             self.assertIn("--dry-run", calls[0])
@@ -210,7 +210,7 @@ class CcSddPreflightTest(unittest.TestCase):
                 return subprocess.CompletedProcess(command, 0, "", "")
 
             with self.assertRaisesRegex(PreflightError, "既存ファイル"):
-                ensure(root, ("codex",), runner=runner)
+                ensure(root, ("codex",), consent=True, runner=runner)
 
     def test_install_that_changes_existing_nested_file_is_not_success(self) -> None:
         with TemporaryDirectory() as directory:
@@ -226,7 +226,7 @@ class CcSddPreflightTest(unittest.TestCase):
                 return subprocess.CompletedProcess(command, 0, "", "")
 
             with self.assertRaisesRegex(PreflightError, "既存ファイル"):
-                ensure(root, ("codex",), runner=runner)
+                ensure(root, ("codex",), consent=True, runner=runner)
 
     def test_symlink_in_protected_tree_refuses_automatic_install(self) -> None:
         with TemporaryDirectory() as directory, TemporaryDirectory() as outside:
@@ -237,7 +237,7 @@ class CcSddPreflightTest(unittest.TestCase):
             runner = Mock()
 
             with self.assertRaisesRegex(PreflightError, "symlink"):
-                ensure(root, ("codex",), runner=runner)
+                ensure(root, ("codex",), consent=True, runner=runner)
 
             runner.assert_not_called()
 
@@ -365,6 +365,23 @@ class CcSddPreflightTest(unittest.TestCase):
     def test_cli_accepts_legacy_flag_shape_used_by_existing_skill_docs(self) -> None:
         with TemporaryDirectory() as directory:
             self.assertEqual(_main([directory, "--agent", "codex", "--check"]), 0)
+
+    def test_ensure_requires_explicit_consent_before_inspection(self) -> None:
+        with TemporaryDirectory() as directory:
+            runner = Mock()
+
+            with self.assertRaisesRegex(PreflightError, "明示同意"):
+                ensure(directory, ("codex",), runner=runner)
+
+            runner.assert_not_called()
+
+    def test_cli_ensure_requires_agent_and_consent_flags(self) -> None:
+        with TemporaryDirectory() as directory:
+            self.assertEqual(_main(["ensure", directory, "--consent"]), 2)
+            self.assertEqual(
+                _main(["ensure", directory, "--agent", "codex"]),
+                1,
+            )
 
 
 if __name__ == "__main__":

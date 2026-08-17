@@ -26,7 +26,7 @@ reviewer:        # 例: codex / claude-new-session。生成担当と別である
 python3 evaluation/cc_sdd_preflight.py <project-root> --agent <codex|claude> --check
 ```
 
-`missing`ならレビュー中に環境を変更せず、generatorまたはdesignへ戻す。固定版と追加先を提示し、ユーザーの明示同意後だけ`--ensure`を実行するよう報告する。`legacy` / `partial`も自動移行しない。
+`missing`ならレビュー中に環境を変更せず、generatorまたはdesignへ戻す。固定版と追加先を提示し、ユーザーの明示同意後だけ対象`--agent`を省略せず`--ensure --consent`を実行するよう報告する。`legacy` / `partial`も自動移行しない。
 
 cc-sddはDiscovery、責任境界、実装運用（`.kiro/`）を担い、レビュー対象の正本はプロジェクトの`docs/spec/`とする。`.kiro/`側の`requirements.md`・`design.md`・`tasks.md`は参照カードまたは運用情報として検証するが、tanukiの正本を上書きしない。同期規則と品質判断の観点は[`references/cc-sdd-integration.md`](./references/cc-sdd-integration.md)と[`references/spec-quality-principles.md`](./references/spec-quality-principles.md)を読む。
 

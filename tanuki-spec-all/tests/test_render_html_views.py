@@ -185,6 +185,33 @@ class HtmlViewTest(unittest.TestCase):
         self.assertTrue(views.render_phase(self.phase))
         self.assertTrue(views.render_phase(self.phase, check=True))
 
+    def test_check_rejects_unterminated_comments_and_marker_mismatch(self):
+        requirements = self.func_a / "01_要件定義書.md"
+        for content in (
+            "# 予約要件\n\n本文。\n\n<!-- 未終端コメント\n## 後続節\n",
+            "# 予約要件\n\n<!-- AUTHOR-GUIDE:START -->\n本文。\n<!-- HUMAN:END -->\n",
+            "# 予約要件\n\n<!-- HUMAN:START -->\n本文A。\n<!-- HUMAN:END -->\n"
+            "<!-- HUMAN:START -->\n本文B。\n<!-- HUMAN:END -->\n",
+            "# 予約要件\n\n<!-- AUTHOR-GUIDE:START -->\n"
+            "<!-- HUMAN:START -->\n本文。\n<!-- HUMAN:END -->\n"
+            "<!-- AUTHOR-GUIDE:END -->\n",
+        ):
+            with self.subTest(content=content):
+                requirements.write_text(content, encoding="utf-8")
+                self.assertTrue(views.render_phase(self.phase))
+                self.assertFalse(views.render_phase(self.phase, check=True))
+
+    def test_check_ignores_marker_notation_inside_code_fence(self):
+        requirements = self.func_a / "01_要件定義書.md"
+        requirements.write_text(
+            "# 予約要件\n\n本文。\n\n```markdown\n"
+            "<!-- AUTHOR-GUIDE:START -->\n<!-- HUMAN:END -->\n"
+            "<!-- 未終端コメント\n```\n",
+            encoding="utf-8",
+        )
+        self.assertTrue(views.render_phase(self.phase))
+        self.assertTrue(views.render_phase(self.phase, check=True))
+
     def test_removes_legacy_outputs_but_preserves_unknown_and_screen(self):
         view_dir = self.phase / "views"
         legacy_dir = view_dir / "func-旧機能"

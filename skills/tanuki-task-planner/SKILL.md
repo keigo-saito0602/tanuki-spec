@@ -25,7 +25,7 @@ tanuki-task-planner
 python3 evaluation/cc_sdd_preflight.py <project-root> --agent <codex|claude> --check
 ```
 
-`missing`の場合は、固定版`cc-sdd@3.0.2`と追加先を提示する。ユーザーが導入へ明示的に同意した後だけ`--ensure`を実行する。`partial`または`legacy`の場合は自動導入せず、手動移行が必要な状態を報告する。
+`missing`の場合は、固定版`cc-sdd@3.0.2`と追加先を提示する。ユーザーが導入へ明示的に同意した後だけ、対象`--agent`を省略せず`--ensure --consent`を実行する。`partial`または`legacy`の場合は自動導入せず、手動移行が必要な状態を報告する。
 
 `standalone`は、ユーザーがcc-sddを使わないと明示した場合だけ選ぶ。この場合は環境を変更せず`--check`で状態を記録し、未導入でも単独タスク計画へ進む。
 

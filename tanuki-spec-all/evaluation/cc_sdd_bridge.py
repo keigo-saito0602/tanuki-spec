@@ -25,6 +25,16 @@ import yaml
 OWNER_MARKER = "tanuki-spec-cc-sdd-bridge-v1"
 OUTPUT_FILES = ("spec.json", "requirements.md", "design.md")
 REQUIREMENT_STATUS = {"in_scope", "draft", "deferred", "out_of_scope"}
+# cc-sdd の標準メタデータは `kiro-spec-*` が更新する。ブリッジが所有する
+# 拡張フィールドだけを `check` で比較し、タスク生成や承認処理による
+# cc-sdd 管理フィールドの更新を正本との差分として誤検知しない。
+BRIDGE_OWNED_SPEC_FIELDS = (
+    "generated_by",
+    "source",
+    "bridge",
+    "feature_name",
+    "language",
+)
 
 
 class BridgeError(RuntimeError):
@@ -580,6 +590,20 @@ def check(inputs: Inputs, approved: bool = False) -> list[str]:
         _assert_not_symlink(path, filename)
         if not path.is_file():
             failures.append(f"{filename} がありません")
+            continue
+        if filename == "spec.json":
+            actual_spec = json.loads(path.read_text(encoding="utf-8"))
+            expected_spec = json.loads(expected)
+            actual_bridge_fields = {
+                field: actual_spec.get(field)
+                for field in BRIDGE_OWNED_SPEC_FIELDS
+            }
+            expected_bridge_fields = {
+                field: expected_spec.get(field)
+                for field in BRIDGE_OWNED_SPEC_FIELDS
+            }
+            if actual_bridge_fields != expected_bridge_fields:
+                failures.append(f"{filename} が最新のtanuki入力と一致しません")
             continue
         actual = path.read_text(encoding="utf-8")
         if actual != expected:

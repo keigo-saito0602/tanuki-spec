@@ -197,6 +197,19 @@ class DocumentHeaderTest(unittest.TestCase):
         self.assertNotIn("FILL:START", reader_text)
         self.assertNotIn("### [必須] 項目", reader_text)
 
+    def test_reader_view_preserves_content_inside_human_markers(self):
+        text = (
+            "# 要件\n\n<!-- HUMAN:START -->\n"
+            "## 読者向け本文\n予約を完了できる。\n"
+            "<!-- HUMAN:END -->\n"
+        )
+
+        reader_text = render_html_views.strip_reader_only_content(text)
+
+        self.assertIn("## 読者向け本文", reader_text)
+        self.assertIn("予約を完了できる。", reader_text)
+        self.assertNotIn("HUMAN:START", reader_text)
+
     def test_reader_view_preserves_business_quote_with_guide_words(self):
         text = """# 方針
 
@@ -247,6 +260,65 @@ class DocumentHeaderTest(unittest.TestCase):
                 "# 要件\n\n[要確認: 案件と読者に合わせた本文を作成してください]\n"
             )
         )
+
+    def test_multiple_human_blocks_cannot_hide_an_unfilled_body(self):
+        text = (
+            "<!-- HUMAN:START -->\n"
+            "[要確認: 案件と読者に合わせた本文を作成してください]\n"
+            "<!-- HUMAN:END -->\n"
+            "<!-- HUMAN:START -->\n予約を完了できる。\n<!-- HUMAN:END -->\n"
+        )
+
+        self.assertFalse(render_html_views.reader_body_complete(text))
+        self.assertTrue(
+            any(
+                "1つだけ" in issue
+                for issue in render_html_views.validate_document_markers(text)
+            )
+        )
+
+    def test_nested_human_marker_is_rejected_without_deleting_its_body(self):
+        text = (
+            "<!-- AUTHOR-GUIDE:START -->\n"
+            "<!-- HUMAN:START -->\n読者向け本文。\n<!-- HUMAN:END -->\n"
+            "<!-- AUTHOR-GUIDE:END -->\n"
+        )
+
+        self.assertTrue(render_html_views.validate_document_markers(text))
+        self.assertIn(
+            "読者向け本文。",
+            render_html_views.strip_reader_only_content(text),
+        )
+
+    def test_unterminated_html_comment_does_not_hide_following_markdown(self):
+        text = "# 要件\n\n本文。\n\n<!-- 未終端コメント\n\n## 後続節\n後続の本文。\n"
+        reader_text = render_html_views.strip_reader_only_content(text)
+        self.assertIn("## 後続節", reader_text)
+        self.assertIn("後続の本文", reader_text)
+        self.assertTrue(render_html_views.validate_document_markers(text))
+
+    def test_marker_mismatch_and_unterminated_marker_are_reported(self):
+        mismatched = "<!-- AUTHOR-GUIDE:START -->\n本文。\n<!-- HUMAN:END -->\n"
+        self.assertTrue(render_html_views.validate_document_markers(mismatched))
+        unterminated = "<!-- AUDIT:START -->\n本文。\n"
+        self.assertTrue(render_html_views.validate_document_markers(unterminated))
+
+    def test_marker_notation_in_code_fence_is_preserved_and_ignored(self):
+        text = """# 記法例
+
+```markdown
+<!-- AUTHOR-GUIDE:START -->
+<!-- AUDIT:END -->
+<!-- 未終端コメント
+```
+
+## 本文
+実際の本文。
+"""
+        reader_text = render_html_views.strip_reader_only_content(text)
+        self.assertIn("<!-- AUTHOR-GUIDE:START -->", reader_text)
+        self.assertIn("<!-- 未終端コメント", reader_text)
+        self.assertEqual([], render_html_views.validate_document_markers(text))
 
     def test_legacy_audit_tail_preserves_section_after_evidence_appendix(self):
         text = """# 要件

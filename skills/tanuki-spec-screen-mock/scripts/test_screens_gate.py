@@ -208,6 +208,22 @@ class SchemaTest(unittest.TestCase):
         )
         self.assertEqual([], result.errors)
 
+    def test_explanatory_sentence_containing_tag_like_text_is_not_placeholder(self) -> None:
+        result = self._validate(
+            lambda d: d["screens"][0].__setitem__(
+                "rationale", "説明文内の<select>相当の入力部品を既存パターンに合わせる"
+            )
+        )
+        self.assertEqual([], result.errors)
+
+    def test_html_control_name_is_not_treated_as_a_placeholder(self) -> None:
+        result = self._validate(
+            lambda d: d["screens"][0]["blocks"][1]["fields"][0].__setitem__(
+                "control", "<select>"
+            )
+        )
+        self.assertEqual([], result.errors)
+
     def test_unknown_risk_level_is_error(self) -> None:
         result = self._validate(lambda d: d["screens"][0].__setitem__("risk", "critical"))
         self.assertTrue(any("critical" in error for error in result.errors))

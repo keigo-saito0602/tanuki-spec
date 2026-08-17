@@ -69,20 +69,10 @@ STATUS_CLASS = {
     "❓": "status-pending",
 }
 FRONTMATTER_RE = re.compile(r"\A---\s*\n.*?\n---(?:\s*\n|\Z)", re.DOTALL)
-HTML_COMMENT_RE = re.compile(r"<!--.*?(?:-->|\Z)", re.DOTALL)
-AUTHOR_GUIDE_BLOCK_RE = re.compile(
-    r"<!--\s*AUTHOR-GUIDE:START\s*-->.*?<!--\s*AUTHOR-GUIDE:END\s*-->",
-    re.DOTALL,
-)
-AUDIT_BLOCK_RE = re.compile(
-    r"<!--\s*AUDIT:START\s*-->.*?<!--\s*AUDIT:END\s*-->",
-    re.DOTALL,
-)
-HUMAN_BLOCK_RE = re.compile(
-    r"<!--\s*HUMAN:START\s*-->(.*?)<!--\s*HUMAN:END\s*-->",
-    re.DOTALL,
-)
 DEFAULT_HUMAN_PLACEHOLDER = "[要確認: 案件と読者に合わせた本文を作成してください]"
+MARKER_RE = re.compile(r"^\s*(AUTHOR-GUIDE|AUDIT|HUMAN):(START|END)\s*$")
+FENCE_OPEN_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+FENCE_CLOSE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})[ \t]*$")
 HEADING_RE = re.compile(r"^( {0,3})(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$", re.MULTILINE)
 LEGACY_GUIDE_FIRST_LINE_RE = re.compile(
     r"^(?:(?:👥|🧭|🔤|🔎|📎|📝|🔍)\s*)?\*\*(?:記入ガイド|記入方法|記入形式|この節で確認すべきこと|第三者レビュー視点(?:（PBR）)?|レビュー観点)\*\*"
@@ -138,18 +128,177 @@ def rewrite_relative_link(target: str, source: Path, phase_dir: Path) -> str:
     return urlunsplit(("", "", quote(output_root_relative, safe="/-_.~%"), parsed.query, parsed.fragment))
 
 
+def _code_fence_mask(markdown: str) -> bytearray:
+    """コードフェンス内の文字位置を1にしたマスクを作る。"""
+
+    mask = bytearray(len(markdown))
+    offset = 0
+    fence_char: str | None = None
+    fence_length = 0
+    for line in markdown.splitlines(keepends=True):
+        content = line.rstrip("\r\n")
+        if fence_char is not None:
+            mask[offset : offset + len(line)] = b"\x01" * len(line)
+            close_match = FENCE_CLOSE_RE.match(content)
+            if close_match and close_match.group(1)[0] == fence_char and len(close_match.group(1)) >= fence_length:
+                fence_char = None
+                fence_length = 0
+        else:
+            open_match = FENCE_OPEN_RE.match(content)
+            if open_match:
+                delimiter = open_match.group(1)
+                mask[offset : offset + len(line)] = b"\x01" * len(line)
+                fence_char = delimiter[0]
+                fence_length = len(delimiter)
+        offset += len(line)
+    return mask
+
+
+def _iter_html_comments(markdown: str):
+    """コードフェンス外のHTMLコメントを開始・終了位置付きで返す。
+
+    終端がないコメントは ``end=None`` として返す。旧実装のように未終端コメントを
+    文書末尾まで削除しないため、呼び出し側が明示的に扱えるようにしている。
+    """
+
+    mask = _code_fence_mask(markdown)
+    cursor = 0
+    while True:
+        start = markdown.find("<!--", cursor)
+        if start < 0:
+            return
+        if mask[start]:
+            cursor = start + len("<!--")
+            continue
+        close = markdown.find("-->", start + len("<!--"))
+        if close < 0 or any(mask[start : close + len("-->")]):
+            yield start, None, markdown[start:]
+            return
+        end = close + len("-->")
+        yield start, end, markdown[start:end]
+        cursor = end
+
+
+def _marker_name(comment: str) -> tuple[str, str] | None:
+    """HTMLコメントがAUTHOR-GUIDE/AUDIT/HUMANマーカーなら種別を返す。"""
+
+    inner = comment[len("<!--") : -len("-->")]
+    match = MARKER_RE.match(inner)
+    return match.groups() if match else None
+
+
+def validate_document_markers(markdown: str) -> list[str]:
+    """HTMLコメントと読者向け領域マーカーの不整合を列挙する。"""
+
+    errors: list[str] = []
+    stack: list[str] = []
+    human_starts = 0
+    for start, end, comment in _iter_html_comments(markdown):
+        if end is None:
+            errors.append(f"HTMLコメントが未終端です（位置: {start}）")
+            continue
+        marker = _marker_name(comment)
+        if marker is None:
+            continue
+        name, kind = marker
+        if kind == "START":
+            if name == "HUMAN":
+                human_starts += 1
+            if stack:
+                errors.append(
+                    f"{name}:START を {stack[-1]} ブロック内へ入れ子にできません"
+                )
+            stack.append(name)
+            continue
+        if not stack:
+            errors.append(f"{name}:END に対応するSTARTがありません")
+            continue
+        if stack[-1] != name:
+            errors.append(f"{name}:END の順序が不正です（対応待ち: {stack[-1]}:END）")
+            continue
+        stack.pop()
+    errors.extend(f"{name}:START に対応するENDがありません" for name in reversed(stack))
+    if human_starts > 1:
+        errors.append("HUMANブロックは文書内に1つだけ配置してください")
+    return errors
+
+
+def _marked_block_ranges(markdown: str) -> list[tuple[int, int]]:
+    """整合した明示マーカー領域の削除範囲を返す。"""
+
+    ranges: list[tuple[int, int]] = []
+    stack: list[tuple[str, int]] = []
+    comments = _iter_html_comments(markdown)
+    for start, end, comment in comments:
+        if end is None:
+            continue
+        marker = _marker_name(comment)
+        if marker is None:
+            continue
+        name, kind = marker
+        if name == "HUMAN":
+            # HUMANは読者向け本文の境界なので、マーカーだけを後段で除去し、
+            # 囲まれた本文自体は閲覧用HTMLへ残す。
+            continue
+        if kind == "START":
+            stack.append((name, start))
+        elif stack and stack[-1][0] == name:
+            _, block_start = stack.pop()
+            ranges.append((block_start, end))
+    return ranges
+
+
+def _remove_ranges(markdown: str, ranges: list[tuple[int, int]]) -> str:
+    if not ranges:
+        return markdown
+    output: list[str] = []
+    cursor = 0
+    for start, end in sorted(ranges):
+        if start < cursor:
+            continue
+        output.append(markdown[cursor:start])
+        cursor = end
+    output.append(markdown[cursor:])
+    return "".join(output)
+
+
+def _strip_html_comments(markdown: str) -> str:
+    """終端済み・コードフェンス外のHTMLコメントだけを除去する。"""
+
+    ranges = [(start, end) for start, end, _ in _iter_html_comments(markdown) if end is not None]
+    return _remove_ranges(markdown, ranges)
+
+
+def _marker_content_ranges(markdown: str, marker_name: str) -> list[tuple[int, int]]:
+    ranges: list[tuple[int, int]] = []
+    starts: list[int] = []
+    for start, end, comment in _iter_html_comments(markdown):
+        if end is None:
+            continue
+        marker = _marker_name(comment)
+        if marker != (marker_name, "START") and marker != (marker_name, "END"):
+            continue
+        if marker[1] == "START":
+            starts.append(end)
+        elif starts:
+            ranges.append((starts.pop(), start))
+    return ranges
+
+
 def strip_reader_only_content(markdown: str) -> str:
     """読者向けには不要なメタデータ・作成ガイド・出典付録を取り除く。
 
     この関数は入力文字列を返すだけで正本ファイルを書き換えない。
     """
 
+    markdown = FRONTMATTER_RE.sub("", markdown, count=1)
     # 新しいテンプレートは明示マーカーで作成者向け領域を区別する。
     # 一般語のキーワード検索で業務上の引用を削除してはいけない。
-    markdown = AUTHOR_GUIDE_BLOCK_RE.sub("", markdown)
-    markdown = AUDIT_BLOCK_RE.sub("", markdown)
-    markdown = FRONTMATTER_RE.sub("", markdown, count=1)
-    markdown = HTML_COMMENT_RE.sub("", markdown)
+    # マーカーが壊れている文書では、範囲推測による本文消失を避けるため
+    # 作成者向けブロックも削除しない。呼び出し元の--checkが不整合を拒否する。
+    if not validate_document_markers(markdown):
+        markdown = _remove_ranges(markdown, _marked_block_ranges(markdown))
+    markdown = _strip_html_comments(markdown)
     lines = markdown.splitlines()
 
     # ガイド用の blockquote は、開始行から連続する引用ブロック全体を除く。
@@ -228,13 +377,16 @@ def strip_reader_only_content(markdown: str) -> str:
 def reader_body_complete(markdown: str) -> bool:
     """HUMAN領域が既定プレースホルダのまま、または空でないか確認する。"""
 
-    match = HUMAN_BLOCK_RE.search(markdown)
-    if not match:
+    ranges = _marker_content_ranges(markdown, "HUMAN")
+    if not ranges:
         # HUMANマーカー導入前の既存文書は原則許容するが、既定の未記入文言が
         # 残っている場合はマーカーだけを消してゲートを回避できないようにする。
         return DEFAULT_HUMAN_PLACEHOLDER not in markdown
-    body = HTML_COMMENT_RE.sub("", match.group(1)).strip()
-    return bool(body) and DEFAULT_HUMAN_PLACEHOLDER not in body
+    bodies = [
+        _strip_html_comments(markdown[body_start:body_end]).strip()
+        for body_start, body_end in ranges
+    ]
+    return all(body and DEFAULT_HUMAN_PLACEHOLDER not in body for body in bodies)
 
 
 class SafeViewRenderer(RendererHTML):
@@ -580,17 +732,25 @@ def render_phase(phase_dir: Path, check: bool = False) -> bool:
         for violation in violations:
             print(f"安全のため処理を中止: 出力先がシンボリックリンクです: {violation}")
         return False
+    documents = collect_documents(phase_dir)
     outputs = expected_outputs(phase_dir)
     incomplete_reader_docs = [
         document.path
-        for document in collect_documents(phase_dir)
+        for document in documents
         if not reader_body_complete(document.path.read_text(encoding="utf-8"))
+    ]
+    marker_issues = [
+        (document.path, issue)
+        for document in documents
+        for issue in validate_document_markers(document.path.read_text(encoding="utf-8"))
     ]
     wanted = set(outputs)
     stale = _legacy_stale(view_dir, wanted)
     empty_dirs = _empty_legacy_dirs(view_dir, stale)
     mismatches = [relative for relative, content in outputs.items() if not (view_dir / relative).is_file() or (view_dir / relative).read_text(encoding="utf-8") != content]
     if check:
+        for path, issue in marker_issues:
+            print(f"マーカー不整合: {path}: {issue}")
         for path in incomplete_reader_docs:
             print(f"読者向け本文が未記入: {path}")
         for relative in mismatches:
@@ -599,7 +759,9 @@ def render_phase(phase_dir: Path, check: bool = False) -> bool:
             print(f"不要: {path}")
         for path in empty_dirs:
             print(f"不要な空ディレクトリ: {path}")
-        return not (mismatches or stale or empty_dirs or incomplete_reader_docs)
+        return not (mismatches or stale or empty_dirs or incomplete_reader_docs or marker_issues)
+    for path, issue in marker_issues:
+        print(f"警告: マーカー不整合です: {path}: {issue}")
     for path in incomplete_reader_docs:
         print(f"警告: 読者向け本文が未記入です: {path}")
     view_dir.mkdir(parents=True, exist_ok=True)
