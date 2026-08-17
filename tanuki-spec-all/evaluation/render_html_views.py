@@ -760,8 +760,10 @@ def render_phase(phase_dir: Path, check: bool = False) -> bool:
         for path in empty_dirs:
             print(f"不要な空ディレクトリ: {path}")
         return not (mismatches or stale or empty_dirs or incomplete_reader_docs or marker_issues)
-    for path, issue in marker_issues:
-        print(f"警告: マーカー不整合です: {path}: {issue}")
+    if marker_issues:
+        for path, issue in marker_issues:
+            print(f"生成中止: マーカー不整合です: {path}: {issue}")
+        return False
     for path in incomplete_reader_docs:
         print(f"警告: 読者向け本文が未記入です: {path}")
     view_dir.mkdir(parents=True, exist_ok=True)

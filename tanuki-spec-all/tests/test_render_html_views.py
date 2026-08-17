@@ -198,7 +198,7 @@ class HtmlViewTest(unittest.TestCase):
         ):
             with self.subTest(content=content):
                 requirements.write_text(content, encoding="utf-8")
-                self.assertTrue(views.render_phase(self.phase))
+                self.assertFalse(views.render_phase(self.phase))
                 self.assertFalse(views.render_phase(self.phase, check=True))
 
     def test_check_ignores_marker_notation_inside_code_fence(self):

@@ -385,6 +385,10 @@ class RenderDocumentTest(unittest.TestCase):
     def test_injects_token_variables(self) -> None:
         self.assertIn("--color-primary: #1a73e8;", self.html)
 
+    def test_exploration_card_has_readable_spacing_and_labels(self) -> None:
+        self.assertIn(".meta, .exploration { margin-top: 1rem;", self.html)
+        self.assertIn(".meta dt, .exploration dt { font-weight: 700;", self.html)
+
     def test_contains_no_script_or_external_reference(self) -> None:
         self.assertNotIn("<script", self.html)
         self.assertNotIn("onclick", self.html)
