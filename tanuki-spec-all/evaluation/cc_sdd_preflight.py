@@ -286,7 +286,7 @@ def _status(
         return "modern"
     if legacy_complete and not modern_found:
         return "legacy"
-    if modern_found or legacy_found:
+    if modern_found or artifacts_found or legacy_found:
         return "partial"
     return "missing"
 

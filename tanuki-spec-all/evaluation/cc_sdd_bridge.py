@@ -482,6 +482,13 @@ def _assert_no_symlink_components(path: Path, root: Path, label: str) -> None:
 
 
 def _check_output_state(spec_dir: Path) -> None:
+    """参照カードを読み取る前に出力先の安全性と所有権を確認する。
+
+    この関数は読み取り専用の ``check`` からも呼ばれるため、既存の
+    ``tasks.md`` の有無は判定しない。タスクを上書きしないための拒否は、
+    実際に書き込む ``render`` 側のガードで行う。
+    """
+
     # `.kiro` や `.kiro/specs` がsymlinkの場合も、意図しない場所への書込みになる。
     project_root = spec_dir.parents[2]
     _assert_no_symlink_components(spec_dir, project_root, "出力specパス")
@@ -491,8 +498,6 @@ def _check_output_state(spec_dir: Path) -> None:
             raise BridgeError(f"出力specパスがディレクトリではありません: {spec_dir}")
         tasks = spec_dir / "tasks.md"
         _assert_not_symlink(tasks, "tasks.md")
-        if tasks.exists():
-            raise BridgeError(f"既存tasks.mdがあるため上書きしません: {tasks}")
         metadata = spec_dir / "spec.json"
         _assert_not_symlink(metadata, "spec.json")
         if not metadata.exists():
@@ -509,6 +514,15 @@ def _check_output_state(spec_dir: Path) -> None:
             _assert_not_symlink(parent, "出力spec親ディレクトリ")
             if not parent.is_dir():
                 raise BridgeError(f"出力spec親パスがディレクトリではありません: {parent}")
+
+
+def _check_render_output_state(spec_dir: Path) -> None:
+    """参照カードを書き込む前の安全性と上書き防止を確認する。"""
+
+    _check_output_state(spec_dir)
+    tasks = spec_dir / "tasks.md"
+    if tasks.exists():
+        raise BridgeError(f"既存tasks.mdがあるため上書きしません: {tasks}")
 
 
 def _write_atomic(path: Path, content: str) -> None:
@@ -549,7 +563,7 @@ def generate(inputs: Inputs, approved: bool) -> dict[str, str]:
 
 
 def render(inputs: Inputs, approved: bool = False) -> list[Path]:
-    _check_output_state(inputs.spec_dir)
+    _check_render_output_state(inputs.spec_dir)
     contents = generate(inputs, approved)
     inputs.spec_dir.mkdir(parents=True, exist_ok=True)
     for filename, content in contents.items():

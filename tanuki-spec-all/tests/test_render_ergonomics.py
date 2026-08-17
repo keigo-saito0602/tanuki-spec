@@ -184,6 +184,10 @@ class DocumentHeaderTest(unittest.TestCase):
         self.assertLess(text.index("## 付録: 監査用項目"), text.index("### [必須] 項目"))
         self.assertIn("<!-- HUMAN:START -->", text)
         self.assertIn("<!-- FILL:START demo-x -->", text)
+        self.assertEqual(text.count("<!-- AUTHOR-GUIDE:START -->"), 2)
+        self.assertEqual(text.count("<!-- AUTHOR-GUIDE:END -->"), 2)
+        self.assertIn("<!-- AUDIT:START -->", text)
+        self.assertIn("<!-- AUDIT:END -->", text)
 
     def test_reader_view_hides_audit_template_fields(self):
         text = generate_templates.render_phase("demo", self._minimal_data())
@@ -192,6 +196,81 @@ class DocumentHeaderTest(unittest.TestCase):
         self.assertNotIn("## 付録: 監査用項目", reader_text)
         self.assertNotIn("FILL:START", reader_text)
         self.assertNotIn("### [必須] 項目", reader_text)
+
+    def test_reader_view_preserves_business_quote_with_guide_words(self):
+        text = """# 方針
+
+> **ゴール**: 3か月で予約完了率を10%改善する。
+> 月次レビューで未達なら是正する。
+"""
+        reader_text = render_html_views.strip_reader_only_content(text)
+        self.assertIn("予約完了率を10%改善", reader_text)
+        self.assertIn("月次レビュー", reader_text)
+
+    def test_reader_view_removes_structured_legacy_header_guide(self):
+        text = """# 要件
+
+> **ゴール**: 外部仕様を確定する
+> 👥 **読み手**: 第三者の技術者
+> 🧭 **読み方**: 2パスで確認する
+> 🔤 **凡例**: 決定 / 未決
+> 📎 **記入方法**: 末尾の付録を参照する
+
+## 読者向け本文
+予約を扱う。
+"""
+        reader_text = render_html_views.strip_reader_only_content(text)
+        self.assertNotIn("外部仕様を確定", reader_text)
+        self.assertNotIn("第三者の技術者", reader_text)
+        self.assertIn("予約を扱う", reader_text)
+
+    def test_reader_body_requires_content_between_human_markers(self):
+        self.assertFalse(
+            render_html_views.reader_body_complete(
+                "<!-- HUMAN:START -->\n\n<!-- HUMAN:END -->"
+            )
+        )
+        self.assertFalse(
+            render_html_views.reader_body_complete(
+                "<!-- HUMAN:START -->\n"
+                "[要確認: 案件と読者に合わせた本文を作成してください]\n"
+                "<!-- HUMAN:END -->"
+            )
+        )
+        self.assertTrue(
+            render_html_views.reader_body_complete(
+                "<!-- HUMAN:START -->\n予約を完了できる。\n<!-- HUMAN:END -->"
+            )
+        )
+        self.assertFalse(
+            render_html_views.reader_body_complete(
+                "# 要件\n\n[要確認: 案件と読者に合わせた本文を作成してください]\n"
+            )
+        )
+
+    def test_legacy_audit_tail_preserves_section_after_evidence_appendix(self):
+        text = """# 要件
+
+## 読者向け本文
+表示する本文。
+
+## 付録: 監査用項目
+表示しない。
+
+## 業務要件
+表示しない監査項目。
+
+## 付録: 項目の根拠一覧
+表示しない根拠。
+
+## 変更履歴
+この節は表示する。
+"""
+        reader_text = render_html_views.strip_reader_only_content(text)
+        self.assertNotIn("表示しない監査項目", reader_text)
+        self.assertNotIn("表示しない根拠", reader_text)
+        self.assertIn("## 変更履歴", reader_text)
+        self.assertIn("この節は表示する", reader_text)
 
 
 class ReviewChecklistTest(unittest.TestCase):

@@ -35,11 +35,13 @@ tanuki-spec-generator
 
 埋まったら、下の「手順」①〜③を順に実行する。
 
-入力が揃ったら、生成前にcc-sddの導入状態を確認する。未導入ならこのコマンドで導入し、導入済みなら状態だけを記録する。
+入力が揃ったら、生成前にまず読み取り専用でcc-sddの導入状態を確認する。
 
 ```bash
-python3 evaluation/cc_sdd_preflight.py <project-root> --agent <codex|claude> --ensure
+python3 evaluation/cc_sdd_preflight.py <project-root> --agent <codex|claude> --check
 ```
+
+`missing`の場合は、固定版`cc-sdd@3.0.2`と、追加先（Codexは`.agents/skills/`、Claudeは`.claude/skills/`、共通は`.kiro/settings/`）をユーザーへ提示する。**ユーザーがこの導入へ明示的に同意した後だけ**、同じコマンドの`--check`を`--ensure`へ変えて実行する。`partial`または`legacy`の場合は`--ensure`を実行せず、既存状態と手動移行が必要な理由を報告する。
 
 cc-sddはDiscovery、境界整理、実装運用（`.kiro/`）を担い、tanuki-specの正本は常にプロジェクトの`docs/spec/`とする。cc-sddの`requirements.md`・`design.md`は参照カードまたは自動生成要約に限り、仕様変更は`docs/spec/`へ戻す。詳細な同期規則と既存コンテキストの読み方は[`references/cc-sdd-integration.md`](./references/cc-sdd-integration.md)と[`references/spec-quality-principles.md`](./references/spec-quality-principles.md)を読む。
 

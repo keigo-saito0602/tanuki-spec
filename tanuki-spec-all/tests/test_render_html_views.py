@@ -167,6 +167,24 @@ class HtmlViewTest(unittest.TestCase):
         self.assertFalse(views.render_phase(self.phase, check=True))
         self.assertEqual(target.read_text(encoding="utf-8"), before)
 
+    def test_check_rejects_default_or_empty_human_body(self):
+        requirements = self.func_a / "01_要件定義書.md"
+        requirements.write_text(
+            "# 予約要件\n\n<!-- HUMAN:START -->\n"
+            "[要確認: 案件と読者に合わせた本文を作成してください]\n"
+            "<!-- HUMAN:END -->\n",
+            encoding="utf-8",
+        )
+        self.assertTrue(views.render_phase(self.phase))
+        self.assertFalse(views.render_phase(self.phase, check=True))
+
+        requirements.write_text(
+            "# 予約要件\n\n<!-- HUMAN:START -->\n予約を扱う。\n<!-- HUMAN:END -->\n",
+            encoding="utf-8",
+        )
+        self.assertTrue(views.render_phase(self.phase))
+        self.assertTrue(views.render_phase(self.phase, check=True))
+
     def test_removes_legacy_outputs_but_preserves_unknown_and_screen(self):
         view_dir = self.phase / "views"
         legacy_dir = view_dir / "func-旧機能"

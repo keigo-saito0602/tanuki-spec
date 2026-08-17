@@ -47,7 +47,7 @@ tanuki-spec-screen-mock
 python3 scripts/cc_sdd_preflight.py <project-root> --agent <codex|claude> --check
 ```
 
-`missing`なら画面生成中に環境を変更せず、generatorまたはdesignの`--ensure`を先に実行するよう報告する。`legacy` / `partial`も自動移行しない。
+`missing`なら画面生成中に環境を変更せず、generatorまたはdesignへ戻す。固定版と追加先を提示し、ユーザーの明示同意後だけ`--ensure`を実行するよう報告する。`legacy` / `partial`も自動移行しない。
 
 ## 手順
 

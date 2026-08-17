@@ -59,7 +59,7 @@ tanuki-spec自体のPython・テンプレート・スキルを変更するとき
 cc-sddとの役割分担と安全条件は[`tanuki-spec-all/references/cc-sdd-integration.md`](./tanuki-spec-all/references/cc-sdd-integration.md)を正本とする。
 
 - cc-sddはリポジトリへ複製せず、`integrations/cc-sdd/compatibility.json`で固定した公式npm版を使う。
-- 完全未導入の場合だけ公式インストーラーで追加する。
+- 完全未導入の場合は固定版と追加先を提示し、ユーザーの明示同意後だけ公式インストーラーで追加する。
 - 旧版・部分導入・既存ファイル競合・symlink競合を検出した場合は自動上書きせず停止する。
 - preflightの互換性判定は、バージョン番号だけでなく必須Skillとartifactの実体まで確認する。
 - bridgeはDoD通過後だけ実行し、数値要件IDと正本リンクを持つ薄い参照カードを生成する。
@@ -139,4 +139,3 @@ cc-sdd連携を変更した場合は、隔離した一時ディレクトリで�
 - APIキーやトークンをコード・設定・レビューコメントへ書かない。
 - 外部依存の取得元、版、ライセンスを互換性台帳で確認する。
 - コミットメッセージは1行、日本語、Gitmoji付きにする。
-

@@ -19,11 +19,13 @@ tanuki-task-planner
 運用モード(任意):  # cc-sdd（既定） / standalone
 ```
 
-入力を受け取ったら運用モードを確定する。既定の`cc-sdd`では未導入なら固定版を導入し、導入済みなら状態だけを記録する。
+入力を受け取ったら運用モードを確定する。既定の`cc-sdd`では、まず読み取り専用で導入状態を確認する。
 
 ```bash
-python3 evaluation/cc_sdd_preflight.py <project-root> --agent <codex|claude> --ensure
+python3 evaluation/cc_sdd_preflight.py <project-root> --agent <codex|claude> --check
 ```
+
+`missing`の場合は、固定版`cc-sdd@3.0.2`と追加先を提示する。ユーザーが導入へ明示的に同意した後だけ`--ensure`を実行する。`partial`または`legacy`の場合は自動導入せず、手動移行が必要な状態を報告する。
 
 `standalone`は、ユーザーがcc-sddを使わないと明示した場合だけ選ぶ。この場合は環境を変更せず`--check`で状態を記録し、未導入でも単独タスク計画へ進む。
 

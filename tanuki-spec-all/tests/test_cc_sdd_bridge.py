@@ -110,6 +110,31 @@ class CcSddBridgeTest(unittest.TestCase):
         (inputs.spec_dir / "requirements.md").write_text("changed\n", encoding="utf-8")
         self.assertEqual(check(inputs), ["requirements.md が最新のtanuki入力と一致しません"])
 
+    def test_check_allows_tasks_and_preserves_them_when_cards_are_stale(self) -> None:
+        inputs = self._inputs()
+        render(inputs)
+        tasks = inputs.spec_dir / "tasks.md"
+        tasks.write_text("- [ ] 1. 既存タスク\n", encoding="utf-8")
+        tasks_before = tasks.read_bytes()
+
+        self.assertEqual(check(inputs), [])
+        self.assertEqual(tasks.read_bytes(), tasks_before)
+
+        requirements = yaml.safe_load(
+            (self.func / "traceability.yaml").read_text(encoding="utf-8")
+        )["requirements"]
+        requirements[0]["statement"] = "利用者が安全に登録できる"
+        self._write_sources(requirements=requirements)
+
+        self.assertEqual(
+            check(inputs),
+            ["requirements.md が最新のtanuki入力と一致しません"],
+        )
+        self.assertEqual(tasks.read_bytes(), tasks_before)
+        with self.assertRaisesRegex(BridgeError, "既存tasks.md"):
+            render(inputs)
+        self.assertEqual(tasks.read_bytes(), tasks_before)
+
     def test_existing_non_owned_directory_is_rejected(self) -> None:
         inputs = self._inputs()
         inputs.spec_dir.mkdir(parents=True)

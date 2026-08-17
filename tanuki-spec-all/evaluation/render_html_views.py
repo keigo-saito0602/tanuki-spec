@@ -70,10 +70,23 @@ STATUS_CLASS = {
 }
 FRONTMATTER_RE = re.compile(r"\A---\s*\n.*?\n---(?:\s*\n|\Z)", re.DOTALL)
 HTML_COMMENT_RE = re.compile(r"<!--.*?(?:-->|\Z)", re.DOTALL)
+AUTHOR_GUIDE_BLOCK_RE = re.compile(
+    r"<!--\s*AUTHOR-GUIDE:START\s*-->.*?<!--\s*AUTHOR-GUIDE:END\s*-->",
+    re.DOTALL,
+)
+AUDIT_BLOCK_RE = re.compile(
+    r"<!--\s*AUDIT:START\s*-->.*?<!--\s*AUDIT:END\s*-->",
+    re.DOTALL,
+)
+HUMAN_BLOCK_RE = re.compile(
+    r"<!--\s*HUMAN:START\s*-->(.*?)<!--\s*HUMAN:END\s*-->",
+    re.DOTALL,
+)
+DEFAULT_HUMAN_PLACEHOLDER = "[要確認: 案件と読者に合わせた本文を作成してください]"
 HEADING_RE = re.compile(r"^( {0,3})(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$", re.MULTILINE)
-GUIDE_RE = re.compile(
-    r"(?:記入ガイド|記入方法|記入形式|書き方|FILL|この節で確認すべきこと|ゴール|読み手|読み方|凡例|レビュー(?:観点|チェック|項目|用チェック)?|"
-    r"チェックリスト|第三者レビュー|writing\s+guide|review\s+checklist|checklist)",
+LEGACY_GUIDE_FIRST_LINE_RE = re.compile(
+    r"^(?:(?:👥|🧭|🔤|🔎|📎|📝|🔍)\s*)?\*\*(?:記入ガイド|記入方法|記入形式|この節で確認すべきこと|第三者レビュー視点(?:（PBR）)?|レビュー観点)\*\*"
+    r"|^FILL(?:項目)?(?:\s|の)",
     re.IGNORECASE,
 )
 APPENDIX_RE = re.compile(
@@ -131,6 +144,10 @@ def strip_reader_only_content(markdown: str) -> str:
     この関数は入力文字列を返すだけで正本ファイルを書き換えない。
     """
 
+    # 新しいテンプレートは明示マーカーで作成者向け領域を区別する。
+    # 一般語のキーワード検索で業務上の引用を削除してはいけない。
+    markdown = AUTHOR_GUIDE_BLOCK_RE.sub("", markdown)
+    markdown = AUDIT_BLOCK_RE.sub("", markdown)
     markdown = FRONTMATTER_RE.sub("", markdown, count=1)
     markdown = HTML_COMMENT_RE.sub("", markdown)
     lines = markdown.splitlines()
@@ -155,7 +172,13 @@ def strip_reader_only_content(markdown: str) -> str:
                     index += 1
                     continue
                 break
-            if GUIDE_RE.search("\n".join(block)):
+            first_line = next((value.strip() for value in block if value.strip()), "")
+            legacy_header = (
+                first_line.startswith("**ゴール**")
+                and any("**読み手**" in value for value in block)
+                and any("**読み方**" in value or "**凡例**" in value for value in block)
+            )
+            if LEGACY_GUIDE_FIRST_LINE_RE.search(first_line) or legacy_header:
                 if cleaned and cleaned[-1].strip() == "":
                     cleaned.pop()
                 continue
@@ -167,27 +190,51 @@ def strip_reader_only_content(markdown: str) -> str:
     # 「付録: 項目の根拠一覧」等は見出しから同階層以上の次見出しまでを除く。
     without_appendix: list[str] = []
     appendix_level: int | None = None
-    audit_tail = False
+    audit_level: int | None = None
+    audit_final_appendix = False
     for line in cleaned:
-        if audit_tail:
-            continue
         heading = re.match(r"^ {0,3}(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$", line)
         if heading:
             level = len(heading.group(1))
             title = heading.group(2).strip()
-            # 生成テンプレートの監査項目は、この見出し以降がすべて作成者向け。
-            # 配下に同階層のカテゴリ見出しが続いても、読者ビューへ戻さない。
+            # 明示マーカー導入前のテンプレートとの互換処理。監査領域末尾の
+            # 「項目の根拠一覧」を越えた後の同階層見出しは読者本文へ戻す。
+            if audit_level is not None:
+                if audit_final_appendix and level <= audit_level:
+                    audit_level = None
+                    audit_final_appendix = False
+                else:
+                    if re.search(r"項目の根拠一覧", title):
+                        audit_final_appendix = True
+                    continue
             if re.search(r"監査用項目", title):
-                audit_tail = True
+                audit_level = level
+                audit_final_appendix = False
+                continue
+            if audit_level is not None:
                 continue
             if appendix_level is not None and level <= appendix_level:
                 appendix_level = None
             if appendix_level is None and APPENDIX_RE.search(title):
                 appendix_level = level
                 continue
+        if audit_level is not None:
+            continue
         if appendix_level is None:
             without_appendix.append(line)
     return "\n".join(without_appendix).strip() + "\n"
+
+
+def reader_body_complete(markdown: str) -> bool:
+    """HUMAN領域が既定プレースホルダのまま、または空でないか確認する。"""
+
+    match = HUMAN_BLOCK_RE.search(markdown)
+    if not match:
+        # HUMANマーカー導入前の既存文書は原則許容するが、既定の未記入文言が
+        # 残っている場合はマーカーだけを消してゲートを回避できないようにする。
+        return DEFAULT_HUMAN_PLACEHOLDER not in markdown
+    body = HTML_COMMENT_RE.sub("", match.group(1)).strip()
+    return bool(body) and DEFAULT_HUMAN_PLACEHOLDER not in body
 
 
 class SafeViewRenderer(RendererHTML):
@@ -534,18 +581,27 @@ def render_phase(phase_dir: Path, check: bool = False) -> bool:
             print(f"安全のため処理を中止: 出力先がシンボリックリンクです: {violation}")
         return False
     outputs = expected_outputs(phase_dir)
+    incomplete_reader_docs = [
+        document.path
+        for document in collect_documents(phase_dir)
+        if not reader_body_complete(document.path.read_text(encoding="utf-8"))
+    ]
     wanted = set(outputs)
     stale = _legacy_stale(view_dir, wanted)
     empty_dirs = _empty_legacy_dirs(view_dir, stale)
     mismatches = [relative for relative, content in outputs.items() if not (view_dir / relative).is_file() or (view_dir / relative).read_text(encoding="utf-8") != content]
     if check:
+        for path in incomplete_reader_docs:
+            print(f"読者向け本文が未記入: {path}")
         for relative in mismatches:
             print(f"不一致: {view_dir / relative}")
         for path in stale:
             print(f"不要: {path}")
         for path in empty_dirs:
             print(f"不要な空ディレクトリ: {path}")
-        return not (mismatches or stale or empty_dirs)
+        return not (mismatches or stale or empty_dirs or incomplete_reader_docs)
+    for path in incomplete_reader_docs:
+        print(f"警告: 読者向け本文が未記入です: {path}")
     view_dir.mkdir(parents=True, exist_ok=True)
     for path in stale:
         path.unlink()

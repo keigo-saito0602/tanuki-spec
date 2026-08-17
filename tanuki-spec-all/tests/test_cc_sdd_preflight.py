@@ -23,6 +23,9 @@ from evaluation.cc_sdd_preflight import (
 )
 
 
+FIXTURE_FILE = Path(__file__).parent / "fixtures" / "cc_sdd_3_0_2_codex_layout.json"
+
+
 class CcSddPreflightTest(unittest.TestCase):
     def _modern(
         self,
@@ -55,6 +58,21 @@ class CcSddPreflightTest(unittest.TestCase):
             names = legacy_commands(agent)
         for name in names:
             (command_root / name).write_text(f"# {name}\n", encoding="utf-8")
+
+    def _distribution_fixture(self, root: Path) -> dict[str, object]:
+        fixture = json.loads(FIXTURE_FILE.read_text(encoding="utf-8"))
+        for name in fixture["skills"]:
+            skill_dir = root / ".agents" / "skills" / name
+            skill_dir.mkdir(parents=True, exist_ok=True)
+            (skill_dir / "SKILL.md").write_text(
+                f"---\nname: {name}\ndescription: cc-sdd 3.0.2 fixture\n---\n",
+                encoding="utf-8",
+            )
+        for relative in fixture["artifacts"]:
+            artifact = root / relative
+            artifact.parent.mkdir(parents=True, exist_ok=True)
+            artifact.write_text("cc-sdd 3.0.2 fixture\n", encoding="utf-8")
+        return fixture
 
     def test_missing_modern_legacy_and_partial_are_distinguished_per_agent(self) -> None:
         with TemporaryDirectory() as directory:
@@ -100,6 +118,21 @@ class CcSddPreflightTest(unittest.TestCase):
             state = inspect(root, "codex")
             self.assertEqual(state.status, "partial")
             self.assertIn("kiro-debug", state.modern_missing)
+
+    def test_artifacts_only_are_partial_and_never_auto_installed(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            for relative in required_artifacts("codex"):
+                artifact = root / relative
+                artifact.parent.mkdir(parents=True, exist_ok=True)
+                artifact.write_text("artifact-only fixture\n", encoding="utf-8")
+            runner = Mock()
+
+            state = inspect(root, "codex")
+            self.assertEqual(state.status, "partial")
+            with self.assertRaises(PreflightError):
+                ensure(root, ("codex",), runner=runner)
+            runner.assert_not_called()
 
     def test_modern_and_legacy_mixture_is_partial(self) -> None:
         with TemporaryDirectory() as directory:
@@ -235,6 +268,67 @@ class CcSddPreflightTest(unittest.TestCase):
         self.assertEqual(compatibility["dependency"]["package"], "cc-sdd")
         self.assertEqual(tuple(compatibility["required_skills"]), MODERN_SKILLS)
         self.assertTrue(COMPATIBILITY_FILE.is_file())
+
+    def test_manifest_declared_paths_can_materialize_a_modern_fixture(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._modern(root, "codex")
+            manifest = load_compatibility()
+            declared = manifest["required_artifacts"]
+            expected = (
+                *declared["shared"],
+                *declared["agents"]["codex"],
+                *(
+                    (Path(".agents/skills") / resource).as_posix()
+                    for resource in declared["skill_resources"]
+                ),
+            )
+            self.assertEqual(required_artifacts("codex"), expected)
+            self.assertEqual(inspect(root, "codex").status, "modern")
+
+    def test_cc_sdd_3_0_2_distribution_fixture_matches_expected_layout(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixture = self._distribution_fixture(root)
+            state = inspect(root, "codex")
+
+            self.assertEqual(fixture["package"], "cc-sdd")
+            self.assertEqual(fixture["version"], "3.0.2")
+            self.assertEqual(len(fixture["skills"]), 17)
+            self.assertEqual(len(fixture["artifacts"]), 33)
+            self.assertEqual(state.status, "modern")
+            self.assertEqual(set(state.modern_found), set(fixture["skills"]))
+            self.assertEqual(set(state.artifacts_found), set(fixture["artifacts"]))
+
+    def test_cc_sdd_3_0_2_distribution_fixture_matches_claude_layout(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixture = json.loads(FIXTURE_FILE.read_text(encoding="utf-8"))
+            for name in fixture["skills"]:
+                skill_dir = root / ".claude" / "skills" / name
+                skill_dir.mkdir(parents=True, exist_ok=True)
+                (skill_dir / "SKILL.md").write_text(
+                    f"---\nname: {name}\ndescription: cc-sdd 3.0.2 fixture\n---\n",
+                    encoding="utf-8",
+                )
+            for relative in fixture["artifacts"]:
+                if relative.startswith(".codex/"):
+                    continue
+                artifact_path = relative.replace(".agents/skills/", ".claude/skills/")
+                artifact = root / artifact_path
+                artifact.parent.mkdir(parents=True, exist_ok=True)
+                artifact.write_text("cc-sdd 3.0.2 fixture\n", encoding="utf-8")
+
+            state = inspect(root, "claude")
+            expected_artifacts = {
+                relative.replace(".agents/skills/", ".claude/skills/")
+                for relative in fixture["artifacts"]
+                if not relative.startswith(".codex/")
+            }
+            self.assertEqual(len(expected_artifacts), 32)
+            self.assertEqual(state.status, "modern")
+            self.assertEqual(set(state.modern_found), set(fixture["skills"]))
+            self.assertEqual(set(state.artifacts_found), expected_artifacts)
 
     def test_invalid_compatibility_manifest_is_rejected(self) -> None:
         with TemporaryDirectory() as directory:

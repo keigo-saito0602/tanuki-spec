@@ -190,6 +190,24 @@ class SchemaTest(unittest.TestCase):
         result = self._validate(lambda d: d["screens"][0].pop("design_question"))
         self.assertTrue(any("design_question" in error for error in result.errors))
 
+    def test_placeholder_exploration_text_is_error(self) -> None:
+        for value in ("未定", "TBD", "<このモックで決めたい問い>"):
+            with self.subTest(value=value):
+                result = self._validate(
+                    lambda d, placeholder=value: d["screens"][0].__setitem__(
+                        "design_question", placeholder
+                    )
+                )
+                self.assertTrue(any("仮値" in error for error in result.errors))
+
+    def test_decided_sentence_containing_similar_word_is_not_placeholder(self) -> None:
+        result = self._validate(
+            lambda d: d["screens"][0].__setitem__(
+                "rationale", "未定義の状態を作らないため既存導線を継承する"
+            )
+        )
+        self.assertEqual([], result.errors)
+
     def test_unknown_risk_level_is_error(self) -> None:
         result = self._validate(lambda d: d["screens"][0].__setitem__("risk", "critical"))
         self.assertTrue(any("critical" in error for error in result.errors))
@@ -479,20 +497,15 @@ class ValidateAllTest(unittest.TestCase):
         self.assertEqual([], result.errors)
         self.assertTrue(result.ok())
 
-    def test_template_file_passes_every_check(self) -> None:
-        """テンプレートの構造（レイアウト・状態・遷移の組み合わせ）が最新のスキーマで通ること。
-
-        `generated_at`だけは未置換を検知するための意図的なプレースホルダなので、
-        この検証では実在する日付へ置き換えてから確認する
-        （test_unfilled_template_generated_at_fails_gateが未置換側を保証する）。
-        """
+    def test_template_placeholders_fail_even_after_generated_at_is_filled(self) -> None:
+        """日付だけを埋めても、画面判断の仮値が残ればゲートを通さない。"""
         import yaml
 
         template = SCRIPT_DIR.parent / "templates" / "screens-template.yaml"
         data = yaml.safe_load(template.read_text(encoding="utf-8"))
         data["meta"]["generated_at"] = "2026-07-30"
         result = GATE.validate_all(data, CATALOG.load_catalog())
-        self.assertEqual([], result.errors)
+        self.assertTrue(any("仮値" in error for error in result.errors))
 
     def test_unfilled_template_generated_at_fails_gate(self) -> None:
         """テンプレートをそのままコピーして置換を忘れても、ゲートが必ず弾くことを保証する。"""

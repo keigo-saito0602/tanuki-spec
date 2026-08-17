@@ -30,15 +30,15 @@ python3 evaluation/cc_sdd_bridge.py check <project-root> \
 - `deferred` / `out_of_scope`は数値要件へ昇格せず、理由だけを対象外表へ残す。
 - 設計要素は`design-traceability.yaml`から変換し、要件・基本設計・詳細設計の正本へ相対リンクする。本文は複製しない。
 - 参照カードには`kiro-spec-tasks`がタスク生成前に全文を読む正本一覧を明記する。カードの短い要点だけでタスクを生成しない。
-- 生成物には`tanuki-spec-cc-sdd-bridge-v1`所有マーカーを付ける。手書きspec、symlink、既存`tasks.md`があるディレクトリは上書きしない。
+- 生成物には`tanuki-spec-cc-sdd-bridge-v1`所有マーカーを付ける。手書きspec、symlink、既存`tasks.md`があるディレクトリは`render`で上書きしない。`check`は読み取り専用のため、`tasks.md`が生成済みでも参照カードの最新性を検査できる。
 - 初回は未承認で生成する。tanukiのDoDとユーザー承認を終え、`draft`要件がゼロになった後だけ`render ... --approve`を実行する。
-- 承認後は`kiro-spec-tasks <spec名>`を実行する。ブリッジ生成物を手編集せず、仕様変更は`docs/spec/`へ戻してタスク生成前に再生成する。
+- 承認後は`kiro-spec-tasks <spec名>`を実行する。タスク生成後も定期的に`check`を実行し、正本と参照カードの一致を確認する。正本変更で`check`が不一致を検出した場合、`check`は`tasks.md`を変更しないため、そのまま実装を続けず、既存`tasks.md`を退避してから`render`で参照カードを再生成し、`kiro-spec-tasks <spec名>`でタスクを再生成する。仕様変更は常に`docs/spec/`へ戻し、ブリッジ生成物を手編集しない。
 
 ## 導入の安全条件
 
 - v3 の Agent Skills（Codex: `.agents/skills/kiro-*/`、Claude: `.claude/skills/kiro-*/`）と、検証済み版が必要とする`.kiro/settings/`・Skill内rules/templates・エージェント別補助ファイルが全て揃った状態を現行形式とする。
 - 状態は Codex/Claude 別に `modern` / `legacy` / `partial` / `missing` で判定する。
-- 状態が `missing` のときだけ、互換性台帳で検証済みの公式コマンド（現在はCodex: `npx --yes cc-sdd@3.0.2 --codex-skills --lang ja`、Claude: `npx --yes cc-sdd@3.0.2 --claude-skills --lang ja`）を `--dry-run` → 本導入の順で実行する。
+- 状態が `missing` のときだけ、固定版と追加先をユーザーへ提示する。ユーザーが導入へ明示的に同意した後、互換性台帳で検証済みの公式コマンド（現在はCodex: `npx --yes cc-sdd@3.0.2 --codex-skills --lang ja`、Claude: `npx --yes cc-sdd@3.0.2 --claude-skills --lang ja`）を `--dry-run` → 本導入の順で実行する。
 - `partial` / `legacy` は自動上書き・自動移行せず、中止して手動確認する。
 - 既存の `AGENTS.md` / `CLAUDE.md` / `.kiro/` はプロジェクト資産として保護する。cc-sddのデフォルト`prompt`を使い、非TTYでは既存ファイルを保持して新規だけを追加する。cc-sdd側の`--yes`や`--overwrite force`は使わない。
 - `--overwrite skip`も使わない。版によってはカテゴリ単位で新規Skillsまで省略し、不完全導入になるためである。

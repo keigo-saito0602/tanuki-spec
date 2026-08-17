@@ -10,7 +10,7 @@ cc-sdd側の`requirements.md`・`design.md`は共通ブリッジが`docs/spec/`�
 自動生成し、手編集しない。仕様変更は`.kiro`側ではなく`docs/spec/`へ差し戻し、
 tanukiのゲート通過後に橋渡し情報を更新する。
 
-cc-sdd本体は複製せず、検証済みの公式npmパッケージを外部依存として利用する。生成・設計・タスク引き渡しの開始時は、対象エージェントの現行Skills版が完全に未導入なら、互換性台帳で固定した版を公式インストーラーで追加する。レビュー・テスト・画面モックは環境を変更せず状態を確認し、未導入なら生成工程のプリフライトへ戻す。旧版または部分導入を検出した場合は、既存の`AGENTS.md`・`.kiro/settings/`を自動上書きせず、状態と移行方法を報告する。詳細は[`tanuki-spec-all/references/cc-sdd-integration.md`](./tanuki-spec-all/references/cc-sdd-integration.md)を参照する。
+cc-sdd本体は複製せず、検証済みの公式npmパッケージを外部依存として利用する。生成・設計・タスク引き渡しの開始時は、対象エージェントの現行Skills版が完全に未導入なら、固定版と追加先を提示し、ユーザーの明示同意後にだけ公式インストーラーで追加する。レビュー・テスト・画面モックは環境を変更せず状態を確認し、未導入なら生成工程のプリフライトへ戻す。旧版または部分導入を検出した場合は、既存の`AGENTS.md`・`.kiro/settings/`を自動上書きせず、状態と移行方法を報告する。詳細は[`tanuki-spec-all/references/cc-sdd-integration.md`](./tanuki-spec-all/references/cc-sdd-integration.md)を参照する。
 
 ## インストール
 

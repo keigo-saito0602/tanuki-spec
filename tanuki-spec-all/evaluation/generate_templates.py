@@ -160,6 +160,7 @@ def render_phase(phase_key: str, data: dict) -> str:
     out.append("")
     out.append(f"# {ph['label']}書テンプレート")
     out.append("")
+    out.append("<!-- AUTHOR-GUIDE:START -->")
     out.append(f"> **ゴール**: {ph['goal']}")
     if ph.get("audience"):
         out.append(f"> 👥 **読み手**: {ph['audience']}")
@@ -172,11 +173,14 @@ def render_phase(phase_key: str, data: dict) -> str:
         for guide in ph["pbr_guide"]:
             out.append(f"> - {guide}")
     out.append("> 📎 **記入方法**: 末尾の「付録: 項目の根拠一覧」を参照する。")
+    out.append("<!-- AUTHOR-GUIDE:END -->")
     out.append("")
     out.append("## 読者向け本文")
     out.append("")
+    out.append("<!-- AUTHOR-GUIDE:START -->")
     out.append("> **記入ガイド**: この領域は品質項目の並びを写さず、案件の読者が判断する順序へ再編集する。")
     out.append("> サマリではなく、この本文だけで要件・設計判断が完結する内容にする。低リスク部分は表へ畳み、高リスク部分を深掘りする。")
+    out.append("<!-- AUTHOR-GUIDE:END -->")
     out.append("")
     out.append("<!-- HUMAN:START -->")
     out.append("[要確認: 案件と読者に合わせた本文を作成してください]")
@@ -184,6 +188,7 @@ def render_phase(phase_key: str, data: dict) -> str:
     out.append("")
     out.append("---")
     out.append("")
+    out.append("<!-- AUDIT:START -->")
     out.append("## 付録: 監査用項目")
     out.append("")
     out.append("以下はカバレッジ・根拠・トレーサビリティを検査するための領域。閲覧用HTMLでは表示しない。本文を複製せず、根拠と本文見出し・IDへの参照を記録する。")
@@ -199,6 +204,7 @@ def render_phase(phase_key: str, data: dict) -> str:
                 out.append(f"> - {check}")
             out.append("")
     out.extend(render_appendix(guides))
+    out.append("<!-- AUDIT:END -->")
     return "\n".join(out) + "\n"
 
 

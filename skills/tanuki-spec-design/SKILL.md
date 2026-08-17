@@ -23,11 +23,13 @@ tanuki-spec-design
 前回の設計成果物:          # updateでは必須
 ```
 
-入力を受け取ったら、設計開始前にcc-sddの導入状態を確認する。未導入なら導入し、導入済みなら状態だけを記録する。
+入力を受け取ったら、設計開始前にまず読み取り専用でcc-sddの導入状態を確認する。
 
 ```bash
-python3 evaluation/cc_sdd_preflight.py <project-root> --agent <codex|claude> --ensure
+python3 evaluation/cc_sdd_preflight.py <project-root> --agent <codex|claude> --check
 ```
+
+`missing`の場合は、固定版`cc-sdd@3.0.2`と、追加先（Codexは`.agents/skills/`、Claudeは`.claude/skills/`、共通は`.kiro/settings/`）をユーザーへ提示する。**ユーザーがこの導入へ明示的に同意した後だけ**、同じコマンドの`--check`を`--ensure`へ変えて実行する。`partial`または`legacy`の場合は`--ensure`を実行せず、既存状態と手動移行が必要な理由を報告する。
 
 cc-sddはDiscovery、責任境界、実装運用（`.kiro/`）を担う。tanuki-specの正本はプロジェクトの`docs/spec/`であり、cc-sddの`requirements.md`・`design.md`は参照カードまたは自動生成要約に限る。詳しい同期規則、調査の深さ、読者向け再編集は[`references/cc-sdd-integration.md`](./references/cc-sdd-integration.md)と[`references/spec-quality-principles.md`](./references/spec-quality-principles.md)を読む。
 
@@ -62,7 +64,7 @@ python3 evaluation/render_html_views.py <phase>
 python3 evaluation/render_html_views.py <phase> --check
 ```
 
-HTMLレンダラはフェーズ内に存在する文書だけを生成対象とし、未着手工程はエラーにせずスキップする。HTMLは閲覧用の派生物なので、内容を直す場合は正本Markdown/YAMLを更新して再生成する。
+HTMLレンダラはフェーズ内に存在する文書だけを生成対象とし、未着手工程はエラーにせずスキップする。`--check` はファイルを書き換えず、生成対象の欠落・正本との差分・不要な旧派生物・未記入の読者向け本文だけを表示し、スキップ対象自体は表示しない。HTMLは閲覧用の派生物なので、内容を直す場合は正本Markdown/YAMLを更新して再生成する。
 
 8. レビューは`tanuki-spec-reviewer`へ渡す。設計工程は`--design-traceability`付きでレビュー記録を検証する。
 9. 設計書の散文を出力する前に、[`references/cognitive-doc-principles.md`](./references/cognitive-doc-principles.md) の「症状を二つに分ける」「文レベルの規範」「語彙の規範」「想起を組み込む規範」で自己点検する。設計判断は、代替案・根拠・トレードオフ・再検討条件を示して読み手が検証できる形に残す。案件固有の品質判断は[`references/spec-quality-principles.md`](./references/spec-quality-principles.md)に従う。

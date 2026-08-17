@@ -7,8 +7,8 @@ func/phase再構成（2026-08-12設計）に対応済みで、要件・トレー
 [`phase-1_レッスン予約/system-traceability.yaml`](./phase-1_レッスン予約/system-traceability.yaml)
 にあります。root直下の`traceability.yaml`は`spec_gate`等の既存テストのために残した
 func正本へのsymlinkです。HTMLビューは
-[`phase-1_レッスン予約/views/index.html`](./phase-1_レッスン予約/views/index.html)
-から確認できます。
+[`phase-1_レッスン予約/views/01_要件定義書.html`](./phase-1_レッスン予約/views/01_要件定義書.html)
+から確認できます（未着手工程のビューは生成されません）。
 
 複数funcの構成例は[`phase-2_複数機能例/`](./phase-2_複数機能例/README.md)を参照してください。
 
