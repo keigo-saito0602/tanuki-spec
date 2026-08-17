@@ -3,14 +3,14 @@ name: tanuki-spec-generator
 description: 案件着手時に、ユーザーストーリーから要件定義書・基本設計書・詳細設計書の根拠付きドラフトを作成し、抜け漏れと未確定事項を検証する。要件定義書作成、設計書のテンプレート記入、仕様の抜け漏れ確認、カバレッジ測定で使う。
 ---
 
-# tanuki-spec-generator — 品質項目ベースの仕様書ジェネレーター
+# tanuki-spec-generator — 案件理解ベースの仕様書ジェネレーター
 
 > 🚀 **30秒でわかる**: やりたいことをざっくり話すだけで、抜け漏れを点検した「要件定義書・設計書のたたき台」が返ってくる。案件の最初、土台づくりの一手。
 
 > 📖 わからない用語は [用語集（GLOSSARY.md）](../../GLOSSARY.md) を参照。
 
-ざっくりしたユーザーストーリーを入力に、**品質項目マスター（SSOT）に基づく穴埋めテンプレート**へドラフトを生成し、
-**カバレッジ評価**（項目の充足度）と出力ゲートを実行する。抜け漏れのない要件定義・設計のドラフトを用意するのが目的。
+ユーザーストーリーだけでなく、既存プロジェクト、steering、brief、researchを読み、案件固有の判断ができる要件定義・設計のドラフトを作る。
+品質項目マスター（SSOT）は抜け漏れを点検するために使うが、全項目を均等に埋める穴埋めはしない。リスクの高い論点を深掘りし、根拠・代替案・トレードオフを残す。
 
 - 項目の正本: `spec-items.yaml`（要件定義30／基本設計27／詳細設計18。要件定義・基本設計では非機能35明細も個別評価、AI品質は別評価）
 - 既存の `dev-workflow` / `kiro:spec-*` との棲み分け → 末尾「他スキルとの関係」参照
@@ -34,6 +34,16 @@ tanuki-spec-generator
 `工程`・`対象func`・`ストーリー` が未記入のうちは生成を始めない（`参照仕様`・`モード` は空でよい）。
 
 埋まったら、下の「手順」①〜③を順に実行する。
+
+入力が揃ったら、生成前にまず読み取り専用でcc-sddの導入状態を確認する。
+
+```bash
+python3 evaluation/cc_sdd_preflight.py <project-root> --agent <codex|claude> --check
+```
+
+`missing`の場合は、固定版`cc-sdd@3.0.2`と、追加先（Codexは`.agents/skills/`、Claudeは`.claude/skills/`、共通は`.kiro/settings/`）をユーザーへ提示する。**ユーザーがこの導入へ明示的に同意した後だけ**、同じコマンドの`--check`を`--ensure --consent`へ変えて実行する。`--agent`は省略しない。`partial`または`legacy`の場合は`--ensure`を実行せず、既存状態と手動移行が必要な理由を報告する。
+
+cc-sddはDiscovery、境界整理、実装運用（`.kiro/`）を担い、tanuki-specの正本は常にプロジェクトの`docs/spec/`とする。cc-sddの`requirements.md`・`design.md`は参照カードまたは自動生成要約に限り、仕様変更は`docs/spec/`へ戻す。詳細な同期規則と既存コンテキストの読み方は[`references/cc-sdd-integration.md`](./references/cc-sdd-integration.md)と[`references/spec-quality-principles.md`](./references/spec-quality-principles.md)を読む。
 
 ---
 
@@ -60,6 +70,8 @@ tanuki-spec-generator
    （初回フェーズ等でまだ作られていないことがある）。
    参照した場合は、`reports/01_差分・未決事項.md`に「参照したベースライン文書」を記録する。
 
+   併せて、プロジェクトルートの目的・利用者・制約・規約、既存の`docs/spec/`、`.kiro/steering/`、対象`.kiro/specs/`の`brief.md`・`roadmap.md`・`research.md`（存在するもの）を読む。既存コード・画面・データ・外部連携も必要な範囲で確認し、事実・推測・未確定事項を分けて記録する。見つからない資料は推測で補わず、未整備として記録する。
+
 ### ①入力ゲート — ユーザーストーリーの INVEST チェック
 INVESTの6軸（Independent/Negotiable/Valuable/Estimable/Small/Testable）をYES/NOで確認。
 NOの軸は質問リストにして仕様書へ残す。ドラフト生成は止めないが、根拠がない項目を埋めてはいけない。
@@ -69,20 +81,25 @@ NOの軸は質問リストにして仕様書へ残す。ドラフト生成は止
 
 **振る舞いの洗い出し（BDD発見・軽量）**: 各USについて正常系・異常系・境界値の振る舞いを洗い出す。「ルール→具体例→疑問」（Example Mapping風）で広げ、ビジネス/開発/QA の3視点（疑似Three Amigos）で「本当にこれで正しいか」を自問する。洗い出した振る舞いは②でGherkinの受入試験(AC)になる。
 
-### ②穴埋め生成
+### ②根拠付きドラフト生成
 1. `spec-items.yaml` の対象工程の項目と、`templates/<工程>-template.md` を読む。
-   - **各項目の記入ガイド・出典・品質観点は、テンプレート末尾の「付録: 項目の根拠一覧」に表として集約されている**。読み手の認知負荷を下げるため本文から外しているだけで、記入に必要な情報はすべてそこにある。**記入前に必ず付録の該当ID行を読み、ガイドと記入形式に沿って記入する**。
+   - テンプレートは構造と出力形式のガイドとして読む。**全項目を均等に埋める目的で使わず**、リスク分類と読者の判断に必要な項目を選ぶ。選んだ項目の記入ガイド・出典・品質観点は、テンプレート末尾の「付録: 項目の根拠一覧」の該当ID行を読む。
    - テンプレは `python3 evaluation/generate_templates.py` でSSOTから再生成できる（手で編集せずSSOTを直す）。
 2. `templates/traceability-template.yaml` をコピーして `traceability.yaml` を作る。ユーザーストーリーと業務フロー手順に `US-xxx` / `BF-xxx-Sxx` を付け、次をすべて洗い出す。
    - 業務要件・機能要件・非機能要件は `BR-xxx` / `FR-xxx` / `NFR-xxx` とし、各要件に `user_story_ids` と `flow_step_ids` を必ず指定する。
    - 受入試験は `AC-xxx` とし、対象US・要件・業務フロー手順を指定し、`scenario`（name/given/when/then、任意でexamples）にGherkinで振る舞いを書く。書き方は共有コアの `references/ears-gherkin-guidelines.md` に従う（1シナリオ1振る舞い・Thenは観測可能・プレースホルダ禁止）。
    - システムテストは `ST-xxx` とし、対象要件・受入試験・テスト種別・前提条件・操作・期待結果を指定する。
-3. 各項目の `<!-- FILL:START id -->` … `END` の間を、ユーザーストーリー（＋参照仕様）から記入する。対応する `US-xxx` / `BR-xxx` 等を本文にも記載する。
+3. `01_要件定義書.md`は、先頭を読者向け本文として案件別に編集する。**本文はサマリの言い換えではなく、付録を読まなくても要件判断が完結する正本**にする。目的・対象範囲・利用者と業務フロー・要件と業務ルール・主要な例外と復旧・データと権限・重要判断・リスク・未決事項から、案件に必要な章だけを読者の順序で構成する。低リスク要件は表へ畳み、高リスク要件はシナリオ・境界・失敗・復旧・判断理由まで本文で掘る。本文はテンプレートの見出しや項目順をコピーしない。
+   - テンプレートの全FILLブロックと根拠一覧は`## 付録: 監査用項目`以下へ隔離し、coverage/spec_gateが監査できる形を保つ。
+   - 付録へ本文と同じ説明を再掲しない。記入済みFILLは「根拠」と「本文の見出し・要件IDへの参照」を基本とし、本文にない新しい要件・判断を書かない。
+   - 各FILLの論点が本文に必要なら本文へ先に書く。読者が付録を開かなければ理解できない状態は不合格とする。
+   - リスク（low／medium／high）に応じて深さを変え、対応する `US-xxx` / `BR-xxx` 等を本文へ記載する。
 4. **根拠・不確実性ルール（必須）**:
-   - 実際に記入した各FILLブロックの先頭に、`- **根拠**: [入力] ユーザーストーリー US-xxx「<該当箇所>」` または `- **根拠**: [参照] 提供内容「<見出しまたは要点>」` を書く。
+   - 実際に記入した各FILLブロックの先頭に、`- **根拠**: [入力] ユーザーストーリー US-xxx「<該当箇所>」` または `- **根拠**: [参照] 提供内容「<見出しまたは要点>」` を書く。その次は原則として`- **本文**: 「<見出し>」の <BR/FR/NFR-ID> を参照`とし、結論全文を複製しない。
    - 根拠が無い項目は勝手に埋めず、`[要確認: <確認したい質問>]` を残す。これは充足ではない。
    - 過去仕様は現案件の事実ではないため、採用する場合はユーザの承認を得る。
 5. `required: conditional` の項目は、該当しない場合のみ `[対象外: <適用しない理由>]` と記入する。理由なしの対象外は許可しない。
+6. 重要な判断は、採用案だけでなく比較した代替案、採用・不採用の根拠、トレードオフ、前提が変わったときの再検討条件を記録する。人が読む`00_サマリ.md`とHTMLは、正本の単純な貼り付けではなく、結論・未決事項・最大リスクの順へ再編集する。
 
 ### ③カバレッジ評価（決定論・自動）
 ```bash
@@ -137,7 +154,7 @@ python3 evaluation/render_html_views.py <phase> --check
 
 ## 文章の点検（出力前）
 
-サマリ層と本論層の散文を出力する前に、[`references/cognitive-doc-principles.md`](./references/cognitive-doc-principles.md) の「症状を二つに分ける」「文レベルの規範」「語彙の規範」「想起を組み込む規範」で自己点検する。
+サマリ層と本論層の散文を出力する前に、[`references/cognitive-doc-principles.md`](./references/cognitive-doc-principles.md) の「症状を二つに分ける」「文レベルの規範」「語彙の規範」「想起を組み込む規範」で自己点検する。案件の品質判断は[`references/spec-quality-principles.md`](./references/spec-quality-principles.md)に従う。
 
 要件定義書の読み手は非技術者である。未決事項をなめらかな断定で埋めず、`[要確認]`として残す。判断が必要な箇所は、選択肢と判断基準を示して読み手の決定に残す。
 
@@ -152,7 +169,7 @@ python3 evaluation/render_html_views.py <phase> --check
 - `<phase>/func-<名前>/traceability.yaml`（US → BR/FR/NFR → AC → ST の正本）
 - `<phase>/tests/requirements-traceability.md`、`<phase>/tests/system-test-cases.md`
 - `<phase>/features/*.feature`（受入試験はGherkinの `.feature` として標準で生成。将来E2E（Cucumber/playwright-bdd）へ直接投入できる）
-- `<phase>/views/`（`index.html`、`README.md`、存在する要件・サマリ・対応表の閲覧用HTML。正本ではなく再生成する派生物）
+- `<phase>/views/00_サマリ.html`、`01_要件定義書.html`（全funcをphase単位で統合した、人向けの閲覧用HTML。正本ではなく再生成する派生物）
 - `<phase>/func-<名前>/reports/01_差分・未決事項.md`（カバレッジ評価レポート：必須充足率／欠落リスト）
 
 実例は `examples/sample-user-story/` を参照（サンプルストーリー1件のE2E成果物）。

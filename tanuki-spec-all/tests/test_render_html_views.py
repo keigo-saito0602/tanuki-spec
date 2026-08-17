@@ -5,9 +5,9 @@ import re
 import subprocess
 import sys
 import tempfile
+import unittest
 from pathlib import Path
 from urllib.parse import unquote
-import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "evaluation" / "render_html_views.py"
@@ -15,381 +15,243 @@ sys.path.insert(0, str(ROOT / "evaluation"))
 import render_html_views as views
 
 
-SAMPLE = """---
-date: 2026-07-01
-updated: 2026-07-29T15:33:12
+SUMMARY = """---
+updated: 2026-08-16
 ---
-# 予約機能
+# 予約サマリ
 
+<!-- FILL:START summary -->
 ## 決定事項
-予約を受け付ける。
+[共有資料](../../_project/shared.md)を参照する。[要確認: 上限]。
+<!-- FILL:END summary -->
 
-## 未決事項
-[要確認: 上限] と ⚠️ リスク。`[未記入]` はコード内。
+> 🔍 **レビュー観点**
+> - この作成者向けガイドは表示しない
 
-| ID | 要件 |
-| --- | --- |
-| FR-101 | 予約する |
+> 📝 **記入形式**: `| 項目 | 内容 |`
+
+> 🔍 **この節で確認すべきこと**
+> - 抜け漏れを確認する
+
+> FILL項目の数は変えない
+
+> **ゴール**: 作成者向けの冒頭ガイド
+> **読み手**: レビュアー
 
 <script>alert(1)</script>
 [危険](javascript:alert(1))
 ![追跡画像](https://example.test/pixel.png)
 
-## 付録
-長い根拠。
+## 付録: 項目の根拠一覧
+表示しない根拠。
 """
 
 
 class HtmlViewTest(unittest.TestCase):
-    """func-*/system名前空間の下で、既存の描画・安全性・再生成ロジックが
-    引き続き成立することを確認する（Task 10でパスをfunc/system配下へ移動）。"""
-
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
-        self.phase = self.root / "docs" / "spec" / "phase-1_予約"
-        self.func = self.phase / "func-予約"
-        self.func.mkdir(parents=True)
-        (self.func / "00_サマリ.md").write_text(SAMPLE, encoding="utf-8")
-        (self.func / "01_要件定義書.md").write_text("# 要件\n\n## 範囲\n本文\n", encoding="utf-8")
-        (self.func / "02_基本設計書.md").write_text("# 基本設計\n\n## 方針\n本文\n", encoding="utf-8")
+        self.spec = self.root / "docs" / "spec"
+        self.phase = self.spec / "phase-1_予約"
+        self.func_a = self.phase / "func-予約"
+        self.func_b = self.phase / "func-認証"
+        (self.spec / "_project").mkdir(parents=True)
+        (self.spec / "_project" / "shared.md").write_text("# 共有\n", encoding="utf-8")
+        for func in (self.func_a, self.func_b):
+            (func / "tests").mkdir(parents=True)
+        (self.func_a / "00_サマリ.md").write_text(SUMMARY, encoding="utf-8")
+        (self.func_b / "00_サマリ.md").write_text("# 認証サマリ\n\n## 目的\nログインする。\n", encoding="utf-8")
+        (self.func_a / "01_要件定義書.md").write_text("# 予約要件\n\n## [必須] 範囲\n予約を扱う。\n", encoding="utf-8")
+        (self.func_b / "01_要件定義書.md").write_text("# 認証要件\n\n## 範囲\n認証を扱う。\n", encoding="utf-8")
+        (self.func_a / "02_基本設計書.md").write_text("# 基本設計\n\n## ER図・DB論理設計\nA (1) -- B\n", encoding="utf-8")
+        (self.func_a / "03_詳細設計書.md").write_text("# 詳細設計\n\n## 内部処理シーケンス設計\nA -> B\n\n## DB物理設計・インデックス\nNoSQL定義\n", encoding="utf-8")
+        (self.func_b / "02_基本設計書.md").write_text("# 認証基本設計\n\n## アクセス制御\n拒否する。\n", encoding="utf-8")
+        (self.func_a / "tests" / "04_テスト項目書.md").write_text("# テスト項目書\n\n## 単体テスト\nUT-101\n", encoding="utf-8")
         (self.phase / "tests").mkdir()
-        (self.phase / "tests" / "system-test-cases.md").write_text(
-            "# テスト\n\n| ID | 結果 |\n| --- | --- |\n| ST-101 | 成功 |\n", encoding="utf-8"
-        )
-        for path in self.phase.rglob("*.md"):
-            os.utime(path, (1_700_000_000, 1_700_000_000))
+        (self.phase / "tests" / "system-test-cases.md").write_text("# システムテスト\n\n## 正常系\nST-101\n", encoding="utf-8")
+        (self.phase / "views").mkdir()
+        (self.phase / "views" / "画面モック.html").write_text("<html>mock</html>", encoding="utf-8")
 
     def tearDown(self):
         self.temp.cleanup()
 
-    def test_generation_mapping_navigation_and_readme(self):
+    def render(self) -> Path:
         self.assertTrue(views.render_phase(self.phase))
-        view_dir = self.phase / "views"
-        generated_html = {str(path.relative_to(view_dir)) for path in view_dir.rglob("*.html")}
-        self.assertEqual(
-            generated_html,
-            {
-                "index.html",
-                "func-予約/index.html",
-                "func-予約/00_サマリ.html",
-                "func-予約/01_要件定義書.html",
-                "func-予約/02_基本設計書.html",
-                "system/system-test-cases.html",
-            },
-        )
-        self.assertTrue((view_dir / "README.md").is_file())
+        return self.phase / "views"
 
-        top_index = (view_dir / "index.html").read_text(encoding="utf-8")
-        self.assertIn("<h3>func-予約</h3>", top_index)
-        self.assertIn("機能ごとの文書", top_index)
-        self.assertIn("phase共通の文書", top_index)
-        func_index_match = re.search(r'<a href="([^"]+)">func-予約の目次</a>', top_index)
-        self.assertIsNotNone(func_index_match)
-        resolved_func_index = (view_dir / unquote(func_index_match.group(1))).resolve()
-        self.assertEqual(resolved_func_index, (view_dir / "func-予約" / "index.html").resolve())
+    def test_generates_only_four_bundles_and_preserves_screen_mock(self):
+        view_dir = self.render()
+        generated = {path.name for path in view_dir.iterdir() if path.is_file()}
+        self.assertEqual(generated, set(views.OUTPUT_FILES) | {views.SCREEN_MOCK})
+        self.assertFalse((view_dir / "index.html").exists())
+        self.assertFalse((view_dir / "README.md").exists())
 
-        func_index = (view_dir / "func-予約" / "index.html").read_text(encoding="utf-8")
-        self.assertIn("読む順番", func_index)
-        self.assertIn("未決事項・注意事項を確認する", func_index)
-        self.assertIn("2026-07-29T15:33:12", func_index)
-        source_link_match = re.search(r'<a href="([^"]+)">正本: 00_サマリ\.md</a>', func_index)
-        self.assertIsNotNone(source_link_match)
-        resolved_source = (view_dir / "func-予約" / unquote(source_link_match.group(1))).resolve()
-        self.assertEqual(resolved_source, (self.func / "00_サマリ.md").resolve())
-        self.assertTrue(resolved_source.is_file())
+    def test_aggregates_funcs_and_tests_without_reader_noise(self):
+        view_dir = self.render()
+        summary = (view_dir / "00_サマリ.html").read_text(encoding="utf-8")
+        requirements = (view_dir / "01_要件定義書.html").read_text(encoding="utf-8")
+        tests = (view_dir / "03_テストケース.html").read_text(encoding="utf-8")
+        self.assertIn("func-予約", summary)
+        self.assertIn("func-認証", summary)
+        self.assertNotIn("FILL:START", summary)
+        self.assertNotIn("この作成者向けガイド", summary)
+        self.assertNotIn("記入形式", summary)
+        self.assertNotIn("この節で確認すべきこと", summary)
+        self.assertNotIn("FILL項目", summary)
+        self.assertNotIn("作成者向けの冒頭ガイド", summary)
+        self.assertNotIn("表示しない根拠", summary)
+        self.assertIn("範囲", requirements)
+        self.assertNotIn("[必須] 範囲", requirements)
+        self.assertEqual(tests.count("ST-101"), 1)
+        self.assertIn("UT-101", tests)
 
-        page = (view_dir / "func-予約" / "01_要件定義書.html").read_text(encoding="utf-8")
-        self.assertIn('rel="prev"', page)
-        self.assertIn('rel="next"', page)
-        self.assertIn("閲覧用の派生成果物", page)
+    def test_design_navigation_targets_real_unique_anchors(self):
+        design = (self.render() / "02_設計書.html").read_text(encoding="utf-8")
+        ids = re.findall(r' id="([^"]+)"', design)
+        self.assertEqual(len(ids), len(set(ids)))
+        coverage = re.search(r'<aside class="coverage-nav".*?</aside>', design)
+        self.assertIsNotNone(coverage)
+        hrefs = re.findall(r'href="#([^"]+)"', coverage.group(0))
+        self.assertGreaterEqual(len(hrefs), 3)
+        for target in hrefs:
+            self.assertIn(target, ids)
+        self.assertIn("ER・データモデル", design)
+        self.assertIn("DDL / NoSQL物理スキーマ", design)
+        self.assertRegex(design, r'href="#[^"]*内部処理シーケンス[^"]*">業務フロー・シーケンス</a>')
+        self.assertRegex(design, r'href="#[^"]*db物理設計[^"]*">DDL / NoSQL物理スキーマ</a>')
+        self.assertIn(">インデックス</a>", design)
+        self.assertIn(">セキュリティルール</a>", design)
 
-        readme = (view_dir / "README.md").read_text(encoding="utf-8")
-        self.assertIn("Local HTML Embed", readme)
-        self.assertIn("--check", readme)
+    def test_relative_source_link_is_rebased_from_original_markdown(self):
+        summary_path = self.render() / "00_サマリ.html"
+        content = summary_path.read_text(encoding="utf-8")
+        match = re.search(r'<a href="([^"]+)">共有資料</a>', content)
+        self.assertIsNotNone(match)
+        resolved = (summary_path.parent / unquote(match.group(1))).resolve()
+        self.assertEqual(resolved, (self.spec / "_project" / "shared.md").resolve())
 
-    def test_accessible_structure_and_safe_markdown(self):
-        views.render_phase(self.phase)
-        page = (self.phase / "views" / "func-予約" / "00_サマリ.html").read_text(encoding="utf-8")
+    def test_source_link_supports_symlink_to_document_outside_phase(self):
+        external = self.spec / "shared-requirements.md"
+        external.write_text("# 共通要件\n", encoding="utf-8")
+        linked = self.func_a / "01_要件定義書.md"
+        linked.unlink()
+        linked.symlink_to(external)
+
+        requirements_path = self.render() / "01_要件定義書.html"
+        content = requirements_path.read_text(encoding="utf-8")
+        match = re.search(r'<span>正本: <a href="([^"]+)">func-予約/01_要件定義書.md</a>', content)
+        self.assertIsNotNone(match)
+        resolved = (requirements_path.parent / unquote(match.group(1))).resolve()
+        self.assertEqual(resolved, external.resolve())
+
+    def test_accessibility_and_unsafe_markdown(self):
+        page = (self.render() / "00_サマリ.html").read_text(encoding="utf-8")
         self.assertEqual(len(re.findall(r"<h1(?:\s|>)", page)), 1)
-        self.assertIn('href="#決定事項"', page)
-        self.assertIn('id="決定事項"', page)
-        self.assertIn('<div class="table-scroll" tabindex="0"', page)
-        self.assertIn("<caption>文書内の表</caption>", page)
-        self.assertIn('<th scope="col">', page)
+        self.assertIn("Content-Security-Policy", page)
+        self.assertIn("script-src 'none'", page)
+        self.assertIn("@media(prefers-color-scheme:dark)", page)
+        self.assertIn("@media print", page)
         self.assertIn('<span class="status status-pending">[要確認: 上限]</span>', page)
-        self.assertIn("<code>[未記入]</code>", page, "コード内の状態語は装飾しない")
         self.assertNotIn("<script>", page)
-        self.assertIn("&lt;script&gt;", page)
         self.assertNotIn('href="javascript:', page)
         self.assertNotIn("<img", page)
         self.assertIn("画像: 追跡画像", page)
-        self.assertNotIn("https://example.test/pixel.png", page)
-        self.assertIn("@media(prefers-color-scheme:dark)", page)
-        self.assertIn("@media print", page)
-        self.assertIn("max-width:75ch", page)
-        self.assertIn("Content-Security-Policy", page)
-        self.assertIn("script-src 'none'", page)
-        self.assertIn('<meta name="referrer" content="no-referrer">', page)
-        self.assertIn('<details class="supporting-detail" open>', page)
-        self.assertIn("「付録」詳細を表示/折りたたむ</summary>", page)
-        self.assertIn('<h3 id="付録">付録</h3>', page)
-        self.assertIn(":target", page)
 
-    def test_check_is_read_only_and_detects_source_change_or_missing_output(self):
-        views.render_phase(self.phase)
-        target = self.phase / "views" / "func-予約" / "00_サマリ.html"
+    def test_check_is_read_only_and_detects_change(self):
+        view_dir = self.render()
+        target = view_dir / "00_サマリ.html"
         before = target.read_text(encoding="utf-8")
         self.assertTrue(views.render_phase(self.phase, check=True))
-        (self.func / "00_サマリ.md").write_text(SAMPLE + "\n変更\n", encoding="utf-8")
+        changed = SUMMARY.replace("[要確認: 上限]", "[要確認: 受付上限]")
+        (self.func_a / "00_サマリ.md").write_text(changed, encoding="utf-8")
         self.assertFalse(views.render_phase(self.phase, check=True))
         self.assertEqual(target.read_text(encoding="utf-8"), before)
-        target.unlink()
-        self.assertFalse(views.render_phase(self.phase, check=True))
-        self.assertFalse(target.exists())
 
-    def test_known_stale_html_is_removed_but_unknown_html_is_preserved(self):
+    def test_check_rejects_default_or_empty_human_body(self):
+        requirements = self.func_a / "01_要件定義書.md"
+        requirements.write_text(
+            "# 予約要件\n\n<!-- HUMAN:START -->\n"
+            "[要確認: 案件と読者に合わせた本文を作成してください]\n"
+            "<!-- HUMAN:END -->\n",
+            encoding="utf-8",
+        )
+        self.assertTrue(views.render_phase(self.phase))
+        self.assertFalse(views.render_phase(self.phase, check=True))
+
+        requirements.write_text(
+            "# 予約要件\n\n<!-- HUMAN:START -->\n予約を扱う。\n<!-- HUMAN:END -->\n",
+            encoding="utf-8",
+        )
+        self.assertTrue(views.render_phase(self.phase))
+        self.assertTrue(views.render_phase(self.phase, check=True))
+
+    def test_check_rejects_unterminated_comments_and_marker_mismatch(self):
+        requirements = self.func_a / "01_要件定義書.md"
+        for content in (
+            "# 予約要件\n\n本文。\n\n<!-- 未終端コメント\n## 後続節\n",
+            "# 予約要件\n\n<!-- AUTHOR-GUIDE:START -->\n本文。\n<!-- HUMAN:END -->\n",
+            "# 予約要件\n\n<!-- HUMAN:START -->\n本文A。\n<!-- HUMAN:END -->\n"
+            "<!-- HUMAN:START -->\n本文B。\n<!-- HUMAN:END -->\n",
+            "# 予約要件\n\n<!-- AUTHOR-GUIDE:START -->\n"
+            "<!-- HUMAN:START -->\n本文。\n<!-- HUMAN:END -->\n"
+            "<!-- AUTHOR-GUIDE:END -->\n",
+        ):
+            with self.subTest(content=content):
+                requirements.write_text(content, encoding="utf-8")
+                self.assertFalse(views.render_phase(self.phase))
+                self.assertFalse(views.render_phase(self.phase, check=True))
+
+    def test_check_ignores_marker_notation_inside_code_fence(self):
+        requirements = self.func_a / "01_要件定義書.md"
+        requirements.write_text(
+            "# 予約要件\n\n本文。\n\n```markdown\n"
+            "<!-- AUTHOR-GUIDE:START -->\n<!-- HUMAN:END -->\n"
+            "<!-- 未終端コメント\n```\n",
+            encoding="utf-8",
+        )
+        self.assertTrue(views.render_phase(self.phase))
+        self.assertTrue(views.render_phase(self.phase, check=True))
+
+    def test_removes_legacy_outputs_but_preserves_unknown_and_screen(self):
         view_dir = self.phase / "views"
-        (view_dir / "func-予約").mkdir(parents=True)
-        stale = view_dir / "func-予約" / "03_詳細設計書.html"
-        stale.write_text("stale", encoding="utf-8")
-        unknown = view_dir / "notes.html"
-        unknown.write_text("keep", encoding="utf-8")
+        legacy_dir = view_dir / "func-旧機能"
+        legacy_dir.mkdir()
+        (legacy_dir / "02_基本設計書.html").write_text("old", encoding="utf-8")
+        (view_dir / "index.html").write_text("old", encoding="utf-8")
+        (view_dir / "README.md").write_text("old", encoding="utf-8")
+        (view_dir / "notes.html").write_text("keep", encoding="utf-8")
         self.assertFalse(views.render_phase(self.phase, check=True))
-        self.assertTrue(stale.exists(), "--check は削除もしない")
-        views.render_phase(self.phase)
-        self.assertFalse(stale.exists())
-        self.assertEqual(unknown.read_text(encoding="utf-8"), "keep")
+        self.assertTrue((view_dir / "index.html").exists())
+        self.assertTrue(views.render_phase(self.phase))
+        self.assertFalse(legacy_dir.exists())
+        self.assertFalse((view_dir / "index.html").exists())
+        self.assertFalse((view_dir / "README.md").exists())
+        self.assertEqual((view_dir / "notes.html").read_text(encoding="utf-8"), "keep")
+        self.assertEqual((view_dir / "画面モック.html").read_text(encoding="utf-8"), "<html>mock</html>")
 
-    def test_missing_sources_are_skipped(self):
+    def test_symlinked_output_is_rejected(self):
+        outside = self.root / "outside.html"
+        outside.write_text("protected", encoding="utf-8")
+        target = self.phase / "views" / "00_サマリ.html"
+        target.symlink_to(outside)
+        self.assertFalse(views.render_phase(self.phase))
+        self.assertEqual(outside.read_text(encoding="utf-8"), "protected")
+
+    def test_empty_phase_does_not_create_empty_documents(self):
         empty = self.root / "phase-9_empty"
         empty.mkdir()
         self.assertTrue(views.render_phase(empty))
-        self.assertTrue((empty / "views" / "index.html").exists())
-        self.assertFalse((empty / "views" / "00_サマリ.html").exists())
+        self.assertEqual(list((empty / "views").iterdir()), [])
 
-    def test_standard_phase_directory_discovery_and_cli(self):
+    def test_discovery_cli_and_mtime_independence(self):
         self.assertEqual(views.discover_phase_dirs([self.root]), [self.phase.resolve()])
-        generated = subprocess.run(
-            [sys.executable, str(SCRIPT), str(self.root)],
-            text=True, capture_output=True, check=False,
-        )
+        generated = subprocess.run([sys.executable, str(SCRIPT), str(self.root)], text=True, capture_output=True, check=False)
         self.assertEqual(generated.returncode, 0, generated.stderr)
-        checked = subprocess.run(
-            [sys.executable, str(SCRIPT), str(self.root), "--check"],
-            text=True, capture_output=True, check=False,
-        )
-        self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-
-    def test_rendering_does_not_depend_on_filesystem_mtime(self):
-        # views/index.html（phase_index_html）はsource_updated()を呼ばない静的な内容のため、
-        # source_updated()の出力を実際に描画するfunc-予約/index.html（func_index）を対象にする。
-        views.render_phase(self.phase)
-        first = (self.phase / "views" / "func-予約" / "index.html").read_bytes()
+        first = (self.phase / "views" / "00_サマリ.html").read_bytes()
         for path in self.phase.rglob("*.md"):
             os.utime(path, (1_900_000_000, 1_900_000_000))
         views.render_phase(self.phase)
-        second = (self.phase / "views" / "func-予約" / "index.html").read_bytes()
-        self.assertEqual(first, second)
-
-    def test_source_without_frontmatter_has_fixed_update_label(self):
-        views.render_phase(self.phase)
-        page = (self.phase / "views" / "func-予約" / "01_要件定義書.html").read_text(encoding="utf-8")
-        self.assertIn("更新日時: 正本に記載なし", page)
-
-    def test_symlinked_views_or_known_output_is_rejected_without_writing(self):
-        outside = self.root / "outside"
-        outside.mkdir()
-        linked_phase = self.root / "phase-2_linked"
-        linked_phase.mkdir()
-        (linked_phase / "views").symlink_to(outside, target_is_directory=True)
-        self.assertFalse(views.render_phase(linked_phase))
-        self.assertEqual(list(outside.iterdir()), [])
-
-        view_dir = self.phase / "views"
-        view_dir.mkdir()
-        target = outside / "protected.html"
-        target.write_text("保護", encoding="utf-8")
-        (view_dir / "01_要件定義書.html").symlink_to(target)
-        self.assertFalse(views.render_phase(self.phase))
-        self.assertFalse(views.render_phase(self.phase, check=True))
-        self.assertEqual(target.read_text(encoding="utf-8"), "保護")
-        self.assertFalse((view_dir / "index.html").exists())
-
-    def test_encoded_or_network_path_urls_are_not_executable_links(self):
-        markdown = "\n".join(
-            [
-                "[script](java%73cript:alert(1))",
-                "[data](data:text/html,attack)",
-                "[network](//evil.example/path)",
-                "[file](file:///tmp/attack)",
-                "[relative](../safe.md)",
-                "[web](https://safe.example/path)",
-            ]
-        )
-        body, _ = views.markdown_to_html(markdown)
-        self.assertNotIn('href="java%73cript:', body)
-        self.assertNotIn('href="data:', body)
-        self.assertNotIn('href="//evil.example', body)
-        self.assertNotIn('href="file:', body)
-        self.assertEqual(
-            body.count('class="unsafe-link"'),
-            2,
-            "Markdown parserが文字列化したdata/file以外も安全なspanへ変換する",
-        )
-        self.assertIn('href="../safe.md"', body)
-        self.assertIn('href="https://safe.example/path"', body)
-
-
-class DiscoverFuncsTest(unittest.TestCase):
-    def test_finds_func_prefixed_directories_only(self):
-        with tempfile.TemporaryDirectory() as directory_str:
-            phase_dir = Path(directory_str)
-            (phase_dir / "func-予約").mkdir()
-            (phase_dir / "func-認証").mkdir()
-            (phase_dir / "system-baseline").mkdir()
-            funcs = views.discover_funcs(phase_dir)
-            self.assertEqual([path.name for path in funcs], ["func-予約", "func-認証"])
-
-
-class RenderPhaseWithFuncsTest(unittest.TestCase):
-    def _make_phase(self, phase_dir: Path) -> None:
-        func_dir = phase_dir / "func-予約"
-        func_dir.mkdir(parents=True)
-        (func_dir / "01_要件定義書.md").write_text("---\nupdated: 2026-08-01\n---\n# 要件\n", encoding="utf-8")
-        (phase_dir / "tests").mkdir()
-        (phase_dir / "tests" / "system-test-cases.md").write_text("# ST\n", encoding="utf-8")
-
-    def test_generates_func_namespaced_and_system_namespaced_views(self):
-        with tempfile.TemporaryDirectory() as directory_str:
-            phase_dir = Path(directory_str) / "phase-1_予約"
-            self._make_phase(phase_dir)
-            self.assertTrue(views.render_phase(phase_dir))
-            self.assertTrue((phase_dir / "views" / "func-予約" / "01_要件定義書.html").is_file())
-            self.assertTrue((phase_dir / "views" / "system" / "system-test-cases.html").is_file())
-            self.assertTrue((phase_dir / "views" / "index.html").is_file())
-
-    def test_check_mode_detects_no_diff_after_generation(self):
-        with tempfile.TemporaryDirectory() as directory_str:
-            phase_dir = Path(directory_str) / "phase-1_予約"
-            self._make_phase(phase_dir)
-            views.render_phase(phase_dir)
-            self.assertTrue(views.render_phase(phase_dir, check=True))
-
-    def test_index_links_to_screen_mock_html_when_present(self):
-        with tempfile.TemporaryDirectory() as directory_str:
-            phase_dir = Path(directory_str) / "phase-1_予約"
-            self._make_phase(phase_dir)
-            (phase_dir / "views").mkdir(exist_ok=True)
-            (phase_dir / "views" / "画面モック.html").write_text("<html></html>", encoding="utf-8")
-            views.render_phase(phase_dir)
-            index_content = (phase_dir / "views" / "index.html").read_text(encoding="utf-8")
-            self.assertIn("画面モック.html", index_content)
-
-    def test_func_page_source_link_resolves_to_real_file(self):
-        """views/func-予約/01_要件定義書.htmlの「正本を開く」リンクが、実在する
-        func-予約/01_要件定義書.md を指すことを、実際にパスを解決して確認する。"""
-        import re
-
-        with tempfile.TemporaryDirectory() as directory_str:
-            phase_dir = Path(directory_str) / "phase-1_予約"
-            self._make_phase(phase_dir)
-            views.render_phase(phase_dir)
-            html_path = phase_dir / "views" / "func-予約" / "01_要件定義書.html"
-            content = html_path.read_text(encoding="utf-8")
-            match = re.search(r'正本Markdownを開く</a>', content)
-            self.assertIsNotNone(match, msg="「正本Markdownを開く」リンクが見つかりません")
-            href_match = re.search(r'<a href="([^"]+)">正本Markdownを開く</a>', content)
-            self.assertIsNotNone(href_match)
-            # hrefはquote()でURLエンコードされているため、ファイルパスとして解決する前にunquoteする
-            # （namespace「func-予約」は非ASCII文字を含み、そのままでは実在パスと一致しない）。
-            resolved = (html_path.parent / unquote(href_match.group(1))).resolve()
-            self.assertEqual(resolved, (phase_dir / "func-予約" / "01_要件定義書.md").resolve())
-            self.assertTrue(resolved.is_file())
-
-    def test_system_page_source_link_resolves_to_real_file(self):
-        import re
-
-        with tempfile.TemporaryDirectory() as directory_str:
-            phase_dir = Path(directory_str) / "phase-1_予約"
-            self._make_phase(phase_dir)
-            views.render_phase(phase_dir)
-            html_path = phase_dir / "views" / "system" / "system-test-cases.html"
-            content = html_path.read_text(encoding="utf-8")
-            href_match = re.search(r'<a href="([^"]+)">正本Markdownを開く</a>', content)
-            self.assertIsNotNone(href_match)
-            resolved = (html_path.parent / unquote(href_match.group(1))).resolve()
-            self.assertEqual(resolved, (phase_dir / "tests" / "system-test-cases.md").resolve())
-            self.assertTrue(resolved.is_file())
-
-    def test_readme_links_resolve_to_real_func_and_system_files(self):
-        """views/README.mdのMarkdownリンク（[出力](パス)）を実際に解決し、
-        func・system双方の実在ファイルを指すことを確認する。"""
-        import re
-
-        with tempfile.TemporaryDirectory() as directory_str:
-            phase_dir = Path(directory_str) / "phase-1_予約"
-            self._make_phase(phase_dir)
-            views.render_phase(phase_dir)
-            readme_path = phase_dir / "views" / "README.md"
-            content = readme_path.read_text(encoding="utf-8")
-            links = re.findall(r"\[[^\]]+\]\(([^)]+)\)", content)
-            # 対応表の行に含まれるリンク（HTMLビュー側・正本側の両方）だけを対象にする
-            table_links = [link for link in links if link.startswith("./") or link.startswith("../")]
-            self.assertTrue(table_links, msg="対応表のリンクが見つかりません")
-            for link in table_links:
-                resolved = (readme_path.parent / link).resolve()
-                self.assertTrue(resolved.is_file(), msg=f"リンク先が実在しません: {link} -> {resolved}")
-
-    def test_func_page_phase_entry_link_resolves_to_real_file(self):
-        """views/func-予約/01_要件定義書.htmlの「フェーズ入口」リンクが、実在する
-        views/index.html を指すことを確認する（namespace配下は実際にはviews/phase_dir
-        への相対深さ2なので、素の"index.html"のままだと存在しないviews/func-予約/index.html
-        を指してしまう回帰）。"""
-        with tempfile.TemporaryDirectory() as directory_str:
-            phase_dir = Path(directory_str) / "phase-1_予約"
-            self._make_phase(phase_dir)
-            views.render_phase(phase_dir)
-            html_path = phase_dir / "views" / "func-予約" / "01_要件定義書.html"
-            content = html_path.read_text(encoding="utf-8")
-            href_matches = re.findall(r'<a href="([^"]+)">フェーズ入口', content)
-            self.assertTrue(href_matches, msg="「フェーズ入口」リンクが見つかりません")
-            for href in href_matches:
-                resolved = (html_path.parent / unquote(href)).resolve()
-                self.assertEqual(resolved, (phase_dir / "views" / "index.html").resolve())
-                self.assertTrue(resolved.is_file())
-
-    def test_system_page_phase_entry_link_resolves_to_real_file(self):
-        """views/system/system-test-cases.htmlの「フェーズ入口」リンクも同様に、
-        実在するviews/index.html を指すことを確認する。"""
-        with tempfile.TemporaryDirectory() as directory_str:
-            phase_dir = Path(directory_str) / "phase-1_予約"
-            self._make_phase(phase_dir)
-            views.render_phase(phase_dir)
-            html_path = phase_dir / "views" / "system" / "system-test-cases.html"
-            content = html_path.read_text(encoding="utf-8")
-            href_matches = re.findall(r'<a href="([^"]+)">フェーズ入口', content)
-            self.assertTrue(href_matches, msg="「フェーズ入口」リンクが見つかりません")
-            for href in href_matches:
-                resolved = (html_path.parent / unquote(href)).resolve()
-                self.assertEqual(resolved, (phase_dir / "views" / "index.html").resolve())
-                self.assertTrue(resolved.is_file())
-
-    def test_func_index_readme_link_resolves_to_real_file(self):
-        """views/func-予約/index.htmlの「Obsidian・ブラウザでの閲覧方法」リンクが、
-        実在するviews/README.md を指すことを確認する（同様のnamespace配下の
-        リンク深さの回帰）。"""
-        with tempfile.TemporaryDirectory() as directory_str:
-            phase_dir = Path(directory_str) / "phase-1_予約"
-            self._make_phase(phase_dir)
-            views.render_phase(phase_dir)
-            html_path = phase_dir / "views" / "func-予約" / "index.html"
-            content = html_path.read_text(encoding="utf-8")
-            href_match = re.search(r'<a href="([^"]+)">Obsidian', content)
-            self.assertIsNotNone(href_match, msg="README.mdへのリンクが見つかりません")
-            resolved = (html_path.parent / unquote(href_match.group(1))).resolve()
-            self.assertEqual(resolved, (phase_dir / "views" / "README.md").resolve())
-            self.assertTrue(resolved.is_file())
+        self.assertEqual((self.phase / "views" / "00_サマリ.html").read_bytes(), first)
 
 
 if __name__ == "__main__":

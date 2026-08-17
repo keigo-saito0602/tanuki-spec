@@ -15,6 +15,7 @@ CSS・レスポンシブ設定・モード切替は再生成しない。
 - UTF-8、viewport、CSP、意味のある `title`
 - `h1` は1件。見出しレベルを飛ばさない
 - 各画面は `<section class="screen" id="SC-xxx">`。idが無いとアンカー遷移が動かない
+- 各画面にはデザイン探索カードを表示し、`design_question`・`hypothesis`・`risk`・`validation_task`・`rationale`・重点状態・代替案の採否理由をレビューできること
 
 ## 自己完結と安全
 

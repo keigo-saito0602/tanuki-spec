@@ -1,6 +1,6 @@
 # references — 参照仕様と出典の扱い
 
-本ファイルは主に`tanuki-spec-generator`が生成時に使う参照仕様の扱いを説明する。
+このディレクトリは、generator・design・test-item・reviewer・task-plannerが共有する判断基準と統合契約を置く。各Skillは必要な参照だけを読み、同じ説明をSkill本文へ複製しない。
 
 ## 1. 生成時に参照する「過去仕様」（都度指定）
 

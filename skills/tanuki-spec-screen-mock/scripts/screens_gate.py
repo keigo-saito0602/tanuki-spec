@@ -11,10 +11,39 @@ from typing import Any
 from catalog import Catalog
 
 SCREEN_ID_PATTERN = re.compile(r"^SC-[EL]?\d+$")
-REQUIRED_SCREEN_FIELDS = ("id", "name", "purpose", "actor", "layout", "trace", "blocks", "states")
+REQUIRED_SCREEN_FIELDS = (
+    "id",
+    "name",
+    "purpose",
+    "actor",
+    "layout",
+    "trace",
+    "design_question",
+    "hypothesis",
+    "risk",
+    "validation_task",
+    "rationale",
+    "exploration_mode",
+    "alternatives",
+    "blocks",
+    "states",
+    "state_strategy",
+)
 REQUIRED_META_FIELDS = ("phase", "source_spec", "generated_at")
 GENERATED_AT_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 STATE_KEYS = ("normal", "empty", "loading", "error", "forbidden")
+RISK_LEVELS = ("low", "medium", "high")
+EXPLORATION_MODES = ("compare", "inherit")
+ALTERNATIVE_DECISIONS = ("adopted", "rejected")
+PLACEHOLDER_PATTERN = re.compile(
+    r"^\s*(?:未定|未確定|未設定|未記入|未入力|TBD|TBA|TODO|PLACEHOLDER|N/?A|<\s*[^>\n]+\s*>)\s*[。.]?\s*$",
+    re.IGNORECASE,
+)
+HTML_CONTROL_PATTERN = re.compile(
+    r"^\s*</?\s*(?:button|fieldset|form|input|label|legend|option|select|textarea)\b[^>\n]*>\s*[。.]?\s*$",
+    re.IGNORECASE,
+)
+PLACEHOLDER_ERROR = "空欄・未定・TBD・TODO・<placeholder>などの仮値は指定できません"
 
 
 @dataclass
@@ -34,6 +63,23 @@ class Result:
 def _screens(data: Any) -> list[dict]:
     screens = data.get("screens") if isinstance(data, dict) else None
     return [s for s in screens if isinstance(s, dict)] if isinstance(screens, list) else []
+
+
+def _is_placeholder_text(value: Any) -> bool:
+    """未確定のまま残った埋め草を検出する。"""
+
+    return (
+        isinstance(value, str)
+        and not HTML_CONTROL_PATTERN.fullmatch(value)
+        and bool(PLACEHOLDER_PATTERN.fullmatch(value))
+    )
+
+
+def _validate_required_text(value: Any, where: str, result: Result, message: str) -> None:
+    if not isinstance(value, str) or not value.strip():
+        result.errors.append(message)
+    elif _is_placeholder_text(value):
+        result.errors.append(f"{where}に{PLACEHOLDER_ERROR}")
 
 
 def validate_schema(data: Any, catalog: Catalog) -> Result:
@@ -77,6 +123,14 @@ def validate_schema(data: Any, catalog: Catalog) -> Result:
         for name in REQUIRED_SCREEN_FIELDS:
             if name not in screen:
                 result.errors.append(f"{where}に必須フィールド{name}がありません")
+        for name in ("name", "purpose", "actor"):
+            if name in screen:
+                _validate_required_text(
+                    screen.get(name),
+                    f"{where}.{name}",
+                    result,
+                    f"{where}.{name}に内容を書いてください",
+                )
 
         screen_id = screen.get("id")
         if isinstance(screen_id, str):
@@ -102,6 +156,14 @@ def validate_schema(data: Any, catalog: Catalog) -> Result:
                 result.errors.append(f"{label}のtraceは要件IDの配列で指定してください")
             elif not trace:
                 result.warnings.append(f"{label}のtraceが空です。対応する要件IDを書いてください")
+            else:
+                for trace_index, trace_id in enumerate(trace):
+                    if not isinstance(trace_id, str) or not trace_id.strip():
+                        result.errors.append(f"{label}のtrace[{trace_index}]に要件IDを書いてください")
+                    elif _is_placeholder_text(trace_id):
+                        result.errors.append(f"{label}のtrace[{trace_index}]に{PLACEHOLDER_ERROR}")
+
+        _validate_exploration(screen, label, result)
 
         block_types, block_states = _validate_blocks(screen.get("blocks"), label, catalog, result)
         if rule is not None:
@@ -114,6 +176,105 @@ def validate_schema(data: Any, catalog: Catalog) -> Result:
 
     _validate_entry_screens(meta.get("entry_screens"), seen, result)
     return result
+
+
+def _validate_exploration(screen: dict, label: str, result: Result) -> None:
+    """画面を部品の充足だけで確定させず、探索と判断の根拠を残す。"""
+
+    for field_name in ("design_question", "hypothesis", "validation_task", "rationale"):
+        _validate_required_text(
+            screen.get(field_name),
+            f"{label}の{field_name}",
+            result,
+            f"{label}の{field_name}にレビュー可能な内容を書いてください",
+        )
+
+    risk = screen.get("risk")
+    if risk not in RISK_LEVELS:
+        result.errors.append(f"{label}のrisk「{risk}」は{'/'.join(RISK_LEVELS)}のいずれかにしてください")
+
+    exploration_mode = screen.get("exploration_mode")
+    if exploration_mode not in EXPLORATION_MODES:
+        result.errors.append(
+            f"{label}のexploration_mode「{exploration_mode}」は{'/'.join(EXPLORATION_MODES)}のいずれかにしてください"
+        )
+
+    alternatives = screen.get("alternatives")
+    expected_count = (
+        isinstance(alternatives, list)
+        and (
+            (exploration_mode == "compare" and 2 <= len(alternatives) <= 3)
+            or (exploration_mode == "inherit" and len(alternatives) == 1)
+        )
+    )
+    if not expected_count:
+        if exploration_mode == "inherit":
+            result.errors.append(f"{label}のinheritモードではalternativesを採用案1件だけにしてください")
+        else:
+            result.errors.append(f"{label}のcompareモードではalternativesを比較可能な2〜3案にしてください")
+    else:
+        adopted = 0
+        alternative_ids: set[str] = set()
+        for index, alternative in enumerate(alternatives):
+            where = f"{label}のalternatives[{index}]"
+            if not isinstance(alternative, dict):
+                result.errors.append(f"{where}はマッピングで指定してください")
+                continue
+            for field_name in ("id", "name", "summary", "reason"):
+                _validate_required_text(
+                    alternative.get(field_name),
+                    f"{where}の{field_name}",
+                    result,
+                    f"{where}の{field_name}に比較内容を書いてください",
+                )
+            alternative_id = alternative.get("id")
+            if isinstance(alternative_id, str) and alternative_id.strip():
+                if alternative_id in alternative_ids:
+                    result.errors.append(f"{label}のalternativesでid「{alternative_id}」が重複しています")
+                alternative_ids.add(alternative_id)
+            decision = alternative.get("decision")
+            if decision not in ALTERNATIVE_DECISIONS:
+                result.errors.append(
+                    f"{where}のdecision「{decision}」は{'/'.join(ALTERNATIVE_DECISIONS)}のいずれかにしてください"
+                )
+            elif decision == "adopted":
+                adopted += 1
+        if adopted != 1:
+            result.errors.append(f"{label}のalternativesは採用案（decision: adopted）をちょうど1件にしてください")
+
+    if exploration_mode == "inherit":
+        inherited_from = screen.get("inherited_from")
+        _validate_required_text(
+            inherited_from,
+            f"{label}のinherited_from",
+            result,
+            f"{label}のinheritモードではinherited_fromに継承元を書いてください",
+        )
+        if risk == "high":
+            result.errors.append(f"{label}はrisk: highのためinheritではなくcompareモードで代替案を比較してください")
+
+    strategy = screen.get("state_strategy")
+    if not isinstance(strategy, dict):
+        result.errors.append(f"{label}のstate_strategyをマッピングで定義してください")
+        return
+    priority_states = strategy.get("priority_states")
+    if not isinstance(priority_states, list) or not priority_states:
+        result.errors.append(f"{label}のstate_strategy.priority_statesに重点状態を1件以上書いてください")
+    else:
+        unknown = [state for state in priority_states if state not in STATE_KEYS]
+        if unknown:
+            result.errors.append(
+                f"{label}のstate_strategy.priority_statesに5状態以外の値があります: {', '.join(map(str, unknown))}"
+            )
+        if len(priority_states) != len({repr(state) for state in priority_states}):
+            result.errors.append(f"{label}のstate_strategy.priority_statesに重複があります")
+    strategy_rationale = strategy.get("rationale")
+    _validate_required_text(
+        strategy_rationale,
+        f"{label}のstate_strategy.rationale",
+        result,
+        f"{label}のstate_strategy.rationaleに重点状態を選んだ理由を書いてください",
+    )
 
 
 def _validate_blocks(blocks: Any, label: str, catalog: Catalog, result: Result) -> tuple[set[str], set[str]]:
@@ -216,8 +377,12 @@ def validate_transitions(data: Any) -> Result:
             if not isinstance(transition, dict):
                 result.errors.append(f"{where}はマッピングで指定してください")
                 continue
-            if not isinstance(transition.get("action"), str) or not transition["action"]:
-                result.errors.append(f"{where}のactionに操作名を書いてください")
+            _validate_required_text(
+                transition.get("action"),
+                f"{where}のaction",
+                result,
+                f"{where}のactionに操作名を書いてください",
+            )
             kind = transition.get("kind")
             if kind not in TRANSITION_KINDS:
                 result.errors.append(f"{where}のkind「{kind}」は{'/'.join(TRANSITION_KINDS)}のいずれかにしてください")
@@ -275,6 +440,9 @@ def validate_states(data: Any) -> Result:
             if not isinstance(value, str) or not value.strip():
                 result.errors.append(f"{screen_id}のstates.{key}に検討結果を書いてください")
                 continue
+            if _is_placeholder_text(value):
+                result.errors.append(f"{screen_id}のstates.{key}に{PLACEHOLDER_ERROR}")
+                continue
             if value.strip().startswith(NOT_APPLICABLE) and ":" not in value and "：" not in value:
                 result.errors.append(f"{screen_id}のstates.{key}は「該当なし: 理由」の形で理由を書いてください")
     return result
@@ -304,20 +472,30 @@ def _validate_field(item: Any, where: str, result: Result) -> None:
         result.errors.append(f"{where}はマッピングで指定してください")
         return
     label = item.get("label")
+    _validate_required_text(label, f"{where}.label", result, f"{where}のlabelに項目名を書いてください")
     if not isinstance(label, str) or not label:
-        result.errors.append(f"{where}のlabelに項目名を書いてください")
         label = where
-    if not isinstance(item.get("control"), str) or not item["control"]:
-        result.errors.append(f"{where}のcontrolに入力方法を書いてください")
+    _validate_required_text(
+        item.get("control"),
+        f"{where}.control",
+        result,
+        f"{where}のcontrolに入力方法を書いてください",
+    )
     if not isinstance(item.get("required"), bool):
         result.errors.append(f"{where}のrequiredをtrueまたはfalseで書いてください")
         return
     if not item["required"]:
         return
-    if not isinstance(item.get("constraint"), str) or not item["constraint"]:
+    constraint = item.get("constraint")
+    if not isinstance(constraint, str) or not constraint.strip():
         result.warnings.append(f"[要確認] {label}の入力制限が未定義です（{where}.constraint）")
-    if not isinstance(item.get("error"), str) or not item["error"]:
+    elif _is_placeholder_text(constraint):
+        result.errors.append(f"{where}.constraintに{PLACEHOLDER_ERROR}")
+    error_message = item.get("error")
+    if not isinstance(error_message, str) or not error_message.strip():
         result.warnings.append(f"[要確認] {label}のエラー文言が未定義です（{where}.error）")
+    elif _is_placeholder_text(error_message):
+        result.errors.append(f"{where}.errorに{PLACEHOLDER_ERROR}")
 
 
 def validate_all(data: Any, catalog: Catalog) -> Result:

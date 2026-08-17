@@ -101,3 +101,19 @@
 36. **係り受けの距離**: [The Dependency Locality Theory (Gibson)](https://www.researchgate.net/publication/247829094_The_dependency_locality_theory_A_distance-based_theory_of_linguistic_complexity) ／ [Minimization of dependency length in written English (PubMed)](https://pubmed.ncbi.nlm.nih.gov/17074312/) ／ [Dependency distance minimization predicts compression (arXiv:2109.08900)](https://arxiv.org/pdf/2109.08900): 処理の複雑さは文の長さではなく、係り受け関係にある語の距離で決まる。距離が長いほどワーキングメモリを消費する。長い文を割るより、主語と述語を近づけ修飾の入れ子を解くほうが効く根拠。
 
 本設計では、上記を「一文の長さは平均40字前後、個々の文は上限で切らない」「60字超は『長い文を許す条件』で判定する」「長い文を連続させない」「情報を落として字数を合わせない」として採用した。長い文の判定条件は、原則36の機構（係り受けの距離、途中で保持させる要素の数、修飾の入れ子）から導いている。
+
+---
+
+## cc-sdd併用と案件固有の設計品質（取得日: 2026-08-16）
+
+37. **仕様は契約であり巨大な命令書ではない**: [cc-sdd: Why cc-sdd?](https://github.com/gotalab/cc-sdd/blob/main/docs/guides/why-cc-sdd.md): 仕様を責任境界・依存関係・再検証条件の契約として扱い、数時間〜数日で扱える単位へ分割する根拠。
+38. **Discovery・Steering・Researchを設計前に置く**: [cc-sdd: Spec-Driven Development Workflow](https://github.com/gotalab/cc-sdd/blob/main/docs/guides/spec-driven.md): 案件の振り分け、プロジェクト文脈、既存実装調査、設計判断を段階分離する根拠。
+39. **テンプレートと判断原則を分離する**: [cc-sdd: Customization Guide](https://github.com/gotalab/cc-sdd/blob/main/docs/guides/customization-guide.md): `templates/`を文書構造、`rules/`を生成原則と判断基準として分離し、案件に応じて章・深さを変える根拠。
+40. **文書を読者の目的別に編集する**: [Diátaxis](https://diataxis.fr/): 学習・作業・参照・理解という異なる目的を一つの文書へ混在させず、読者が必要とする形へ再編集する根拠。
+41. **図は読者と問いに合う抽象度だけ作る**: [C4 model: Diagrams](https://c4model.com/diagrams): すべての図を一律生成せず、関係や相互作用の理解に必要な図だけを選ぶ根拠。
+42. **プロトタイプは仮説を比較し検証する**: [GOV.UK: Making prototypes](https://www.gov.uk/service-manual/design/making-prototypes): 完成形を一案だけ作るのではなく、現在の不確実性に合う忠実度で複数案を試し、早く捨てて学ぶ根拠。
+43. **AIモックには案件固有の入力と人間の判断が要る**: [Nielsen Norman Group: AI Prototyping](https://www.nngroup.com/articles/ai-prototyping/): 高水準の指示だけでは一般的なパターンへ収束しやすく、既存画面、状態、デザイン言語、視覚資料、反復レビューが必要である根拠。
+44. **cc-sddを外部依存として固定する**: [cc-sdd package.json](https://github.com/gotalab/cc-sdd/blob/main/tools/cc-sdd/package.json): npmパッケージ名、3.0.2、配布対象が`dist`と`templates`であることを確認し、ソース複製ではなく検証済み版の外部導入を採用する根拠。
+45. **source内包時はライセンス表示を保持する**: [cc-sdd LICENSE](https://github.com/gotalab/cc-sdd/blob/main/LICENSE): MITライセンスで変更・再配布は可能だが、著作権表示と許諾表示の保持が条件であるため、内包をフォールバック判断に限定する根拠。
+
+本設計では、上記を「cc-sddはDiscovery・境界・実装運用、tanuki-specは業務要件の深掘り・設計判断・テスト・画面・人向け資料を担当」「機械ゲートは下限」「要件の深さはリスクで変える」「調査・代替案・トレードオフを設計本文から分離して残す」として採用した。

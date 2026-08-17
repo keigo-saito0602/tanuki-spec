@@ -1,0 +1,103 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; font-src 'none'; script-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'><meta name="referrer" content="no-referrer"><title>レッスン予約 — 01_要件定義書</title><style>
+:root{color-scheme:light dark;--bg:#fff;--panel:#f4f6f8;--text:#17202a;--muted:#52606d;--line:#b8c2cc;--link:#075ea8;--focus:#d97706;--pending:#fff2cc;--excluded:#e8edf2;--missing:#ffe4e6;--warning:#fff0d5}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--background-primary,var(--bg));color:var(--text-normal,var(--text));font-family:system-ui,-apple-system,"Hiragino Sans","Yu Gothic UI",sans-serif;font-size:1rem;line-height:1.65}a{color:var(--link-color,var(--link));text-underline-offset:.2em}a:focus-visible,.table-scroll:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.skip-link{position:absolute;left:.5rem;top:-5rem;background:var(--text);color:var(--bg);padding:.6rem;z-index:10}.skip-link:focus{top:.5rem}.page-header,.page-footer{background:var(--background-secondary,var(--panel));border-block:1px solid var(--background-modifier-border,var(--line));padding:1rem clamp(1rem,4vw,3rem)}.derived{border-left:.35rem solid var(--focus);padding:.75rem 1rem;background:var(--panel)}.meta{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;color:var(--muted)}.layout{display:grid;grid-template-columns:minmax(12rem,19rem) minmax(0,1fr);gap:clamp(1rem,4vw,3rem);max-width:110rem;margin:auto;padding:2rem clamp(1rem,4vw,3rem)}.toc{align-self:start;position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow:auto}.toc-list{padding-left:1.3rem}.toc-level-3{margin-left:.75rem}.toc-level-4,.toc-level-5,.toc-level-6{margin-left:1.5rem}.content{min-width:0}.prose{max-width:82ch}.prose h2,.prose h3,.prose h4,.prose h5,.prose h6{scroll-margin-top:1rem;margin-top:2em;margin-bottom:.5em;line-height:1.3}.table-scroll{max-width:100%;overflow-x:auto;margin:1.5rem 0}.prose :is(h2,h3,h4,h5,h6):target{outline:3px solid var(--focus);outline-offset:.25rem}table{border-collapse:collapse;min-width:100%;background:var(--bg)}caption{text-align:left;font-weight:700;padding:.5rem 0}th,td{border:1px solid var(--line);padding:.55rem .7rem;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:var(--panel)}code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}pre{overflow:auto;padding:1rem;border:1px solid var(--line);background:var(--panel)}blockquote{margin-left:0;border-left:.3rem solid var(--line);padding:.25rem 1rem;color:var(--muted)}.status{display:inline-block;border:1px solid currentColor;border-radius:.3rem;padding:0 .25rem;font-weight:650;color:#512b00}.status-pending{background:var(--pending)}.status-excluded{background:var(--excluded)}.status-missing{background:var(--missing)}.status-warning{background:var(--warning)}.image-alt{display:inline-block;border:1px dashed var(--line);padding:.25rem;color:var(--muted)}.bundle-nav{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}.bundle-nav a,.bundle-nav strong{border:1px solid var(--line);border-radius:.35rem;padding:.35rem .7rem}.bundle-nav strong{background:var(--panel)}.source-card{border:1px solid var(--line);border-radius:.5rem;padding:1rem;margin:1.25rem 0;background:var(--panel)}.source-card h2{margin-top:0}.source-card .prose{background:var(--bg);padding:1rem;border-radius:.35rem}.muted{color:var(--muted)}.coverage-nav{border:2px solid var(--focus);padding:1rem;background:var(--panel);border-radius:.5rem}.coverage-nav ul{display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:0}@media(prefers-color-scheme:dark){:root{--bg:#111820;--panel:#1c2630;--text:#f1f5f9;--muted:#bdc8d3;--line:#607080;--link:#86c8ff;--focus:#ffc857;--pending:#503c00;--excluded:#273747;--missing:#55252d;--warning:#543400}.status{color:var(--text)}}@media(max-width:48rem){.layout{grid-template-columns:1fr}.toc{position:static;max-height:none}}@media print{.skip-link,.toc,.bundle-nav{display:none}.layout{display:block;padding:0}.page-header,.page-footer{background:none}.prose{max-width:none}a{color:inherit;text-decoration:none}.table-scroll{overflow:visible}body{font-size:11pt}.source-card{break-inside:avoid}}
+</style></head><body><a class="skip-link" href="#main">本文へ移動</a><header class="page-header"><h1>レッスン予約 — 01_要件定義書</h1><p class="derived"><strong>閲覧用の派生成果物です。</strong> 正本Markdown/YAMLを変更して再生成してください。</p><nav class="bundle-nav" aria-label="フェーズ文書"><strong aria-current="page">01_要件定義書</strong><a href="03_%E3%83%86%E3%82%B9%E3%83%88%E3%82%B1%E3%83%BC%E3%82%B9.html">03_テストケース</a></nav></header><div class="layout"><nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ol class="toc-list"><li class="toc-level-2"><a href="#func-予約">func-予約</a></li><li class="toc-level-3"><a href="#func-予約-要件定義書">要件定義書（func-予約）</a></li><li class="toc-level-4"><a href="#func-予約-requirements-要件定義書-サンプル-dj教室レッスン予約機能">要件定義書（サンプル: DJ教室レッスン予約機能）</a></li><li class="toc-level-5"><a href="#func-予約-requirements-業務要件">業務要件</a></li><li class="toc-level-6"><a href="#func-予約-requirements-システム化の目的・背景-経営戦略との紐づけ">システム化の目的・背景（経営戦略との紐づけ）</a></li><li class="toc-level-6"><a href="#func-予約-requirements-システム化対象業務・スコープ定義-対象-対象外-範囲">システム化対象業務・スコープ定義（対象/対象外/範囲）</a></li><li class="toc-level-6"><a href="#func-予約-requirements-ステークホルダー・関係者体制-役割・権限・組織">ステークホルダー・関係者体制（役割・権限・組織）</a></li><li class="toc-level-6"><a href="#func-予約-requirements-業務フロー-as-is-to-be-インパクト分析">業務フロー（As-Is／To-Be、インパクト分析）</a></li><li class="toc-level-6"><a href="#func-予約-requirements-ユーザーストーリー-利用シーン">ユーザーストーリー／利用シーン</a></li><li class="toc-level-5"><a href="#func-予約-requirements-機能要件">機能要件</a></li><li class="toc-level-6"><a href="#func-予約-requirements-機能要件一覧・詳細-p5w2hで整理">機能要件一覧・詳細（P5W2Hで整理）</a></li><li class="toc-level-6"><a href="#func-予約-requirements-要件の優先順位方針-分類・優先度基準">要件の優先順位方針（分類・優先度基準）</a></li><li class="toc-level-5"><a href="#func-予約-requirements-データ要件">データ要件</a></li><li class="toc-level-6"><a href="#func-予約-requirements-データ要件・データモデル-erd-dfd-crud分析">データ要件・データモデル（ERD/DFD、CRUD分析）</a></li><li class="toc-level-6"><a href="#func-予約-requirements-コード設計・コード体系">コード設計・コード体系</a></li><li class="toc-level-6"><a href="#func-予約-requirements-入出力-画面・帳票-要件・ui標準">入出力（画面・帳票）要件・UI標準</a></li><li class="toc-level-6"><a href="#func-予約-requirements-他システム連携・外部インターフェース要件">他システム連携・外部インターフェース要件</a></li><li class="toc-level-5"><a href="#func-予約-requirements-システム基盤・処理方式">システム基盤・処理方式</a></li><li class="toc-level-6"><a href="#func-予約-requirements-処理方式・システム構成要件-どのやり方で処理するか-オンライン-バッチ等の選定">処理方式・システム構成要件（どのやり方で処理するか＝オンライン/バッチ等の選定）</a></li><li class="toc-level-6"><a href="#func-予約-requirements-業務パッケージ-pkg-導入時のfit-gap分析">業務パッケージ(PKG)導入時のFIT&amp;GAP分析</a></li><li class="toc-level-5"><a href="#func-予約-requirements-非機能要件">非機能要件</a></li><li class="toc-level-6"><a href="#func-予約-requirements-非機能要件の観点別ブレークダウン">非機能要件の観点別ブレークダウン</a></li><li class="toc-level-6"><a href="#func-予約-requirements-業務系非機能要件-業務運用視点の可用性・保守性・移行性等">業務系非機能要件（業務運用視点の可用性・保守性・移行性等）</a></li><li class="toc-level-5"><a href="#func-予約-requirements-品質・受け入れ">品質・受け入れ</a></li><li class="toc-level-6"><a href="#func-予約-requirements-受け入れ条件・検収基準">受け入れ条件・検収基準</a></li><li class="toc-level-6"><a href="#func-予約-requirements-カットオーバークライテリア-サービス開始判定基準">カットオーバークライテリア（サービス開始判定基準）</a></li><li class="toc-level-6"><a href="#func-予約-requirements-試験支援要件-試験環境・データ・シナリオ抽出可能性">試験支援要件（試験環境・データ・シナリオ抽出可能性）</a></li><li class="toc-level-5"><a href="#func-予約-requirements-移行・運用">移行・運用</a></li><li class="toc-level-6"><a href="#func-予約-requirements-移行要件・移行計画-方式・切り戻し・リハーサル・ponr">移行要件・移行計画（方式・切り戻し・リハーサル・PoNR）</a></li><li class="toc-level-6"><a href="#func-予約-requirements-運用要件-通常-障害時-保守運用の作業分担">運用要件（通常/障害時/保守運用の作業分担）</a></li><li class="toc-level-6"><a href="#func-予約-requirements-業務改善効果・kpi測定項目">業務改善効果・KPI測定項目</a></li><li class="toc-level-5"><a href="#func-予約-requirements-プロジェクト管理・ドキュメント">プロジェクト管理・ドキュメント</a></li><li class="toc-level-6"><a href="#func-予約-requirements-制約・前提条件">制約・前提条件</a></li><li class="toc-level-6"><a href="#func-予約-requirements-課題管理・検討経緯記録-不採用案・廃案理由を含む">課題管理・検討経緯記録（不採用案・廃案理由を含む）</a></li><li class="toc-level-6"><a href="#func-予約-requirements-開発体制・スキル要件-要員計画">開発体制・スキル要件（要員計画）</a></li><li class="toc-level-6"><a href="#func-予約-requirements-法規制・コンプライアンス対応要件">法規制・コンプライアンス対応要件</a></li><li class="toc-level-6"><a href="#func-予約-requirements-ドキュメント体系・成果物一覧・用語統一">ドキュメント体系・成果物一覧・用語統一</a></li></ol></nav><main id="main" class="content" tabindex="-1"><section class="func-section"><h2 id="func-予約">func-予約</h2><section class="source-card" id="func-予約-要件定義書"><h3>要件定義書 — func-予約</h3><p class="meta"><span>正本: <a href="../../requirements-filled.md">func-予約/01_要件定義書.md</a></span><span>更新日: 正本に記載なし</span></p><div class="prose"><h4 id="func-予約-requirements-要件定義書-サンプル-dj教室レッスン予約機能">要件定義書（サンプル: DJ教室レッスン予約機能）</h4>
+<blockquote>
+<p>旧評価器で作成したドラフト例。非機能の個別明細と項目ごとの根拠が不足しているため、<strong>出力ゲートは不通過</strong>であり、実装へ引き渡してはいけない。</p>
+</blockquote>
+<h5 id="func-予約-requirements-業務要件">業務要件</h5>
+<h6 id="func-予約-requirements-システム化の目的・背景-経営戦略との紐づけ">システム化の目的・背景（経営戦略との紐づけ）</h6>
+<ul>
+<li><strong>根拠</strong>: [入力] ユーザーストーリー「予約漏れや二重予約が起きる」
+DM手動受付による予約漏れ・二重予約・講師の手間を解消し、予約体験の改善で受講継続率を高める。</li>
+</ul>
+<h6 id="func-予約-requirements-システム化対象業務・スコープ定義-対象-対象外-範囲">システム化対象業務・スコープ定義（対象/対象外/範囲）</h6>
+<ul>
+<li><strong>根拠</strong>: [入力] ユーザーストーリー「空き枠を見て予約・キャンセルできる」</li>
+<li>対象: 生徒によるレッスン枠の閲覧・予約・キャンセル・予約確認、確定通知</li>
+<li>対象外: オンライン決済、講師シフトの自動最適化、キャンセル待ちの自動繰上げ（次フェーズ）</li>
+</ul>
+<h6 id="func-予約-requirements-ステークホルダー・関係者体制-役割・権限・組織">ステークホルダー・関係者体制（役割・権限・組織）</h6>
+<p>生徒（予約する利用者）／講師・ユーザ（予約枠の登録・運営）／システム管理者（ユーザ兼務）。</p>
+<h6 id="func-予約-requirements-業務フロー-as-is-to-be-インパクト分析">業務フロー（As-Is／To-Be、インパクト分析）</h6>
+<ul>
+<li>As-Is: 生徒がDM送信 → 講師が台帳へ手記入 → 返信。二重予約・記入漏れが発生。</li>
+<li>To-Be: 生徒がアプリで空き枠を選択 → 即時確定 → 自動通知。台帳記入が不要になる。</li>
+</ul>
+<h6 id="func-予約-requirements-ユーザーストーリー-利用シーン">ユーザーストーリー／利用シーン</h6>
+<ul>
+<li><strong>根拠</strong>: [入力] ユーザーストーリー本文
+生徒として、空いているレッスン枠をスマホから予約・キャンセルしたい。理由: 電話やDMをせず好きな時間に手続きしたいから。</li>
+</ul>
+<h5 id="func-予約-requirements-機能要件">機能要件</h5>
+<h6 id="func-予約-requirements-機能要件一覧・詳細-p5w2hで整理">機能要件一覧・詳細（P5W2Hで整理）</h6>
+<ul>
+<li>F1 空き枠一覧表示（Who:生徒 / When:随時 / What:日時・講師・残席 / Why:選択のため）</li>
+<li>F2 枠予約（確定・確定通知送信）</li>
+<li>F3 予約キャンセル（When: レッスン前日まで）</li>
+<li>F4 予約履歴確認</li>
+<li>F5 満席枠は予約不可（残席0で締切）</li>
+</ul>
+<h6 id="func-予約-requirements-要件の優先順位方針-分類・優先度基準">要件の優先順位方針（分類・優先度基準）</h6>
+<p>必須: F1/F2/F3/F5（予約が成立し二重予約が起きない最小構成）。次点: F4履歴。将来: キャンセル待ち。</p>
+<h5 id="func-予約-requirements-データ要件">データ要件</h5>
+<h6 id="func-予約-requirements-データ要件・データモデル-erd-dfd-crud分析">データ要件・データモデル（ERD/DFD、CRUD分析）</h6>
+<p>エンティティ: 生徒 / レッスン枠 / 予約。予約は「生徒 N:1 レッスン枠」。
+枠は残席を持ち、予約確定でデクリメント（競合制御が必要→非機能・詳細設計へ）。</p>
+<h6 id="func-予約-requirements-コード設計・コード体系">コード設計・コード体系</h6>
+<p>予約ステータスコード（reserved / cancelled）と枠状態（open / full / closed）を定義する。</p>
+<h6 id="func-予約-requirements-入出力-画面・帳票-要件・ui標準">入出力（画面・帳票）要件・UI標準</h6>
+<p>画面: 空き枠一覧 / 予約確認 / 予約履歴。UI標準: 既存 soil-groove のデザイントークンに準拠。</p>
+<h6 id="func-予約-requirements-他システム連携・外部インターフェース要件">他システム連携・外部インターフェース要件</h6>
+<p>確定/キャンセル通知はメール（＋将来LINE）。カレンダー連携は将来スコープ。</p>
+<h5 id="func-予約-requirements-システム基盤・処理方式">システム基盤・処理方式</h5>
+<h6 id="func-予約-requirements-処理方式・システム構成要件-どのやり方で処理するか-オンライン-バッチ等の選定">処理方式・システム構成要件（どのやり方で処理するか＝オンライン/バッチ等の選定）</h6>
+<p>オンライン中心（予約はリアルタイム確定）。バッチ: レッスン前日のリマインド通知（日次）。
+基盤: 既存 soil-groove の Nuxt + Firebase 上に実装。</p>
+<h6 id="func-予約-requirements-業務パッケージ-pkg-導入時のfit-gap分析">業務パッケージ(PKG)導入時のFIT&amp;GAP分析</h6>
+<p>対象外: 外部予約SaaS（STORES予約等）は採用せず、既存基盤に内製するため条件に該当しない。</p>
+<h5 id="func-予約-requirements-非機能要件">非機能要件</h5>
+<h6 id="func-予約-requirements-非機能要件の観点別ブレークダウン">非機能要件の観点別ブレークダウン</h6>
+<ul>
+<li>可用性（必須）: 平日夜の予約ピークに耐える。計画停止は生徒に事前告知。</li>
+<li>性能・拡張性（必須）: 空き枠一覧の表示を1秒以内目標。生徒数増に耐える枠クエリ設計。</li>
+<li>運用・保守性（必須）: 講師が枠を登録/締切できる管理画面。障害時は手動受付にフォールバック。</li>
+<li>移行性（任意）: 既存台帳（スプレッドシート）から初期枠・生徒を投入。</li>
+<li>セキュリティ（必須）: 生徒はログイン必須。自分の予約のみ操作可（認可）。個人情報は最小限保持。</li>
+<li>システム環境・エコロジー（任意）: 対象外（既存基盤に相乗り）。</li>
+</ul>
+<h6 id="func-予約-requirements-業務系非機能要件-業務運用視点の可用性・保守性・移行性等">業務系非機能要件（業務運用視点の可用性・保守性・移行性等）</h6>
+<p>二重予約の禁止（残席の排他制御が業務規制）。講師都合の休講時に該当枠の予約を一斉キャンセルし通知する運用。</p>
+<h5 id="func-予約-requirements-品質・受け入れ">品質・受け入れ</h5>
+<h6 id="func-予約-requirements-受け入れ条件・検収基準">受け入れ条件・検収基準</h6>
+<ul>
+<li>生徒が空き枠を予約でき、確定通知が届く。</li>
+<li>レッスン前日までキャンセルでき、枠が空きに戻る。</li>
+<li>満席（残席0）の枠は予約できない。</li>
+<li>同一枠への二重予約が発生しない。</li>
+</ul>
+<h6 id="func-予約-requirements-カットオーバークライテリア-サービス開始判定基準">カットオーバークライテリア（サービス開始判定基準）</h6>
+<p>主要動線（予約/キャンセル/一覧）のE2E通過、二重予約が発生しないことの負荷確認、既存生徒データ移行完了、講師が枠登録の操作に習熟済み。</p>
+<h6 id="func-予約-requirements-試験支援要件-試験環境・データ・シナリオ抽出可能性">試験支援要件（試験環境・データ・シナリオ抽出可能性）</h6>
+<p>試験用のダミー生徒アカウントと枠データを用意。予約競合（同時に最後の1枠を予約）のテストシナリオを含める。</p>
+<h5 id="func-予約-requirements-移行・運用">移行・運用</h5>
+<h6 id="func-予約-requirements-移行要件・移行計画-方式・切り戻し・リハーサル・ponr">移行要件・移行計画（方式・切り戻し・リハーサル・PoNR）</h6>
+<p>既存の手動予約台帳を初期データとして投入（一括移行）。切り戻し: 問題発生時は台帳運用に戻す。移行前に1週間の並行運用でリハーサル。</p>
+<h6 id="func-予約-requirements-運用要件-通常-障害時-保守運用の作業分担">運用要件（通常/障害時/保守運用の作業分担）</h6>
+<p>通常: 講師が月次で枠を登録。障害時: 手動予約受付にフォールバックし後で台帳反映。保守: 枠テンプレの更新はユーザ。</p>
+<h6 id="func-予約-requirements-業務改善効果・kpi測定項目">業務改善効果・KPI測定項目</h6>
+<p>（未記入）</p>
+<h5 id="func-予約-requirements-プロジェクト管理・ドキュメント">プロジェクト管理・ドキュメント</h5>
+<h6 id="func-予約-requirements-制約・前提条件">制約・前提条件</h6>
+<p>予算・期間は小規模。既存 soil-groove（Nuxt/Firebase）上に実装。設計=Claude、実装=Codexの分業。</p>
+<h6 id="func-予約-requirements-課題管理・検討経緯記録-不採用案・廃案理由を含む">課題管理・検討経緯記録（不採用案・廃案理由を含む）</h6>
+<ul>
+<li>決済連携は今回スコープ外（理由: 手数料と要件複雑化）。</li>
+<li>キャンセル待ち自動繰上げは次フェーズ（理由: まず予約成立の最小構成を優先）。</li>
+</ul>
+<h6 id="func-予約-requirements-開発体制・スキル要件-要員計画">開発体制・スキル要件（要員計画）</h6>
+<p>ユーザ（設計判断・運営）／Claude（設計・レビュー）／Codex（実装）。</p>
+<h6 id="func-予約-requirements-法規制・コンプライアンス対応要件">法規制・コンプライアンス対応要件</h6>
+<p>氏名・連絡先を取得するためプライバシーポリシーに準拠し、保持は予約運用に必要な最小限とする。</p>
+<h6 id="func-予約-requirements-ドキュメント体系・成果物一覧・用語統一">ドキュメント体系・成果物一覧・用語統一</h6>
+<p>既存 soil-groove のドキュメント体系・用語（枠=slot, 予約=reservation）に合わせる。</p>
+</div></section></section></main></div><footer class="page-footer"><p>各カードに機能名と正本へのリンクを表示しています。状態マーカーは正本の記載です。</p></footer></body></html>

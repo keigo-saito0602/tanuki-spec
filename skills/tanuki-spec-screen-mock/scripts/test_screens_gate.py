@@ -43,6 +43,64 @@ STATES_SC2 = {
     "forbidden": "未ログインはログイン画面へ誘導",
 }
 
+EXPLORATION_SC1 = {
+    "design_question": "生徒が候補を比較して予約へ進めるか",
+    "hypothesis": "日付を先に選ぶと候補を比較しやすい",
+    "risk": "medium",
+    "validation_task": "明日の午後の候補を探し、最初に押す場所を説明してください",
+    "rationale": "既存予約画面の日付フィルタと用語を踏襲する",
+    "exploration_mode": "compare",
+    "alternatives": [
+        {
+            "id": "alt-filter-first",
+            "name": "条件を先に絞る",
+            "summary": "日付と講師を先頭に置く",
+            "decision": "adopted",
+            "reason": "候補数を減らしやすいため",
+        },
+        {
+            "id": "alt-calendar",
+            "name": "カレンダー中心",
+            "summary": "月間カレンダーから日付を選ぶ",
+            "decision": "rejected",
+            "reason": "週単位の比較では情報密度が高いため",
+        },
+    ],
+    "state_strategy": {
+        "priority_states": ["normal", "empty", "error"],
+        "rationale": "候補がない場合と取得失敗を重点的に確認する",
+    },
+}
+
+EXPLORATION_SC2 = {
+    "design_question": "入力内容を確認して迷わず確定できるか",
+    "hypothesis": "確認情報と主操作を同じ画面に置けば確定できる",
+    "risk": "high",
+    "validation_task": "入力内容を確認し、予約を確定する操作を説明してください",
+    "rationale": "確定前に誤りを確認できるよう、入力と主操作をまとめる",
+    "exploration_mode": "compare",
+    "alternatives": [
+        {
+            "id": "alt-single",
+            "name": "単一画面で確定",
+            "summary": "入力確認と確定を同じ画面に置く",
+            "decision": "adopted",
+            "reason": "操作の往復を減らせるため",
+        },
+        {
+            "id": "alt-wizard",
+            "name": "確認を別画面に分ける",
+            "summary": "入力と確認を段階に分ける",
+            "decision": "rejected",
+            "reason": "小さな予約では遷移が増えて負荷になるため",
+        },
+    ],
+    "state_strategy": {
+        "priority_states": ["normal", "loading", "error", "forbidden"],
+        "rationale": "確定処理の失敗と権限切れで二重操作が起きるため",
+    },
+}
+
 VALID = {
     "meta": {
         "phase": "phase-1_公開サイト・予約",
@@ -58,6 +116,7 @@ VALID = {
             "actor": "生徒",
             "layout": "list-with-filter",
             "trace": ["FR-001"],
+            **EXPLORATION_SC1,
             "blocks": [
                 {"type": "header", "nav": ["予約", "履歴"]},
                 {
@@ -80,6 +139,7 @@ VALID = {
             "actor": "生徒",
             "layout": "form",
             "trace": ["FR-002"],
+            **EXPLORATION_SC2,
             "blocks": [
                 {"type": "header", "nav": ["予約"]},
                 {
@@ -125,6 +185,108 @@ class SchemaTest(unittest.TestCase):
     def test_missing_required_field_is_error(self) -> None:
         result = self._validate(lambda d: d["screens"][0].pop("purpose"))
         self.assertTrue(any("purpose" in error for error in result.errors))
+
+    def test_missing_exploration_field_is_error(self) -> None:
+        result = self._validate(lambda d: d["screens"][0].pop("design_question"))
+        self.assertTrue(any("design_question" in error for error in result.errors))
+
+    def test_placeholder_exploration_text_is_error(self) -> None:
+        for value in ("未定", "TBD", "<このモックで決めたい問い>"):
+            with self.subTest(value=value):
+                result = self._validate(
+                    lambda d, placeholder=value: d["screens"][0].__setitem__(
+                        "design_question", placeholder
+                    )
+                )
+                self.assertTrue(any("仮値" in error for error in result.errors))
+
+    def test_decided_sentence_containing_similar_word_is_not_placeholder(self) -> None:
+        result = self._validate(
+            lambda d: d["screens"][0].__setitem__(
+                "rationale", "未定義の状態を作らないため既存導線を継承する"
+            )
+        )
+        self.assertEqual([], result.errors)
+
+    def test_explanatory_sentence_containing_tag_like_text_is_not_placeholder(self) -> None:
+        result = self._validate(
+            lambda d: d["screens"][0].__setitem__(
+                "rationale", "説明文内の<select>相当の入力部品を既存パターンに合わせる"
+            )
+        )
+        self.assertEqual([], result.errors)
+
+    def test_html_control_name_is_not_treated_as_a_placeholder(self) -> None:
+        result = self._validate(
+            lambda d: d["screens"][0]["blocks"][1]["fields"][0].__setitem__(
+                "control", "<select>"
+            )
+        )
+        self.assertEqual([], result.errors)
+
+    def test_unknown_risk_level_is_error(self) -> None:
+        result = self._validate(lambda d: d["screens"][0].__setitem__("risk", "critical"))
+        self.assertTrue(any("critical" in error for error in result.errors))
+
+    def test_compare_mode_requires_two_or_three_with_one_adopted(self) -> None:
+        result = self._validate(lambda d: d["screens"][0]["alternatives"].pop())
+        self.assertTrue(any("compareモード" in error and "2〜3案" in error for error in result.errors))
+        result = self._validate(
+            lambda d: d["screens"][0]["alternatives"][1].__setitem__("decision", "adopted")
+        )
+        self.assertTrue(any("ちょうど1件" in error for error in result.errors))
+
+    def test_inherit_mode_allows_one_adopted_pattern_for_non_high_risk(self) -> None:
+        def inherit(data):
+            screen = data["screens"][0]
+            screen["exploration_mode"] = "inherit"
+            screen["inherited_from"] = "既存の生徒向け予約一覧 SC-010"
+            screen["alternatives"] = [screen["alternatives"][0]]
+
+        result = self._validate(inherit)
+        self.assertEqual([], result.errors)
+
+    def test_inherit_mode_requires_source(self) -> None:
+        def inherit_without_source(data):
+            screen = data["screens"][0]
+            screen["exploration_mode"] = "inherit"
+            screen["alternatives"] = [screen["alternatives"][0]]
+
+        result = self._validate(inherit_without_source)
+        self.assertTrue(any("inherited_from" in error for error in result.errors))
+
+    def test_high_risk_screen_must_compare_alternatives(self) -> None:
+        def inherit_high_risk(data):
+            screen = data["screens"][1]
+            screen["exploration_mode"] = "inherit"
+            screen["inherited_from"] = "既存の確認画面"
+            screen["alternatives"] = [screen["alternatives"][0]]
+
+        result = self._validate(inherit_high_risk)
+        self.assertTrue(any("risk: high" in error and "compare" in error for error in result.errors))
+
+    def test_alternative_ids_must_be_unique(self) -> None:
+        result = self._validate(
+            lambda d: d["screens"][0]["alternatives"][1].__setitem__(
+                "id", d["screens"][0]["alternatives"][0]["id"]
+            )
+        )
+        self.assertTrue(any("alternatives" in error and "重複" in error for error in result.errors))
+
+    def test_state_strategy_allows_risk_focused_subset_of_five_states(self) -> None:
+        result = self._validate(
+            lambda d: d["screens"][0].__setitem__(
+                "state_strategy",
+                {"priority_states": ["error"], "rationale": "失敗時の復旧を重点確認する"},
+            )
+        )
+        self.assertEqual([], result.errors)
+
+    def test_state_strategy_rejects_unknown_state(self) -> None:
+        result = self._validate(
+            lambda d: d["screens"][0]["state_strategy"].__setitem__("priority_states", ["expired"])
+        )
+        self.assertTrue(any("expired" in error for error in result.errors))
 
     def test_bad_id_prefix_is_error(self) -> None:
         result = self._validate(lambda d: d["screens"][0].__setitem__("id", "S001"))
@@ -351,20 +513,15 @@ class ValidateAllTest(unittest.TestCase):
         self.assertEqual([], result.errors)
         self.assertTrue(result.ok())
 
-    def test_template_file_passes_every_check(self) -> None:
-        """テンプレートの構造（レイアウト・状態・遷移の組み合わせ）が最新のスキーマで通ること。
-
-        `generated_at`だけは未置換を検知するための意図的なプレースホルダなので、
-        この検証では実在する日付へ置き換えてから確認する
-        （test_unfilled_template_generated_at_fails_gateが未置換側を保証する）。
-        """
+    def test_template_placeholders_fail_even_after_generated_at_is_filled(self) -> None:
+        """日付だけを埋めても、画面判断の仮値が残ればゲートを通さない。"""
         import yaml
 
         template = SCRIPT_DIR.parent / "templates" / "screens-template.yaml"
         data = yaml.safe_load(template.read_text(encoding="utf-8"))
         data["meta"]["generated_at"] = "2026-07-30"
         result = GATE.validate_all(data, CATALOG.load_catalog())
-        self.assertEqual([], result.errors)
+        self.assertTrue(any("仮値" in error for error in result.errors))
 
     def test_unfilled_template_generated_at_fails_gate(self) -> None:
         """テンプレートをそのままコピーして置換を忘れても、ゲートが必ず弾くことを保証する。"""

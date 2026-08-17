@@ -144,6 +144,56 @@ def render_block(block: Any) -> str:
     return _labelled(kind, f'<div class="box">{esc(text)}</div>')
 
 
+def _render_exploration(screen: dict) -> str:
+    """画面を採用判断と検証課題まで含めてレビューできるようにする。"""
+
+    strategy = screen.get("state_strategy") or {}
+    priority_states = "／".join(
+        STATE_LABELS.get(str(state), str(state)) for state in (strategy.get("priority_states") or [])
+    ) or "未記入"
+    exploration_mode = screen.get("exploration_mode", "未記入")
+    mode_label = {"compare": "比較検討", "inherit": "既存パターンを継承"}.get(
+        str(exploration_mode), str(exploration_mode)
+    )
+    inherited_from = screen.get("inherited_from")
+    inherited_row = (
+        f"<dt>継承元</dt><dd>{esc(inherited_from)}</dd>"
+        if isinstance(inherited_from, str) and inherited_from.strip()
+        else ""
+    )
+    rows = []
+    for alternative in screen.get("alternatives") or []:
+        if not isinstance(alternative, dict):
+            continue
+        decision = alternative.get("decision", "未記入")
+        decision_label = {"adopted": "採用", "rejected": "却下"}.get(str(decision), str(decision))
+        rows.append(
+            f"<tr><th scope=\"row\">{esc(alternative.get('name', ''))}</th>"
+            f"<td>{esc(alternative.get('summary', ''))}</td>"
+            f"<td>{esc(decision_label)}</td>"
+            f"<td>{esc(alternative.get('reason', ''))}</td></tr>"
+        )
+    alternatives = "".join(rows) or '<tr><td colspan="4">比較案が未記入です</td></tr>'
+    return f"""<div class="exploration">
+    <h3>デザイン探索と検証</h3>
+    <dl>
+      <dt>デザイン問い</dt><dd>{esc(screen.get('design_question', '未記入'))}</dd>
+      <dt>仮説</dt><dd>{esc(screen.get('hypothesis', '未記入'))}</dd>
+      <dt>リスク</dt><dd>{esc(screen.get('risk', '未記入'))}</dd>
+      <dt>検証タスク</dt><dd>{esc(screen.get('validation_task', '未記入'))}</dd>
+      <dt>採用根拠</dt><dd>{esc(screen.get('rationale', '未記入'))}</dd>
+      <dt>探索方法</dt><dd>{esc(mode_label)}</dd>
+      {inherited_row}
+      <dt>重点状態</dt><dd>{esc(priority_states)}</dd>
+      <dt>状態設計の理由</dt><dd>{esc(strategy.get('rationale', '未記入'))}</dd>
+    </dl>
+    <div class="tbl-wrap" tabindex="0"><table><caption>採用案と代替案</caption>
+      <thead><tr><th scope="col">案</th><th scope="col">概要</th><th scope="col">採否</th><th scope="col">理由</th></tr></thead>
+      <tbody>{alternatives}</tbody>
+    </table></div>
+  </div>"""
+
+
 def render_screen(screen: Any) -> str:
     if not isinstance(screen, dict):
         return ""
@@ -174,6 +224,7 @@ def render_screen(screen: Any) -> str:
     <p>{esc(screen.get('purpose', ''))}／操作者: {esc(screen.get('actor', ''))}</p>
   </div>
   <div class="canvas">{blocks}</div>
+  {_render_exploration(screen)}
   <div class="meta">
     <dl>
       <dt>対応要件</dt><dd>{trace}</dd>

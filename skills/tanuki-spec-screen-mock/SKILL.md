@@ -30,15 +30,24 @@ tanuki-spec-screen-mock
 ## 必ず読む
 
 1. `references/uiux-principles.md`
-2. `references/screens-schema.md` と `references/component-catalog.yaml`
-3. 参考ソースがある場合は `references/design-token-extraction.md`
-4. HTML生成の前に `references/mock-html-contract.md`
-5. 画面名・目的・状態の説明を書く前に `references/cognitive-doc-principles.md`。共有コア`../../tanuki-spec-all/`へのsymlinkであり、認知設計の正本とする
+2. `references/design-exploration.md`（既存画面・ブランド・利用者・業務の調査と仮説の立て方）
+3. `references/screens-schema.md` と `references/component-catalog.yaml`
+4. 参考ソースがある場合は `references/design-token-extraction.md`
+5. HTML生成の前に `references/mock-html-contract.md`
+6. 画面名・目的・状態の説明を書く前に `references/cognitive-doc-principles.md`。共有コア`../../tanuki-spec-all/`へのsymlinkであり、認知設計の正本とする
 
 ## 実行条件
 
 ユーザが操作する画面を伴う案件でのみ実行する。要件定義書の`req-io`（入出力・画面・帳票要件）に
 画面の記載がなければ、モックを作らずその旨を報告する。
+
+開始時にcc-sddの状態だけを確認する。画面レビュー単独ではインストールや`.kiro/`の編集を行わず、未導入なら`tanuki-spec-generator`または`tanuki-spec-design`のプリフライトへ戻す。
+
+```bash
+python3 scripts/cc_sdd_preflight.py <project-root> --agent <codex|claude> --check
+```
+
+`missing`なら画面生成中に環境を変更せず、generatorまたはdesignへ戻す。固定版と追加先を提示し、ユーザーの明示同意後だけ対象`--agent`を省略せず`--ensure --consent`を実行するよう報告する。`legacy` / `partial`も自動移行しない。
 
 ## 手順
 
@@ -54,21 +63,32 @@ tanuki-spec-screen-mock
 - フェーズ配下の各`func-<名前>/01_要件定義書.md`を横断して読み、`req-io`と機能要件から画面が必要かを判断する。画面はfunc単位ではなくphase全体で洗い出す。
 - フェーズディレクトリの存在と、`screens.yaml`の有無から`create`／`update`を決める。
 - 参考ソースの種類（コード／画像／URL）を確認する。
+- プロジェクトに `brief.md`・`roadmap.md`・`.kiro/steering/` など cc-sdd の成果物がある場合は、画面の前提を確認するために読む。cc-sdd はこの工程では確認に限り、タスクや `.kiro/specs/` の成果物を生成・編集しない。
 
 ### 2. 画面を洗い出す
 
-`references/uiux-principles.md`に従い、要件から画面を起こす。
+`references/design-exploration.md`に従い、要件だけでなく、既存UI・ブランド・対象利用者・業務フローを調査してから画面を起こす。事実、仮説、未確定事項を混ぜない。各画面では「何を決めるためのモックか」を先に定め、次の項目を必ず記録する。
+
+- `design_question`：このモックでレビューしたい問い
+- `hypothesis`：現時点の仮説
+- `risk`：`low` / `medium` / `high` の判断リスク
+- `validation_task`：レビュー参加者に確認してもらう具体的な操作・問い
+- `rationale`：この画面構成を採った根拠
+- `exploration_mode`：新規性・不確実性がある場合は`compare`、妥当な既存パターンを継承する場合は`inherit`
+- `alternatives`：`compare`では比較した2〜3案、`inherit`では根拠付きの採用案1件
+
+`risk: high`は必ず`compare`にする。低・中リスクで`inherit`を使う場合は`inherited_from`に継承元を書き、形式的な却下案を作らない。
 
 - 1画面1目的で分ける。目的が2つあるなら画面を分ける。
 - 各画面に5状態（通常・空・読込中・エラー・権限なし）を必ず検討する。
+- 5状態は最低限の確認項目であり、全状態を同じ厚さで作り込まない。`risk`に応じて重点状態を`state_strategy.priority_states`へ記録し、業務固有の追加状態（期限切れ、二重送信、下書きなど）は`notes`または`state_strategy.rationale`に残す。
 - エラー画面と認証画面を忘れない。
 - 各画面に対応する要件IDを`trace`へ書く。根拠がない画面は作らない。
 
 ### 3. screens.yaml を書く
 
 `templates/screens-template.yaml`をコピーし、`references/screens-schema.md`に従って記入する。
-部品とレイアウトは`references/component-catalog.yaml`にあるものだけを使う。
-カタログにない表現が必要なら勝手に作らず、`notes`へ`[要確認: 質問]`を残して報告する。
+部品とレイアウトは`references/component-catalog.yaml`を共通カタログとして使う。案件固有の部品が必要な場合は、プロジェクト側で共通カタログをコピーしたローカル拡張版（例：`docs/spec/_project/component-catalog.yaml`）を管理し、共通定義を残したまま追加する。既存のゲート互換性を保つため、現時点ではローカル拡張版を`--catalog`で渡す（拡張差分だけのファイルをそのまま渡さない）。カタログにない表現を勝手に使わず、拡張がまだ合意されていなければ`notes`へ`[要確認: 質問]`を残して報告する。
 
 ```bash
 python3 scripts/screens_gate.py <phase>/screens.yaml
@@ -114,6 +134,7 @@ python3 scripts/check_browser_contract.py <phase>/views/画面モック.html
 - **まずワイヤーモードで構成と遷移を確認してほしいこと**
 - 色はデザインモードへ切り替えて別に見てほしいこと
 - 画面数、`[要確認]`の件数、確度が`confirmed`でないトークンの件数
+- 各画面のデザイン問い・仮説・リスク・検証タスク・採否理由・重点状態も、ワイヤーモードで確認してほしいこと
 
 キーボード操作・支援技術・色以外の手掛かりが意味として機能するかは機械検査では判定できない。
 最終確定前に[`references/human-ux-review-guide.md`](./references/human-ux-review-guide.md)の手順で人手評価する。
